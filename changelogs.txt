@@ -1,6 +1,15 @@
+Changelogs For Xtra Kernel Manager Version 2.1-Release
+
+Release Date: 10 December 2025
+MAJOR UPDATE :
+- Add Refresh Rate Control on Per-App Profile
+- Add Lock GPU Frequency
+- Fix Animation Dropdown on Home Screen
+
+
 Changelogs For Xtra Kernel Manager Version 2.0-Release
 
-Release Date: December 2025
+Release Date: 8 December 2025
 MAJOR NEW FEATURES
 
 Per-App Profile System
