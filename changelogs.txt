@@ -1,3 +1,14 @@
+Changelogs For Xtra Kernel Manager Version 2.2-Release
+
+Release Date: 10 December 2025
+MAJOR UPDATE :
+- Add GPU Lock Frequency 
+- Fix Powerlevel GPU Reset
+- Add Performance Profile in Quick Settings 
+- Fix Crash Battery Notification & Per-App-Profile on Android 14+
+- Change Toggle Switch Button
+
+
 Changelogs For Xtra Kernel Manager Version 2.1-Release
 
 Release Date: 10 December 2025
