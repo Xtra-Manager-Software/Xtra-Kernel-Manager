@@ -143,14 +143,14 @@ dependencies {
     // Core Android
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("androidx.activity:activity-compose:1.12.3")
+    implementation("androidx.activity:activity-compose:1.12.4")
     implementation("androidx.core:core-splashscreen:1.2.0")
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.work:work-runtime-ktx:2.11.1")
 
 
     // Compose BOM
-    val composeBom = platform("androidx.compose:compose-bom:2026.01.01")
+    val composeBom = platform("androidx.compose:compose-bom:2026.02.00")
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -179,12 +179,12 @@ dependencies {
     implementation("com.github.topjohnwu.libsu:nio:6.0.0")
     
     // Firebase 
-    implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
     implementation("com.google.firebase:firebase-database") 
     
     // Google Play Services (for Play Protect compatibility)
-    implementation("com.google.android.gms:play-services-base:18.5.0")
-    implementation("com.google.android.gms:play-services-tasks:18.2.0") 
+    implementation("com.google.android.gms:play-services-base:18.10.0")
+    implementation("com.google.android.gms:play-services-tasks:18.4.1") 
 
     // TOML Parser
     implementation("org.tomlj:tomlj:1.1.1")
