@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Xposed Module Target Scope - Banking Apps -->
+    <string-array name="xposed_scope">
+        <!-- System Framework - Required for AccessibilityManagerService hooks -->
+        <item>android</item>
+        <!-- SettingsProvider - Required for Settings.Secure hooks -->
+        <item>com.android.providers.settings</item>
+    </string-array>
+</resources>

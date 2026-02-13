@@ -767,9 +767,36 @@ class PreferencesManager(private val context: Context) {
 
   // ==================== SYNC PREFERENCES ====================
   // Using SharedPreferences for simple synchronous access
+  // Also accessible by Xposed module via XSharedPreferences
 
+  @Suppress("DEPRECATION")
   private val syncPrefs by lazy {
-    context.getSharedPreferences("xkm_sync_prefs", Context.MODE_PRIVATE)
+    // Try to use MODE_WORLD_READABLE for Xposed compatibility
+    try {
+      context.getSharedPreferences("xkm_sync_prefs", Context.MODE_WORLD_READABLE)
+    } catch (e: SecurityException) {
+      // Fallback to MODE_PRIVATE if MODE_WORLD_READABLE is not allowed
+      android.util.Log.w("PreferencesManager", "MODE_WORLD_READABLE not allowed, using MODE_PRIVATE")
+      context.getSharedPreferences("xkm_sync_prefs", Context.MODE_PRIVATE)
+    }
+  }
+  
+  /**
+   * Make the sync prefs file world-readable for Xposed module access.
+   * Should be called after saving important settings that Xposed needs.
+   */
+  fun makePrefsWorldReadable() {
+    try {
+      val prefsDir = java.io.File(context.applicationInfo.dataDir, "shared_prefs")
+      val prefsFile = java.io.File(prefsDir, "xkm_sync_prefs.xml")
+      if (prefsFile.exists()) {
+        prefsFile.setReadable(true, false)
+        prefsDir.setExecutable(true, false)
+        android.util.Log.d("PreferencesManager", "Made prefs world-readable: ${prefsFile.absolutePath}")
+      }
+    } catch (e: Exception) {
+      android.util.Log.e("PreferencesManager", "Failed to make prefs world-readable: ${e.message}")
+    }
   }
 
   /** Get boolean value synchronously */
@@ -780,6 +807,7 @@ class PreferencesManager(private val context: Context) {
   /** Set boolean value synchronously */
   fun setBoolean(key: String, value: Boolean) {
     syncPrefs.edit().putBoolean(key, value).apply()
+    makePrefsWorldReadable()
   }
 
   /** Get string value synchronously */
@@ -790,6 +818,7 @@ class PreferencesManager(private val context: Context) {
   /** Set string value synchronously */
   fun setString(key: String, value: String) {
     syncPrefs.edit().putString(key, value).apply()
+    makePrefsWorldReadable()
   }
 
   /** Get int value synchronously */
@@ -800,9 +829,8 @@ class PreferencesManager(private val context: Context) {
   /** Set int value synchronously */
   fun setInt(key: String, value: Int) {
     syncPrefs.edit().putInt(key, value).apply()
+    makePrefsWorldReadable()
   }
-
-  // ==================== Functional ROM Preferences ====================
 
   suspend fun setFunctionalRomUnlockNits(enabled: Boolean) {
     context.dataStore.edit { prefs -> prefs[FUNCTIONAL_ROM_UNLOCK_NITS] = enabled }
@@ -928,4 +956,41 @@ class PreferencesManager(private val context: Context) {
 
   fun getAdditionalSetOnBoot(): Flow<Boolean> =
       context.dataStore.data.map { prefs -> prefs[ADDITIONAL_SET_ON_BOOT] ?: false }
+
+  private val HIDE_ACCESSIBILITY_ENABLED = booleanPreferencesKey("hide_accessibility_enabled")
+  private val HIDE_ACCESSIBILITY_TAB = stringPreferencesKey("hide_accessibility_tab")
+  private val HIDE_ACCESSIBILITY_APPS_TO_HIDE = stringPreferencesKey("hide_accessibility_apps_to_hide")
+  private val HIDE_ACCESSIBILITY_DETECTOR_APPS = stringPreferencesKey("hide_accessibility_detector_apps")
+  
+  suspend fun setHideAccessibilityEnabled(enabled: Boolean) {
+    context.dataStore.edit { prefs -> prefs[HIDE_ACCESSIBILITY_ENABLED] = enabled }
+    setBoolean("xkm_hide_accessibility_enabled", enabled)
+  }
+  
+  fun getHideAccessibilityEnabled(): Flow<Boolean> =
+      context.dataStore.data.map { prefs -> prefs[HIDE_ACCESSIBILITY_ENABLED] ?: false }
+  
+  /** Save current tab selection */
+  suspend fun setHideAccessibilityTab(tab: String) {
+    context.dataStore.edit { prefs -> prefs[HIDE_ACCESSIBILITY_TAB] = tab }
+  }
+  
+  fun getHideAccessibilityTab(): Flow<String> =
+      context.dataStore.data.map { prefs -> prefs[HIDE_ACCESSIBILITY_TAB] ?: "apps_to_hide" }
+  
+  suspend fun setHideAccessibilityAppsToHide(jsonString: String) {
+    context.dataStore.edit { prefs -> prefs[HIDE_ACCESSIBILITY_APPS_TO_HIDE] = jsonString }
+    setString("hide_accessibility_apps_to_hide", jsonString)
+  }
+  
+  fun getHideAccessibilityAppsToHide(): Flow<String> =
+      context.dataStore.data.map { prefs -> prefs[HIDE_ACCESSIBILITY_APPS_TO_HIDE] ?: "[]" }
+  
+  suspend fun setHideAccessibilityDetectorApps(jsonString: String) {
+    context.dataStore.edit { prefs -> prefs[HIDE_ACCESSIBILITY_DETECTOR_APPS] = jsonString }
+    setString("hide_accessibility_detector_apps", jsonString)
+  }
+  
+  fun getHideAccessibilityDetectorApps(): Flow<String> =
+      context.dataStore.data.map { prefs -> prefs[HIDE_ACCESSIBILITY_DETECTOR_APPS] ?: "[]" }
 }

@@ -7,6 +7,8 @@
     <img src="https://img.shields.io/badge/Jetpack%20Compose-7F52FF?style=for-the-badge&colorA=363A4F&logo=jetpack-compose&logoColor=D9E0EE">
     <img src="https://img.shields.io/badge/Rust-000000?style=for-the-badge&colorA=363A4F&logo=rust&logoColor=D9E0EE">
     <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&colorA=363A4F&logo=android&logoColor=D9E0EE">
+    <a href="https://deepwiki.com/Gustyx-Power/Xtra-Kernel-Manager"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+
 </p>
 
 <p align="center">
@@ -48,6 +50,8 @@ It provides **real-time visibility and precise control** over CPU performance, t
 ## Supported Root Managers
 
 - [Magisk](https://github.com/topjohnwu/Magisk)
+- [KernelSU](https://github.com/tiann/KernelSU)
+- [APatch](https://github.com/bmax121/APatch)
 
 ---
 
@@ -93,8 +97,6 @@ This project includes optimizations to reduce Play Protect detection:
 - `local.properties` and `gradle.properties` are gitignored for security
 - Keystore files are never committed to the repository
 - All builds are reproducible and verifiable
-- [KernelSU](https://github.com/tiann/KernelSU)
-- [APatch](https://github.com/bmax121/APatch)
 
 ---
 
@@ -107,9 +109,12 @@ This project includes optimizations to reduce Play Protect detection:
 ---
 
 ## Resources
-
 - [Releases](https://github.com/Xtra-Manager-Software/Xtra-Kernel-Manager/releases)
 - [Issues](https://github.com/Xtra-Manager-Software/Xtra-Kernel-Manager/issues)
+
+## Credits
+- [YukiHookAPI](https://github.com/HighCapable/YukiHookAPI)
+- [KavaRef](https://github.com/Kava-Ref)
 
 ---
 

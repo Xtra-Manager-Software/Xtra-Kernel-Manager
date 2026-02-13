@@ -2,6 +2,8 @@ package id.xms.xtrakernelmanager.ui.screens.functionalrom
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -12,28 +14,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import id.xms.xtrakernelmanager.R
 import id.xms.xtrakernelmanager.ui.components.GlassmorphicCard
 import id.xms.xtrakernelmanager.ui.components.LottieSwitchControlled
 import id.xms.xtrakernelmanager.ui.components.PillCard
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import id.xms.xtrakernelmanager.data.model.HideAccessibilityTab
+import id.xms.xtrakernelmanager.data.model.HideAccessibilityConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FunctionalRomScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToPlayIntegrity: () -> Unit = {},
-    onNavigateToXiaomiTouch: () -> Unit = {},
+    onNavigateToShimokuRom: () -> Unit = {},
+    onNavigateToHideAccessibility: () -> Unit = {},
     viewModel: FunctionalRomViewModel,
 ) {
   val uiState by viewModel.uiState.collectAsState()
-
-  // Force refresh rate value selector state
-  var showRefreshRateDialog by remember { mutableStateOf(false) }
-
-  // Charging limit value selector state
-  var showChargingLimitDialog by remember { mutableStateOf(false) }
 
   // Loading state
   if (uiState.isLoading) {
@@ -87,396 +89,87 @@ fun FunctionalRomScreen(
       }
     }
 
-    // PlayIntegrity Category
-    item { CategoryHeader(title = stringResource(R.string.category_play_integrity)) }
+    // ROM Information Card
+    item {
+      uiState.romInfo?.let { romInfo ->
+        Card(
+          modifier = Modifier.fillMaxWidth(),
+          colors = CardDefaults.cardColors(
+            containerColor = if (romInfo.isShimokuRom) 
+              MaterialTheme.colorScheme.primaryContainer 
+            else MaterialTheme.colorScheme.surfaceVariant
+          )
+        ) {
+          Column(
+            modifier = Modifier.padding(16.dp)
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+              Icon(
+                imageVector = if (romInfo.isShimokuRom) Icons.Default.Verified else Icons.Default.PhoneAndroid,
+                contentDescription = null,
+                tint = if (romInfo.isShimokuRom) 
+                  MaterialTheme.colorScheme.onPrimaryContainer 
+                else MaterialTheme.colorScheme.onSurfaceVariant
+              )
+              Text(
+                text = romInfo.displayName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+              )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+              text = "Android ${romInfo.androidVersion} • ${romInfo.systemBrand}",
+              style = MaterialTheme.typography.bodyMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+          }
+        }
+      }
+    }
+
+    // Universal Features
+    item { 
+      Spacer(modifier = Modifier.height(8.dp))
+      CategoryHeader(title = "Universal Features") 
+    }
+    item {
+      DeveloperOptionsCard(viewModel = viewModel)
+    }
+    item {
+      DPIChangerCard()
+    }
     item {
       ClickableFeatureCard(
-          title = stringResource(R.string.play_integrity_spoofs),
-          description = stringResource(R.string.play_integrity_spoofs_desc),
-          icon = Icons.Default.Security,
-          onClick = onNavigateToPlayIntegrity,
-          enabled = uiState.isVipCommunity,
+          title = "Hide Accessibility Service",
+          description = "System for hiding applications from accessibility detection",
+          icon = Icons.Default.VisibilityOff,
+          onClick = onNavigateToHideAccessibility,
+          enabled = true, // Always enabled - universal feature
+          statusText = if (uiState.hideAccessibilityConfig.isEnabled) {
+            "${uiState.hideAccessibilityConfig.currentTab.displayName} • ${getTotalSelectedApps(uiState.hideAccessibilityConfig)} apps"
+          } else "Disabled"
       )
     }
 
-    // Touch & Kernel Category
-    item {
+    // ROM-Specific Features
+    item { 
       Spacer(modifier = Modifier.height(8.dp))
-      CategoryHeader(title = stringResource(R.string.category_touch_kernel))
+      CategoryHeader(title = "ROM-Specific Features") 
     }
     item {
       ClickableFeatureCard(
-          title = stringResource(R.string.xiaomi_touch_settings),
-          description = stringResource(R.string.xiaomi_touch_settings_desc),
-          icon = Icons.Default.TouchApp,
-          onClick = onNavigateToXiaomiTouch,
-          enabled = uiState.isVipCommunity,
+          title = "Shimoku ROM Features",
+          description = "Features specific to Shimoku ROM",
+          icon = Icons.Default.Verified,
+          onClick = onNavigateToShimokuRom,
+          enabled = true, // Always accessible to show lock message for non-Shimoku ROMs
+          statusText = if (uiState.isShimokuRom) "Available" else "Locked"
       )
     }
-
-    // Touch Boost Toggle
-    item {
-      ToggleFeatureCard(
-          title = stringResource(R.string.touch_boost),
-          description =
-              if (uiState.touchBoostEnabled) stringResource(R.string.touch_boost_desc_enabled)
-              else stringResource(R.string.touch_boost_desc_disabled),
-          icon = Icons.Default.TouchApp,
-          checked = uiState.touchBoostEnabled,
-          onCheckedChange = { viewModel.setTouchBoost(it) },
-          enabled = uiState.isVipCommunity,
-      )
-    }
-
-    // Display Category
-    item {
-      Spacer(modifier = Modifier.height(8.dp))
-      CategoryHeader(title = stringResource(R.string.category_display))
-    }
-    item {
-      ToggleFeatureCard(
-          title = stringResource(R.string.unlock_additional_nits),
-          description =
-              if (uiState.unlockNitsEnabled)
-                  stringResource(R.string.unlock_additional_nits_desc_enabled)
-              else stringResource(R.string.unlock_additional_nits_desc_disabled),
-          icon = Icons.Default.WbSunny,
-          checked = uiState.unlockNitsEnabled,
-          onCheckedChange = { viewModel.setUnlockNits(it) },
-          enabled = uiState.isVipCommunity,
-      )
-    }
-    item {
-      ToggleFeatureCard(
-          title = stringResource(R.string.dynamic_refresh_rate),
-          description =
-              if (uiState.dynamicRefreshRateEnabled)
-                  stringResource(R.string.dynamic_refresh_rate_desc_enabled)
-              else stringResource(R.string.dynamic_refresh_rate_desc_disabled),
-          icon = Icons.Default.Refresh,
-          checked = uiState.dynamicRefreshRateEnabled,
-          onCheckedChange = { viewModel.setDynamicRefreshRate(it) },
-          enabled = uiState.isVipCommunity,
-      )
-    }
-    item {
-      ToggleFeatureCard(
-          title = stringResource(R.string.force_refresh_rate),
-          description =
-              if (uiState.forceRefreshRateEnabled)
-                  stringResource(R.string.force_refresh_rate_desc_enabled)
-              else stringResource(R.string.force_refresh_rate_desc_disabled),
-          icon = Icons.Default.Speed,
-          checked = uiState.forceRefreshRateEnabled,
-          onCheckedChange = { viewModel.setForceRefreshRate(it) },
-          enabled = uiState.isVipCommunity,
-      )
-    }
-    item {
-      SelectorFeatureCard(
-          title = stringResource(R.string.force_refresh_rate_value),
-          description = stringResource(R.string.force_refresh_rate_value_desc),
-          currentValue = "${uiState.forceRefreshRateValue} Hz",
-          icon = Icons.Default.Tune,
-          enabled = uiState.forceRefreshRateEnabled && uiState.isVipCommunity,
-          onClick = { showRefreshRateDialog = true },
-      )
-    }
-    item {
-      ToggleFeatureCard(
-          title = stringResource(R.string.dc_dimming),
-          description =
-              if (uiState.dcDimmingEnabled) stringResource(R.string.dc_dimming_desc_enabled)
-              else stringResource(R.string.dc_dimming_desc_disabled),
-          icon = Icons.Default.Brightness4,
-          checked = uiState.dcDimmingEnabled,
-          onCheckedChange = { viewModel.setDcDimming(it) },
-          enabled = uiState.isVipCommunity,
-      )
-    }
-
-    // System Category
-    item {
-      Spacer(modifier = Modifier.height(8.dp))
-      CategoryHeader(title = stringResource(R.string.category_system))
-    }
-    item {
-      ToggleFeatureCard(
-          title = stringResource(R.string.fix_dt2w),
-          description =
-              when {
-                uiState.fixDt2wInstalling -> stringResource(R.string.fix_dt2w_installing)
-                uiState.fixDt2wStep == 0 -> stringResource(R.string.fix_dt2w_complete)
-                uiState.fixDt2wStep == 2 -> stringResource(R.string.fix_dt2w_step2)
-                else -> stringResource(R.string.fix_dt2w_step1)
-              },
-          icon = Icons.Default.TouchApp,
-          checked = uiState.fixDt2wStep == 0, // ON when both modules installed
-          onCheckedChange = { viewModel.setFixDt2w(it) },
-          enabled = uiState.isVipCommunity && !uiState.fixDt2wInstalling,
-      )
-    }
-
-    // Charging Category
-    item {
-      Spacer(modifier = Modifier.height(8.dp))
-      CategoryHeader(title = stringResource(R.string.category_charging))
-    }
-
-    // Bypass Charging - only show if available
-    if (uiState.bypassChargingAvailable) {
-      item {
-        ToggleFeatureCard(
-            title = stringResource(R.string.bypass_charging),
-            description =
-                if (uiState.bypassChargingEnabled)
-                    stringResource(R.string.bypass_charging_desc_enabled)
-                else stringResource(R.string.bypass_charging_desc_disabled),
-            icon = Icons.Default.BatteryChargingFull,
-            checked = uiState.bypassChargingEnabled,
-            onCheckedChange = { viewModel.setBypassCharging(it) },
-            enabled = uiState.isVipCommunity,
-        )
-      }
-    }
-
-    item {
-      ToggleFeatureCard(
-          title = stringResource(R.string.smart_charging),
-          description =
-              if (uiState.smartChargingEnabled) stringResource(R.string.smart_charging_desc_enabled)
-              else stringResource(R.string.smart_charging_desc_disabled),
-          icon = Icons.Default.BatteryStd,
-          checked = uiState.smartChargingEnabled,
-          onCheckedChange = { viewModel.setSmartCharging(it) },
-          enabled = uiState.isVipCommunity,
-      )
-    }
-
-    // Charging Limit - only show if available
-    if (uiState.chargingLimitAvailable) {
-      item {
-        ToggleFeatureCard(
-            title = stringResource(R.string.charging_limit),
-            description =
-                if (uiState.chargingLimitEnabled)
-                    stringResource(R.string.charging_limit_desc_enabled)
-                else stringResource(R.string.charging_limit_desc_disabled),
-            icon = Icons.Default.BatteryAlert,
-            checked = uiState.chargingLimitEnabled,
-            onCheckedChange = { viewModel.setChargingLimit(it) },
-            enabled = uiState.isVipCommunity,
-        )
-      }
-      item {
-        SelectorFeatureCard(
-            title = stringResource(R.string.charging_limit_value),
-            description = stringResource(R.string.charging_limit_value_desc),
-            currentValue = "${uiState.chargingLimitValue}%",
-            icon = Icons.Default.Tune,
-            enabled = uiState.chargingLimitEnabled && uiState.isVipCommunity,
-            onClick = { showChargingLimitDialog = true },
-        )
-      }
-    }
-
-    // Lock Screen Category - only show DT2W if available
-    if (uiState.dt2wAvailable) {
-      item {
-        Spacer(modifier = Modifier.height(8.dp))
-        CategoryHeader(title = stringResource(R.string.category_lock_screen))
-      }
-      item {
-        ToggleFeatureCard(
-            title = stringResource(R.string.double_tap_wake),
-            description =
-                if (uiState.doubleTapWakeEnabled)
-                    stringResource(R.string.double_tap_wake_desc_enabled)
-                else stringResource(R.string.double_tap_wake_desc_disabled),
-            icon = Icons.Default.Visibility,
-            checked = uiState.doubleTapWakeEnabled,
-            onCheckedChange = { viewModel.setDoubleTapToWake(it) },
-            enabled = uiState.isVipCommunity,
-        )
-      }
-    }
-
-    // Bottom spacing
-    item { Spacer(modifier = Modifier.height(16.dp)) }
-  }
-
-  // Refresh Rate Selection Dialog
-  if (showRefreshRateDialog) {
-    val refreshRates = listOf(60, 90, 120, 144)
-    AlertDialog(
-        onDismissRequest = { showRefreshRateDialog = false },
-        title = {
-          Text(
-              text = stringResource(R.string.force_refresh_rate_value),
-              style = MaterialTheme.typography.titleLarge,
-          )
-        },
-        text = {
-          Column {
-            refreshRates.forEach { rate ->
-              Row(
-                  modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                  verticalAlignment = Alignment.CenterVertically,
-              ) {
-                RadioButton(
-                    selected = uiState.forceRefreshRateValue == rate,
-                    onClick = {
-                      viewModel.setForceRefreshRateValue(rate)
-                      showRefreshRateDialog = false
-                    },
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(text = "$rate Hz", style = MaterialTheme.typography.bodyLarge)
-              }
-            }
-          }
-        },
-        confirmButton = {
-          TextButton(onClick = { showRefreshRateDialog = false }) {
-            Text(stringResource(R.string.cancel))
-          }
-        },
-    )
-  }
-
-  // Charging Limit Selection Dialog
-  if (showChargingLimitDialog) {
-    val chargingLimits = listOf(60, 70, 80, 85, 90, 95)
-    AlertDialog(
-        onDismissRequest = { showChargingLimitDialog = false },
-        title = {
-          Text(
-              text = stringResource(R.string.charging_limit_value),
-              style = MaterialTheme.typography.titleLarge,
-          )
-        },
-        text = {
-          Column {
-            chargingLimits.forEach { limit ->
-              Row(
-                  modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                  verticalAlignment = Alignment.CenterVertically,
-              ) {
-                RadioButton(
-                    selected = uiState.chargingLimitValue == limit,
-                    onClick = {
-                      viewModel.setChargingLimitValue(limit)
-                      showChargingLimitDialog = false
-                    },
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(text = "$limit%", style = MaterialTheme.typography.bodyLarge)
-              }
-            }
-          }
-        },
-        confirmButton = {
-          TextButton(onClick = { showChargingLimitDialog = false }) {
-            Text(stringResource(R.string.cancel))
-          }
-        },
-    )
-  }
-
-  // Fix DT2W Installation Dialog
-  if (uiState.showFixDt2wDialog) {
-    AlertDialog(
-        onDismissRequest = { viewModel.dismissFixDt2wDialog() },
-        icon = {
-          Icon(
-              imageVector = Icons.Default.TouchApp,
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.primary,
-          )
-        },
-        title = {
-          Text(
-              text =
-                  if (uiState.fixDt2wStep == 1) stringResource(R.string.fix_dt2w_dialog_step1_title)
-                  else stringResource(R.string.fix_dt2w_dialog_step2_title),
-              style = MaterialTheme.typography.titleLarge,
-          )
-        },
-        text = {
-          Column {
-            Text(
-                text =
-                    if (uiState.fixDt2wStep == 1)
-                        stringResource(R.string.fix_dt2w_dialog_step1_message)
-                    else stringResource(R.string.fix_dt2w_dialog_step2_message),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = stringResource(R.string.fix_dt2w_dialog_warning),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-            )
-          }
-        },
-        confirmButton = {
-          TextButton(onClick = { viewModel.confirmFixDt2wInstall() }) {
-            Text(stringResource(R.string.fix_dt2w_dialog_confirm))
-          }
-        },
-        dismissButton = {
-          TextButton(onClick = { viewModel.dismissFixDt2wDialog() }) {
-            Text(stringResource(R.string.cancel))
-          }
-        },
-    )
-  }
-
-  // Fix DT2W Uninstall Dialog
-  if (uiState.showFixDt2wUninstallDialog) {
-    AlertDialog(
-        onDismissRequest = { viewModel.dismissFixDt2wUninstallDialog() },
-        icon = {
-          Icon(
-              imageVector = Icons.Default.Delete,
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.error,
-          )
-        },
-        title = {
-          Text(
-              text = stringResource(R.string.fix_dt2w_uninstall_title),
-              style = MaterialTheme.typography.titleLarge,
-          )
-        },
-        text = {
-          Column {
-            Text(
-                text = stringResource(R.string.fix_dt2w_uninstall_message),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = stringResource(R.string.fix_dt2w_dialog_warning),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-            )
-          }
-        },
-        confirmButton = {
-          TextButton(onClick = { viewModel.confirmFixDt2wUninstall() }) {
-            Text(
-                text = stringResource(R.string.fix_dt2w_uninstall_confirm),
-                color = MaterialTheme.colorScheme.error,
-            )
-          }
-        },
-        dismissButton = {
-          TextButton(onClick = { viewModel.dismissFixDt2wUninstallDialog() }) {
-            Text(stringResource(R.string.cancel))
-          }
-        },
-    )
   }
 }
 
@@ -485,9 +178,9 @@ private fun CategoryHeader(title: String) {
   Text(
       text = title,
       style = MaterialTheme.typography.titleSmall,
-      fontWeight = FontWeight.Bold,
+      fontWeight = FontWeight.SemiBold,
       color = MaterialTheme.colorScheme.primary,
-      modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+      modifier = Modifier.padding(horizontal = 4.dp)
   )
 }
 
@@ -497,129 +190,529 @@ private fun ClickableFeatureCard(
     description: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     onClick: () -> Unit,
-    enabled: Boolean = true,
+    enabled: Boolean,
+    statusText: String = ""
 ) {
-  GlassmorphicCard(
-      modifier = Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.5f),
-      onClick = if (enabled) onClick else null,
-      enabled = enabled,
+  Card(
+      modifier = Modifier
+          .fillMaxWidth()
+          .alpha(if (enabled) 1f else 0.6f),
+      onClick = if (enabled) onClick else { {} }
   ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
       Icon(
           imageVector = icon,
           contentDescription = null,
-          modifier = Modifier.size(32.dp),
-          tint = MaterialTheme.colorScheme.primary,
+          tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
       )
       Column(modifier = Modifier.weight(1f)) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium
+        )
         Text(
             text = description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (statusText.isNotEmpty()) {
+          Text(
+              text = statusText,
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.primary
+          )
+        }
+      }
+      Icon(
+          imageVector = Icons.Default.ChevronRight,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.onSurfaceVariant
+      )
+    }
+  }
+}
+
+private fun getTotalSelectedApps(config: HideAccessibilityConfig): Int {
+  return config.appsToHide.size + config.detectorApps.size
+}
+
+@Composable
+private fun DPIChangerCard() {
+  val context = androidx.compose.ui.platform.LocalContext.current
+  val scope = rememberCoroutineScope()
+  var showDPIDialog by remember { mutableStateOf(false) }
+  
+  // Get current DPI and smallest width
+  val currentDPI = remember {
+    context.resources.displayMetrics.densityDpi
+  }
+  
+  val currentSmallestWidth = remember {
+    context.resources.configuration.smallestScreenWidthDp
+  }
+  
+  Card(
+      modifier = Modifier.fillMaxWidth(),
+      onClick = { showDPIDialog = true }
+  ) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+      Icon(
+          imageVector = Icons.Default.PhoneAndroid,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.primary
+      )
+      Column(modifier = Modifier.weight(1f)) {
+        Text(
+            text = "Display Size Changer",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium
+        )
+        Text(
+            text = "Adjust UI size (same as Developer Options > Smallest width)",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = "Current: $currentSmallestWidth dp",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            color = MaterialTheme.colorScheme.primary
         )
       }
       Icon(
           imageVector = Icons.Default.ChevronRight,
           contentDescription = null,
-          tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+          tint = MaterialTheme.colorScheme.onSurfaceVariant
       )
     }
+  }
+  
+  if (showDPIDialog) {
+    DPIChangerDialog(
+        currentDPI = currentDPI,
+        onDismiss = { showDPIDialog = false }
+    )
   }
 }
 
 @Composable
-private fun ToggleFeatureCard(
-    title: String,
-    description: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    enabled: Boolean = true,
+private fun DPIChangerDialog(
+    currentDPI: Int,
+    onDismiss: () -> Unit
 ) {
-  GlassmorphicCard(
-      modifier = Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.5f),
-      enabled = enabled,
-  ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-      Icon(
-          imageVector = icon,
-          contentDescription = null,
-          modifier = Modifier.size(32.dp),
-          tint = MaterialTheme.colorScheme.primary,
-      )
-      Column(modifier = Modifier.weight(1f)) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium)
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-        )
-      }
-      LottieSwitchControlled(
-          checked = checked,
-          onCheckedChange = if (enabled) onCheckedChange else null,
-          width = 80.dp,
-          height = 40.dp,
-          scale = 2.2f,
-          enabled = enabled,
-      )
-    }
+  val context = androidx.compose.ui.platform.LocalContext.current
+  val scope = rememberCoroutineScope()
+  
+  // Get current smallest width in dp
+  val currentSmallestWidth = remember {
+    val config = context.resources.configuration
+    config.smallestScreenWidthDp
   }
+  
+  var selectedWidth by remember { mutableStateOf(currentSmallestWidth) }
+  var customWidth by remember { mutableStateOf(currentSmallestWidth.toString()) }
+  var isApplying by remember { mutableStateOf(false) }
+  var useCustom by remember { mutableStateOf(false) }
+  
+  // Preset smallest width values (in dp)
+  val presetWidths = listOf(
+      320 to "320 dp (Large UI)",
+      360 to "360 dp (Default)",
+      411 to "411 dp (Compact)",
+      480 to "480 dp (More Compact)",
+      540 to "540 dp (Very Compact)",
+      600 to "600 dp (Tablet-like)"
+  )
+  
+  AlertDialog(
+      onDismissRequest = onDismiss,
+      title = {
+        Column {
+          Text(
+              text = "Display Size Changer",
+              style = MaterialTheme.typography.headlineSmall,
+              fontWeight = FontWeight.Bold
+          )
+          Text(
+              text = "Current: $currentSmallestWidth dp (DPI: $currentDPI)",
+              style = MaterialTheme.typography.bodyMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
+        }
+      },
+      text = {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+          Text(
+              text = "Select smallest width (dp):",
+              style = MaterialTheme.typography.bodyMedium,
+              fontWeight = FontWeight.Medium
+          )
+          
+          // Info card
+          Card(
+              modifier = Modifier.fillMaxWidth(),
+              colors = CardDefaults.cardColors(
+                  containerColor = MaterialTheme.colorScheme.secondaryContainer
+              )
+          ) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+              Text(
+                  text = "💡 How it works:",
+                  style = MaterialTheme.typography.labelMedium,
+                  fontWeight = FontWeight.Bold,
+                  color = MaterialTheme.colorScheme.onSecondaryContainer
+              )
+              Text(
+                  text = "• Lower value = Larger UI (easier to tap)",
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.onSecondaryContainer
+              )
+              Text(
+                  text = "• Higher value = Smaller UI (more content)",
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.onSecondaryContainer
+              )
+              Text(
+                  text = "Same as Developer Options > Smallest width",
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.onSecondaryContainer,
+                  fontWeight = FontWeight.Medium
+              )
+            }
+          }
+          
+          // Preset width options
+          Column(
+              modifier = Modifier.selectableGroup(),
+              verticalArrangement = Arrangement.spacedBy(4.dp)
+          ) {
+            presetWidths.forEach { (width, label) ->
+              Row(
+                  modifier = Modifier
+                      .fillMaxWidth()
+                      .selectable(
+                          selected = !useCustom && selectedWidth == width,
+                          onClick = {
+                            useCustom = false
+                            selectedWidth = width
+                          },
+                          role = Role.RadioButton
+                      )
+                      .padding(vertical = 8.dp),
+                  verticalAlignment = Alignment.CenterVertically
+              ) {
+                RadioButton(
+                    selected = !useCustom && selectedWidth == width,
+                    onClick = null
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+              }
+            }
+            
+            // Custom width option
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .selectable(
+                        selected = useCustom,
+                        onClick = { useCustom = true },
+                        role = Role.RadioButton
+                    )
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+              RadioButton(
+                  selected = useCustom,
+                  onClick = null
+              )
+              Spacer(modifier = Modifier.width(8.dp))
+              OutlinedTextField(
+                  value = customWidth,
+                  onValueChange = { 
+                    customWidth = it.filter { char -> char.isDigit() }
+                    useCustom = true
+                  },
+                  label = { Text("Custom (dp)") },
+                  modifier = Modifier.weight(1f),
+                  singleLine = true,
+                  keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                      keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                  )
+              )
+            }
+          }
+          
+          // Warning card
+          Card(
+              modifier = Modifier.fillMaxWidth(),
+              colors = CardDefaults.cardColors(
+                  containerColor = MaterialTheme.colorScheme.primaryContainer
+              )
+          ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+              Icon(
+                  imageVector = Icons.Default.Info,
+                  contentDescription = null,
+                  tint = MaterialTheme.colorScheme.onPrimaryContainer
+              )
+              Text(
+                  text = "Changes require root and apply immediately",
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.onPrimaryContainer
+              )
+            }
+          }
+        }
+      },
+      confirmButton = {
+        Button(
+            onClick = {
+              scope.launch {
+                isApplying = true
+                try {
+                  val targetWidth = if (useCustom) {
+                    customWidth.toIntOrNull() ?: selectedWidth
+                  } else {
+                    selectedWidth
+                  }
+                  
+                  if (targetWidth < 200 || targetWidth > 800) {
+                    android.widget.Toast.makeText(
+                        context,
+                        "Width must be between 200-800 dp",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                    isApplying = false
+                    return@launch
+                  }
+                  
+                  // Apply smallest width by calculating and setting density
+                  // Formula: density = (smallest_physical_pixels / target_dp) * 160
+                  withContext(Dispatchers.IO) {
+                    // Get screen dimensions
+                    val displayMetrics = context.resources.displayMetrics
+                    val widthPixels = displayMetrics.widthPixels
+                    val heightPixels = displayMetrics.heightPixels
+                    val smallestPixels = minOf(widthPixels, heightPixels)
+                    
+                    // Calculate new density for target smallest width
+                    val newDensity = (smallestPixels.toFloat() / targetWidth.toFloat() * 160).toInt()
+                    
+                    // Apply the new density
+                    id.xms.xtrakernelmanager.utils.RootShell.execute(
+                        "wm density $newDensity"
+                    )
+                  }
+                  
+                  android.widget.Toast.makeText(
+                      context,
+                      "Display size changed to $targetWidth dp",
+                      android.widget.Toast.LENGTH_SHORT
+                  ).show()
+                  onDismiss()
+                } catch (e: Exception) {
+                  android.widget.Toast.makeText(
+                      context,
+                      "Error: ${e.message}",
+                      android.widget.Toast.LENGTH_SHORT
+                  ).show()
+                } finally {
+                  isApplying = false
+                }
+              }
+            },
+            enabled = !isApplying
+        ) {
+          if (isApplying) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                strokeWidth = 2.dp
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+          }
+          Text(if (isApplying) "Applying..." else "Apply")
+        }
+      },
+      dismissButton = {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+          TextButton(
+              onClick = {
+                scope.launch {
+                  try {
+                    // Reset to default
+                    withContext(Dispatchers.IO) {
+                      id.xms.xtrakernelmanager.utils.RootShell.execute(
+                          "wm density reset"
+                      )
+                    }
+                    android.widget.Toast.makeText(
+                        context,
+                        "Display size reset to default",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                    onDismiss()
+                  } catch (e: Exception) {
+                    android.widget.Toast.makeText(
+                        context,
+                        "Error: ${e.message}",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                  }
+                }
+              },
+              enabled = !isApplying
+          ) {
+            Text("Reset")
+          }
+          
+          TextButton(
+              onClick = onDismiss,
+              enabled = !isApplying
+          ) {
+            Text("Cancel")
+          }
+        }
+      }
+  )
 }
 
 @Composable
-private fun SelectorFeatureCard(
-    title: String,
-    description: String,
-    currentValue: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
-  GlassmorphicCard(
-      modifier = Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.5f),
-      onClick = if (enabled) onClick else null,
-      enabled = enabled,
+private fun DeveloperOptionsCard(viewModel: FunctionalRomViewModel) {
+  val context = androidx.compose.ui.platform.LocalContext.current
+  val scope = rememberCoroutineScope()
+  var isDeveloperEnabled by remember { mutableStateOf(
+    android.provider.Settings.Global.getInt(
+      context.contentResolver,
+      android.provider.Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
+      0
+    ) == 1
+  ) }
+  
+  Card(
+      modifier = Modifier.fillMaxWidth(),
+      onClick = {
+        if (isDeveloperEnabled) {
+          try {
+            val intent = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+            context.startActivity(intent)
+          } catch (e: Exception) {
+            android.widget.Toast.makeText(
+              context,
+              "Unable to open Developer Options",
+              android.widget.Toast.LENGTH_SHORT
+            ).show()
+          }
+        } else {
+          scope.launch {
+            try {
+              withContext(Dispatchers.IO) {
+                id.xms.xtrakernelmanager.utils.RootShell.execute(
+                  "settings put global development_settings_enabled 1"
+                )
+              }
+                isDeveloperEnabled = android.provider.Settings.Global.getInt(
+                context.contentResolver,
+                android.provider.Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
+                0
+              ) == 1
+              
+              if (isDeveloperEnabled) {
+                android.widget.Toast.makeText(
+                  context,
+                  "Developer Options Enabled!",
+                  android.widget.Toast.LENGTH_SHORT
+                ).show()
+                  try {
+                  val intent = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+                  context.startActivity(intent)
+                } catch (e: Exception) {
+                  android.widget.Toast.makeText(
+                    context,
+                    "Developer Options enabled. Please find it in Settings.",
+                    android.widget.Toast.LENGTH_SHORT
+                  ).show()
+                }
+              } else {
+                android.widget.Toast.makeText(
+                  context,
+                  "Failed to enable Developer Options. Root access required.",
+                  android.widget.Toast.LENGTH_SHORT
+                ).show()
+              }
+            } catch (e: Exception) {
+              android.widget.Toast.makeText(
+                context,
+                "Error: ${e.message}",
+                android.widget.Toast.LENGTH_SHORT
+              ).show()
+            }
+          }
+        }
+      }
   ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
       Icon(
-          imageVector = icon,
+          imageVector = Icons.Default.DeveloperMode,
           contentDescription = null,
-          modifier = Modifier.size(32.dp),
-          tint = MaterialTheme.colorScheme.primary,
+          tint = if (isDeveloperEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
       )
       Column(modifier = Modifier.weight(1f)) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium)
         Text(
-            text = description,
+            text = "Developer Options",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium
+        )
+        Text(
+            text = if (isDeveloperEnabled) {
+              "Developer options are enabled. Click to open settings."
+            } else {
+              "Click to enable developer options (requires root)"
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = if (isDeveloperEnabled) "Enabled" else "Disabled",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            color = if (isDeveloperEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
         )
       }
-      Surface(
-          shape = RoundedCornerShape(8.dp),
-          color = MaterialTheme.colorScheme.primaryContainer,
-      ) {
-        Text(
-            text = currentValue,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-        )
-      }
+      Icon(
+          imageVector = if (isDeveloperEnabled) Icons.Default.ChevronRight else Icons.Default.Lock,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.onSurfaceVariant
+      )
     }
   }
 }

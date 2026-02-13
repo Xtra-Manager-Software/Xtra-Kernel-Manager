@@ -277,15 +277,31 @@ class TuningViewModel(
   // CPU Governor Control - sets governor for a specific cluster
   fun setCpuClusterGovernor(clusterIndex: Int, governor: String) {
     viewModelScope.launch(Dispatchers.IO) {
-      cpuUseCase.setClusterGovernor(clusterIndex, governor)
+      // Set user adjusting flag to prevent monitoring override
+      _isUserAdjusting.value = true
       
-      // Save configuration if set-on-boot is enabled
-      val cpuSetOnBoot = preferencesManager.getCpuSetOnBoot().first()
-      if (cpuSetOnBoot) {
-        preferencesManager.setClusterGovernor(clusterIndex, governor)
+      val result = cpuUseCase.setClusterGovernor(clusterIndex, governor)
+      if (result.isSuccess) {
+        // Update UI state immediately on main thread
+        withContext(Dispatchers.Main) {
+          updateClusterGovernor(clusterIndex, governor)
+        }
+        
+        lastGovernorChangeTime = System.currentTimeMillis()
+        
+        val cpuSetOnBoot = preferencesManager.getCpuSetOnBoot().first()
+        if (cpuSetOnBoot) {
+          preferencesManager.setClusterGovernor(clusterIndex, governor)
+        }
+        
+        Log.d("TuningViewModel", "Successfully set cluster $clusterIndex governor to $governor")
+        
+        // Release flag immediately - no need to wait
+        _isUserAdjusting.value = false
+      } else {
+        Log.e("TuningViewModel", "Failed to set cluster $clusterIndex governor: ${result.exceptionOrNull()?.message}")
+        _isUserAdjusting.value = false
       }
-      
-      refreshDynamicValues()
     }
   }
 
@@ -445,6 +461,9 @@ class TuningViewModel(
 
   // User interaction control to prevent refresh conflicts
   private val _isUserAdjusting = MutableStateFlow(false)
+  private val _isApplyingConfig = MutableStateFlow(false)
+  private var lastConfigApplyTime = 0L
+  private var lastGovernorChangeTime = 0L
 
   // Static data cache flags
   private var staticDataLoaded = false
@@ -518,7 +537,7 @@ class TuningViewModel(
 
   private suspend fun startAutoRefresh() {
     while (true) {
-      delay(5000) // 5 seconds refresh interval
+      delay(2000)
       if (_isRootAvailable.value && !_isLoading.value && _isRefreshEnabled.value) {
         refreshDynamicValues() // Only refresh dynamic data
       }
@@ -557,7 +576,11 @@ class TuningViewModel(
               governor = cluster.governor,
           )
     }
-    _clusterStates.value = states
+    
+    // Only update cluster states if not currently applying config
+    if (!_isApplyingConfig.value) {
+      _clusterStates.value = states
+    }
 
     // Load thermal zones first (fast native call)
     _thermalZones.value = NativeLib.readThermalZones()
@@ -585,8 +608,15 @@ class TuningViewModel(
 
   // Lightweight refresh - only dynamic data (called every 5s)
   private suspend fun refreshDynamicValues() {
-    // Skip refresh if user is currently adjusting values
-    if (_isUserAdjusting.value) {
+    // Skip refresh if user is currently adjusting values or applying config
+    if (_isUserAdjusting.value || _isApplyingConfig.value) {
+      return
+    }
+    
+    val timeSinceLastApply = System.currentTimeMillis() - lastConfigApplyTime
+    val timeSinceLastGovernorChange = System.currentTimeMillis() - lastGovernorChangeTime
+    if (timeSinceLastApply < 1000 || timeSinceLastGovernorChange < 500) {
+      Log.d("TuningViewModel", "Skipping refresh - recent changes detected")
       return
     }
     
@@ -619,7 +649,11 @@ class TuningViewModel(
               governor = cluster.governor,
           )
     }
-    _clusterStates.value = states
+    
+    // Only update cluster states if not currently applying config
+    if (!_isApplyingConfig.value) {
+      _clusterStates.value = states
+    }
 
     _thermalZones.value = NativeLib.readThermalZones()
 
@@ -838,8 +872,12 @@ class TuningViewModel(
 
   fun setCPUFrequency(cluster: Int, minFreq: Int, maxFreq: Int) {
     viewModelScope.launch {
+      // Set user adjusting flag to prevent monitoring override
+      _isUserAdjusting.value = true
+      
       val result = cpuUseCase.setClusterFrequency(cluster, minFreq, maxFreq)
       if (result.isSuccess) {
+        // Update UI state immediately
         updateClusterUIState(cluster, minFreq.toFloat(), maxFreq.toFloat())
         
         // Save configuration if set-on-boot is enabled
@@ -848,21 +886,41 @@ class TuningViewModel(
           preferencesManager.setClusterMinFreq(cluster, minFreq)
           preferencesManager.setClusterMaxFreq(cluster, maxFreq)
         }
+        
+        Log.d("TuningViewModel", "Successfully set cluster $cluster frequency to $minFreq-$maxFreq MHz")
+        
+        _isUserAdjusting.value = false
+      } else {
+        Log.e("TuningViewModel", "Failed to set cluster $cluster frequency: ${result.exceptionOrNull()?.message}")
+        _isUserAdjusting.value = false
       }
     }
   }
 
   fun setCPUGovernor(cluster: Int, governor: String) {
     viewModelScope.launch {
+      // Set user adjusting flag to prevent monitoring override
+      _isUserAdjusting.value = true
+      
       val result = cpuUseCase.setClusterGovernor(cluster, governor)
       if (result.isSuccess) {
+        // Update UI state immediately
         updateClusterGovernor(cluster, governor)
         
-        // Save configuration if set-on-boot is enabled
+        lastGovernorChangeTime = System.currentTimeMillis()
+        
         val cpuSetOnBoot = preferencesManager.getCpuSetOnBoot().first()
         if (cpuSetOnBoot) {
           preferencesManager.setClusterGovernor(cluster, governor)
         }
+        
+        Log.d("TuningViewModel", "Successfully set cluster $cluster governor to $governor")
+        
+        // Release flag immediately - no need to wait
+        _isUserAdjusting.value = false
+      } else {
+        Log.e("TuningViewModel", "Failed to set cluster $cluster governor: ${result.exceptionOrNull()?.message}")
+        _isUserAdjusting.value = false
       }
     }
   }
@@ -1204,6 +1262,13 @@ class TuningViewModel(
             val parseResult = tomlManager.tomlStringToConfig(tomlString)
             if (parseResult != null) {
               if (!parseResult.isCompatible && parseResult.compatibilityWarning != null) {
+                // Still apply the config even with warnings, but return warning result
+                applyConfig(parseResult.config)
+                
+                // Wait a bit more after import to ensure settings are stable
+                delay(1000)
+                
+                Log.d("TuningViewModel", "Config imported with compatibility warnings")
                 return@withContext ImportResult.Warning(
                     config = parseResult.config,
                     warning = parseResult.compatibilityWarning,
@@ -1211,6 +1276,10 @@ class TuningViewModel(
               }
 
               applyConfig(parseResult.config)
+              
+              // Wait a bit more after import to ensure settings are stable
+              delay(1000)
+              
               Log.d("TuningViewModel", "Config imported and applied successfully")
               ImportResult.Success
             } else {
@@ -1223,6 +1292,7 @@ class TuningViewModel(
           }
         }
 
+    // Only set importing to false after everything is complete
     _isImporting.value = false
     return result
   }
@@ -1231,74 +1301,341 @@ class TuningViewModel(
     viewModelScope.launch { applyConfig(config) }
   }
 
-  fun buildCurrentConfig(): TuningConfig {
-    val cpuConfigs =
-        _cpuClusters.value.map { cluster ->
-          CPUClusterConfig(
-              cluster = cluster.clusterNumber,
-              minFreq = cluster.currentMinFreq,
-              maxFreq = cluster.currentMaxFreq,
-              governor = cluster.governor,
-              disabledCores = emptyList(),
-          )
+  suspend fun buildCurrentConfig(): TuningConfig {
+    // Build CPU cluster configs with proper state
+    val cpuConfigs = _cpuClusters.value.map { cluster ->
+      // Get disabled cores for this cluster
+      val disabledCores = mutableListOf<Int>()
+      cluster.cores.forEach { coreNum ->
+        val isEnabled = preferencesManager.isCpuCoreEnabled(coreNum).first()
+        if (!isEnabled) {
+          disabledCores.add(coreNum)
         }
+      }
+      
+      CPUClusterConfig(
+          cluster = cluster.clusterNumber,
+          // Use locked frequencies if available, otherwise current frequencies
+          minFreq = if (_isCpuFrequencyLocked.value) {
+            // Get from CPU lock state's cluster configs
+            val lockState = preferencesManager.getCpuLockState().first()
+            lockState.clusterConfigs[cluster.clusterNumber]?.minFreq ?: cluster.currentMinFreq
+          } else {
+            cluster.currentMinFreq
+          },
+          maxFreq = if (_isCpuFrequencyLocked.value) {
+            // Get from CPU lock state's cluster configs
+            val lockState = preferencesManager.getCpuLockState().first()
+            lockState.clusterConfigs[cluster.clusterNumber]?.maxFreq ?: cluster.currentMaxFreq
+          } else {
+            cluster.currentMaxFreq
+          },
+          governor = cluster.governor,
+          disabledCores = disabledCores,
+          setOnBoot = preferencesManager.getCpuSetOnBoot().first()
+      )
+    }
 
-    val gpu =
-        if (!_isMediatek.value && _gpuInfo.value.minFreq > 0) {
-          GPUConfig(
-              minFreq = _gpuInfo.value.minFreq,
-              maxFreq = _gpuInfo.value.maxFreq,
-              powerLevel = 0,
-              renderer = "auto",
-          )
-        } else {
-          null
-        }
+    // Build GPU config with proper state
+    val gpu = if (!_isMediatek.value && _gpuInfo.value.minFreq > 0) {
+      GPUConfig(
+          // Use locked frequencies if available, otherwise current frequencies
+          minFreq = if (_isGpuFrequencyLocked.value && _lockedGpuMinFreq.value > 0) {
+            _lockedGpuMinFreq.value
+          } else {
+            _gpuInfo.value.minFreq
+          },
+          maxFreq = if (_isGpuFrequencyLocked.value && _lockedGpuMaxFreq.value > 0) {
+            _lockedGpuMaxFreq.value
+          } else {
+            _gpuInfo.value.maxFreq
+          },
+          powerLevel = _gpuInfo.value.powerLevel,
+          renderer = _gpuInfo.value.rendererType
+      )
+    } else {
+      null
+    }
+
+    // Build thermal config with current settings
+    val thermal = ThermalConfig(
+        preset = _currentThermalPreset.value,
+        setOnBoot = _isThermalSetOnBoot.value
+    )
+
+    // Build RAM config with current settings
+    val ramConfig = preferencesManager.getRamConfig().first()
+    val ram = RAMConfig(
+        swappiness = _currentSwappiness.value,
+        zramSize = _zramStatus.value.totalMb,
+        swapSize = _swapFileStatus.value.sizeMb,
+        dirtyRatio = _currentDirtyRatio.value,
+        minFreeMem = _currentMinFreeMem.value,
+        compressionAlgorithm = _currentCompressionAlgorithm.value,
+        setOnBoot = preferencesManager.getRAMSetOnBoot().first()
+    )
+
+    // Build additional config with current settings
+    val additional = AdditionalConfig(
+        ioScheduler = _currentIOScheduler.value,
+        tcpCongestion = _currentTCPCongestion.value,
+        perfMode = _currentPerfMode.value,
+        setOnBoot = preferencesManager.getAdditionalSetOnBoot().first()
+    )
 
     return TuningConfig(
         cpuClusters = cpuConfigs,
         gpu = gpu,
-        thermal = ThermalConfig(),
-        ram = RAMConfig(),
-        additional =
-            AdditionalConfig(
-                ioScheduler = _currentIOScheduler.value,
-                tcpCongestion = _currentTCPCongestion.value,
-                perfMode = _currentPerfMode.value,
-            ),
+        thermal = thermal,
+        ram = ram,
+        additional = additional,
+        cpuSetOnBoot = preferencesManager.getCpuSetOnBoot().first()
     )
   }
 
   private suspend fun applyConfig(config: TuningConfig) {
-    config.cpuClusters.forEach { clusterConfig ->
-      cpuUseCase.setClusterFrequency(
-          clusterConfig.cluster,
-          clusterConfig.minFreq,
-          clusterConfig.maxFreq,
-      )
-      cpuUseCase.setClusterGovernor(clusterConfig.cluster, clusterConfig.governor)
-      clusterConfig.disabledCores.forEach { core -> cpuUseCase.setCoreOnline(core, false) }
-    }
+    Log.d("TuningViewModel", "Applying imported configuration...")
+    
+    // Set flag to prevent refresh during config application
+    _isApplyingConfig.value = true
+    
+    try {
+      // Apply CPU cluster configurations with proper error handling
+      config.cpuClusters.forEach { clusterConfig ->
+        Log.d("TuningViewModel", "Applying CPU cluster ${clusterConfig.cluster}: ${clusterConfig.minFreq}-${clusterConfig.maxFreq}MHz, governor: ${clusterConfig.governor}")
+        
+        // Set frequency first and wait for result
+        val freqResult = cpuUseCase.setClusterFrequency(
+            clusterConfig.cluster,
+            clusterConfig.minFreq,
+            clusterConfig.maxFreq,
+        )
+        
+        if (freqResult.isFailure) {
+          Log.w("TuningViewModel", "Failed to set cluster ${clusterConfig.cluster} frequency: ${freqResult.exceptionOrNull()?.message}")
+        }
+        
+        // Set governor and wait for result
+        val govResult = cpuUseCase.setClusterGovernor(clusterConfig.cluster, clusterConfig.governor)
+        if (govResult.isFailure) {
+          Log.w("TuningViewModel", "Failed to set cluster ${clusterConfig.cluster} governor: ${govResult.exceptionOrNull()?.message}")
+        } else {
+          Log.d("TuningViewModel", "Successfully set cluster ${clusterConfig.cluster} governor to ${clusterConfig.governor}")
+        }
+        
+        // Verify governor was actually set
+        delay(500)
+        val verifyResult = cpuUseCase.detectClusters()
+        val verifiedCluster = verifyResult.find { it.clusterNumber == clusterConfig.cluster }
+        if (verifiedCluster != null) {
+          Log.d("TuningViewModel", "Verification: Cluster ${clusterConfig.cluster} governor is now: ${verifiedCluster.governor}")
+          if (verifiedCluster.governor != clusterConfig.governor) {
+            Log.w("TuningViewModel", "WARNING: Governor verification failed! Expected: ${clusterConfig.governor}, Got: ${verifiedCluster.governor}")
+          }
+        }
+        
+        // Apply disabled cores
+        clusterConfig.disabledCores.forEach { core -> 
+          Log.d("TuningViewModel", "Disabling CPU core $core")
+          val coreResult = cpuUseCase.setCoreOnline(core, false)
+          if (coreResult.isSuccess) {
+            preferencesManager.setCpuCoreEnabled(core, false)
+          } else {
+            Log.w("TuningViewModel", "Failed to disable core $core: ${coreResult.exceptionOrNull()?.message}")
+          }
+        }
+        
+        // Save to preferences if setOnBoot is enabled
+        if (clusterConfig.setOnBoot) {
+          preferencesManager.setClusterMinFreq(clusterConfig.cluster, clusterConfig.minFreq)
+          preferencesManager.setClusterMaxFreq(clusterConfig.cluster, clusterConfig.maxFreq)
+          preferencesManager.setClusterGovernor(clusterConfig.cluster, clusterConfig.governor)
+        }
+        
+        // Small delay between clusters to avoid overwhelming the system
+        delay(200)
+      }
 
-    config.gpu?.let { gpu ->
-      if (!_isMediatek.value) {
-        gpuUseCase.setGPUFrequency(gpu.minFreq, gpu.maxFreq)
-        gpuUseCase.setGPUPowerLevel(gpu.powerLevel)
-        gpuUseCase.setGPURenderer(gpu.renderer)
+      // Apply GPU configuration
+      config.gpu?.let { gpu ->
+        if (!_isMediatek.value) {
+          Log.d("TuningViewModel", "Applying GPU config: ${gpu.minFreq}-${gpu.maxFreq}MHz, power level: ${gpu.powerLevel}, renderer: ${gpu.renderer}")
+          
+          // Set GPU frequencies
+          val gpuFreqResult = gpuUseCase.setGPUFrequency(gpu.minFreq, gpu.maxFreq)
+          if (gpuFreqResult.isFailure) {
+            Log.w("TuningViewModel", "Failed to set GPU frequency: ${gpuFreqResult.exceptionOrNull()?.message}")
+          }
+          
+          // Set power level
+          val powerResult = gpuUseCase.setGPUPowerLevel(gpu.powerLevel)
+          if (powerResult.isFailure) {
+            Log.w("TuningViewModel", "Failed to set GPU power level: ${powerResult.exceptionOrNull()?.message}")
+          }
+          
+          // Set renderer (this may require reboot)
+          if (gpu.renderer != "auto" && gpu.renderer.isNotBlank()) {
+            val rendererResult = gpuUseCase.setGPURenderer(gpu.renderer)
+            if (rendererResult.isFailure) {
+              Log.w("TuningViewModel", "Failed to set GPU renderer: ${rendererResult.exceptionOrNull()?.message}")
+            }
+          }
+          
+          delay(300) // Wait for GPU changes to take effect
+        }
+      }
+
+      // Apply thermal configuration
+      if (config.thermal.preset.isNotBlank() && config.thermal.preset != "Not Set") {
+        Log.d("TuningViewModel", "Applying thermal config: ${config.thermal.preset}, setOnBoot: ${config.thermal.setOnBoot}")
+        
+        val thermalResult = thermalUseCase.setThermalMode(config.thermal.preset, config.thermal.setOnBoot)
+        if (thermalResult.isSuccess) {
+          preferencesManager.setThermalConfig(config.thermal.preset, config.thermal.setOnBoot)
+        } else {
+          Log.w("TuningViewModel", "Failed to set thermal mode: ${thermalResult.exceptionOrNull()?.message}")
+        }
+        
+        delay(200)
+      }
+
+      // Apply RAM configuration
+      Log.d("TuningViewModel", "Applying RAM config: swappiness=${config.ram.swappiness}, zram=${config.ram.zramSize}MB, swap=${config.ram.swapSize}MB")
+      setRAMParameters(config.ram)
+      
+      // Save RAM set-on-boot setting
+      preferencesManager.setRAMSetOnBoot(config.ram.setOnBoot)
+      delay(300)
+
+      // Apply additional configurations
+      Log.d("TuningViewModel", "Applying additional config: IO=${config.additional.ioScheduler}, TCP=${config.additional.tcpCongestion}, perf=${config.additional.perfMode}")
+      
+      // Apply I/O scheduler
+      config.additional.ioScheduler.takeIf { it.isNotBlank() }?.let { 
+        setIOScheduler(it)
+        preferencesManager.setIOSetOnBoot(config.additional.setOnBoot)
+      }
+      
+      // Apply TCP congestion
+      config.additional.tcpCongestion.takeIf { it.isNotBlank() }?.let { 
+        setTCPCongestion(it)
+        preferencesManager.setTCPSetOnBoot(config.additional.setOnBoot)
+      }
+      
+      // Apply performance mode
+      config.additional.perfMode.takeIf { it.isNotBlank() }?.let { 
+        setPerfMode(it)
+      }
+      
+      // Save additional set-on-boot setting
+      preferencesManager.setAdditionalSetOnBoot(config.additional.setOnBoot)
+
+      // Apply CPU set-on-boot setting
+      preferencesManager.setCpuSetOnBoot(config.cpuSetOnBoot)
+
+      // Wait longer for all changes to take effect
+      Log.d("TuningViewModel", "Waiting for all changes to take effect...")
+      delay(2000)
+      
+      // Force refresh CPU clusters to get updated values
+      cpuUseCase.invalidateClusterCache()
+      
+      // Refresh all values multiple times to ensure they're updated
+      repeat(3) { attempt ->
+        Log.d("TuningViewModel", "Refreshing values (attempt ${attempt + 1}/3)")
+        refreshCurrentValues()
+        delay(500)
+      }
+      
+      // Update UI states to match applied config
+      updateUIStatesAfterImport(config)
+      
+      Log.d("TuningViewModel", "Configuration applied and verified successfully")
+      
+    } catch (e: Exception) {
+      Log.e("TuningViewModel", "Error applying configuration", e)
+      throw e
+    } finally {
+      // Wait longer before allowing refresh to prevent immediate override
+      delay(3000)
+      
+      // Always reset the flag, even if there was an error
+      _isApplyingConfig.value = false
+      
+      // Update timestamp to prevent refresh for additional time
+      lastConfigApplyTime = System.currentTimeMillis()
+      
+      Log.d("TuningViewModel", "Config application flag reset, monitoring can resume in 10 seconds")
+    }
+  }
+  
+  private suspend fun updateUIStatesAfterImport(config: TuningConfig) {
+    Log.d("TuningViewModel", "Updating UI states after import...")
+    
+    // Update CPU states
+    config.cpuClusters.forEach { clusterConfig ->
+      // Update cluster frequency states if they exist
+      val clusterIndex = clusterConfig.cluster
+      if (clusterIndex < _cpuClusters.value.size) {
+        val currentCluster = _cpuClusters.value[clusterIndex]
+        val updatedCluster = currentCluster.copy(
+          currentMinFreq = clusterConfig.minFreq,
+          currentMaxFreq = clusterConfig.maxFreq,
+          governor = clusterConfig.governor
+        )
+        
+        // Update the cluster in the list
+        val updatedClusters = _cpuClusters.value.toMutableList()
+        updatedClusters[clusterIndex] = updatedCluster
+        _cpuClusters.value = updatedClusters
       }
     }
-
-    thermalUseCase.setThermalMode(config.thermal.preset, config.thermal.setOnBoot)
-    preferencesManager.setThermalConfig(config.thermal.preset, config.thermal.setOnBoot)
-
-    setRAMParameters(config.ram)
-
-    config.additional.ioScheduler.takeIf { it.isNotBlank() }?.let { setIOScheduler(it) }
-    config.additional.tcpCongestion.takeIf { it.isNotBlank() }?.let { setTCPCongestion(it) }
-    config.additional.perfMode.takeIf { it.isNotBlank() }?.let { setPerfMode(it) }
-
-    delay(1000)
-    refreshCurrentValues()
+    
+    // Update cluster UI states to match imported config
+    val states = mutableMapOf<Int, ClusterUIState>()
+    config.cpuClusters.forEach { clusterConfig ->
+      states[clusterConfig.cluster] = ClusterUIState(
+        minFreq = clusterConfig.minFreq.toFloat(),
+        maxFreq = clusterConfig.maxFreq.toFloat(),
+        governor = clusterConfig.governor,
+      )
+    }
+    _clusterStates.value = states
+    
+    // Update GPU states
+    config.gpu?.let { gpu ->
+      if (!_isMediatek.value) {
+        _gpuInfo.value = _gpuInfo.value.copy(
+          minFreq = gpu.minFreq,
+          maxFreq = gpu.maxFreq,
+          powerLevel = gpu.powerLevel,
+          rendererType = gpu.renderer
+        )
+        
+        // Update locked GPU frequency states
+        _lockedGpuMinFreq.value = gpu.minFreq
+        _lockedGpuMaxFreq.value = gpu.maxFreq
+      }
+    }
+    
+    // Update thermal states
+    if (config.thermal.preset.isNotBlank() && config.thermal.preset != "Not Set") {
+      _currentThermalPreset.value = config.thermal.preset
+      _isThermalSetOnBoot.value = config.thermal.setOnBoot
+    }
+    
+    // Update RAM states
+    _currentSwappiness.value = config.ram.swappiness
+    _currentDirtyRatio.value = config.ram.dirtyRatio
+    _currentMinFreeMem.value = config.ram.minFreeMem
+    _currentCompressionAlgorithm.value = config.ram.compressionAlgorithm
+    
+    // Update additional states
+    _currentIOScheduler.value = config.additional.ioScheduler
+    _currentTCPCongestion.value = config.additional.tcpCongestion
+    _currentPerfMode.value = config.additional.perfMode
+    
+    Log.d("TuningViewModel", "UI states updated successfully")
   }
 
   suspend fun checkMagiskAvailability(): Boolean {
@@ -1317,7 +1654,7 @@ class TuningViewModel(
         viewModelScope.launch(Dispatchers.IO) {
           while (true) {
             refreshDynamicValues()
-            delay(300)
+            delay(1000) // Reduced from 300ms to 1000ms for less aggressive monitoring
           }
         }
   }
@@ -1519,9 +1856,7 @@ class TuningViewModel(
 
   fun endUserAdjusting() {
     _isUserAdjusting.value = false
-    // Refresh once after user finishes adjusting
     viewModelScope.launch {
-      delay(500) // Wait a bit for hardware to apply
       refreshDynamicValues()
     }
   }
