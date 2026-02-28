@@ -15,7 +15,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.gms.google-services")
-    id("com.google.devtools.ksp") version "2.3.5"
+    id("com.google.devtools.ksp") version "2.3.6"
 }
 
 // Disable Google Services for debug build (allows different applicationId)
@@ -31,10 +31,10 @@ android {
 
     defaultConfig {
         applicationId = "id.xms.xtrakernelmanager"
-        minSdk = 31
+        minSdk = 29
         targetSdk = 36
         versionCode = 3
-        versionName = "3.0-Release"
+        versionName = "3.0.1-Release"
 
         // Build Parsing
         val buildDate = SimpleDateFormat("yyyy.MM.dd").format(Date())
@@ -44,7 +44,7 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        resConfigs("en", "in", "ru")
+        resConfigs("in", "ru")
     }
     
     signingConfigs {
@@ -198,10 +198,10 @@ dependencies {
     // Lottie for animations
     implementation("com.airbnb.android:lottie-compose:6.4.0")
 
-    implementation("com.patrykandpatrick.vico:compose-m3:3.0.0-beta.3")
+    implementation("com.patrykandpatrick.vico:compose-m3:3.0.0-beta.4")
 
     // Backdrop (Liquid Glass)
-    implementation("io.github.kyant0:backdrop:1.0.5")
+    implementation("io.github.kyant0:backdrop:1.0.6")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
