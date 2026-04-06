@@ -40,6 +40,7 @@ import id.xms.xtrakernelmanager.ui.screens.functionalrom.PlayIntegritySettingsSc
 import id.xms.xtrakernelmanager.ui.screens.functionalrom.XiaomiTouchSettingsScreen
 import id.xms.xtrakernelmanager.ui.screens.functionalrom.HideAccessibilitySettingsScreen
 import id.xms.xtrakernelmanager.ui.screens.functionalrom.DisplaySizeScreen
+import id.xms.xtrakernelmanager.ui.screens.functionalrom.MaterialDisplaySizeScreen
 import id.xms.xtrakernelmanager.data.model.HideAccessibilityConfig
 import id.xms.xtrakernelmanager.ui.screens.home.HomeScreen
 import id.xms.xtrakernelmanager.ui.screens.donation.DonationScreen
@@ -439,7 +440,15 @@ fun Navigation(
         }
 
         composable("display_size") {
-          DisplaySizeScreen(onNavigateBack = { navController.popBackStack() })
+          when (layoutStyle) {
+            "material" -> {
+              MaterialDisplaySizeScreen(onNavigateBack = { navController.popBackStack() })
+            }
+            else -> {
+              // Frosted and Classic use the same frosted design
+              DisplaySizeScreen(onNavigateBack = { navController.popBackStack() })
+            }
+          }
         }
 
         composable("hideaccessibilitysettings") {
