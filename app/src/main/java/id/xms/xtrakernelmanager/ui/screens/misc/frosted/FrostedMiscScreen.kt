@@ -209,61 +209,35 @@ fun FrostedMiscHeader(modifier: Modifier = Modifier) {
     id.xms.xtrakernelmanager.ui.components.GlassmorphicCard(
         modifier = modifier.fillMaxWidth(),
         shape = CircleShape,
-        contentPadding = PaddingValues(0.dp),
-        onClick = {}
+        contentPadding = PaddingValues(16.dp, 12.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(id.xms.xtrakernelmanager.ui.theme.NeonPurple.copy(alpha = 0.85f))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Miscellaneous",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = Color.White
-                    )
-                    
-                    // Badge
-                    Surface(
-                        color = Color.White.copy(alpha = 0.15f),
-                        shape = CircleShape
-                    ) {
-                        Text(
-                            text = "Settings",
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            color = Color.White
-                        )
-                    }
-                }
+            Text(
+                text = "Miscellaneous",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold
+                )
+            )
 
-                // Icon
-                Surface(
-                    color = Color.White.copy(alpha = 0.15f),
-                    shape = CircleShape,
-                    modifier = Modifier.size(32.dp)
+            // Icon
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(32.dp)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Tune,
-                            contentDescription = "Misc",
-                            modifier = Modifier.size(18.dp),
-                            tint = Color.White
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Tune,
+                        contentDescription = "Misc",
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
         }
@@ -279,15 +253,10 @@ fun FrostedSettingsGroup(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(0.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .background(Color(0xFF1E293B).copy(alpha = 0.85f))
+        Column(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                content()
-            }
+            content()
         }
     }
 }
@@ -301,8 +270,6 @@ fun FrostedSettingsRow(
     badge: String? = null,
     onClick: () -> Unit
 ) {
-    val isLightTheme = false // XKM is always dark mode
-    
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -314,9 +281,9 @@ fun FrostedSettingsRow(
         // Icon with colored background
         Box(
             modifier = Modifier
-                .size(36.dp) 
-                .clip(RoundedCornerShape(10.dp)) 
-                .background(iconColor.copy(alpha = 0.2f)), // Use standard opacity for visibility on dark
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(iconColor.copy(alpha = 0.2f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -335,14 +302,13 @@ fun FrostedSettingsRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = Color.White
+                fontWeight = FontWeight.Medium
             )
             if (subtitle != null) {
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
         }
@@ -350,14 +316,13 @@ fun FrostedSettingsRow(
         // Badge (optional)
         if (badge != null) {
             Surface(
-                color = Color.White.copy(alpha = 0.15f),
-                shape = CircleShape
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ) {
                 Text(
                     text = badge,
                     style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    color = Color.White
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }
         }
@@ -367,7 +332,7 @@ fun FrostedSettingsRow(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
             modifier = Modifier.size(22.dp), 
-            tint = Color.White.copy(alpha = 0.3f)
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
         )
     }
 }
