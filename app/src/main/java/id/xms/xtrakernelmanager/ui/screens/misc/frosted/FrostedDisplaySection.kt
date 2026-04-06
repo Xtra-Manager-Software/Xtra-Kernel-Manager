@@ -38,14 +38,14 @@ fun FrostedDisplaySection(viewModel: MiscViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var sliderValue by remember(currentSaturation) { mutableFloatStateOf(currentSaturation) }
 
-    // Local presets (inline)
+    // Local presets with icons
     val presets = remember {
         listOf(
-            Triple("Mono", 0.5f, "⚫"),
-            Triple("sRGB", 1.0f, "🎨"),
-            Triple("P3", 1.1f, "🌈"),
-            Triple("Vivid", 1.3f, "✨"),
-            Triple("Ultra", 1.5f, "🔥"),
+            Triple("Mono", 0.5f, Triple(Icons.Default.Circle, Color(0xFF9E9E9E), "Monochrome")),
+            Triple("sRGB", 1.0f, Triple(Icons.Default.Palette, Color(0xFF2196F3), "Standard RGB")),
+            Triple("P3", 1.1f, Triple(Icons.Default.ColorLens, Color(0xFF9C27B0), "Display P3")),
+            Triple("Vivid", 1.3f, Triple(Icons.Default.AutoAwesome, Color(0xFFFF9F0A), "Vivid Colors")),
+            Triple("Ultra", 1.5f, Triple(Icons.Default.Whatshot, Color(0xFFF44336), "Ultra Saturated")),
         )
     }
 
@@ -157,45 +157,47 @@ fun FrostedDisplaySection(viewModel: MiscViewModel) {
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        presets.forEach { (name, value, emoji) ->
+                        presets.forEach { (name, value, iconData) ->
+                            val (icon, color, _) = iconData
                             val isSelected = kotlin.math.abs(sliderValue - value) < 0.05f
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clip(RoundedCornerShape(14.dp))
+                                    .clip(RoundedCornerShape(16.dp))
                                     .background(
                                         if (isSelected) {
-                                            if (isLightTheme) Color(0xFFFF9500).copy(0.2f)
-                                            else Color(0xFFFF9F0A).copy(0.25f)
+                                            color.copy(alpha = 0.2f)
                                         } else {
-                                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(0.5f)
+                                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(0.4f)
                                         }
                                     )
                                     .clickable(enabled = isRootAvailable) {
                                         sliderValue = value
                                         viewModel.setDisplaySaturation(value)
                                     }
-                                    .padding(vertical = 12.dp),
+                                    .padding(vertical = 16.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Text(
-                                        text = emoji,
-                                        style = MaterialTheme.typography.titleMedium
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = name,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = if (isSelected) color else MaterialTheme.colorScheme.onSurface.copy(0.6f)
                                     )
                                     Text(
                                         text = name,
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                         color = if (isSelected) {
-                                            if (isLightTheme) Color(0xFFFF9500) else Color(0xFFFF9F0A)
+                                            color
                                         } else {
-                                            MaterialTheme.colorScheme.onSurface.copy(0.7f)
+                                            MaterialTheme.colorScheme.onSurface.copy(0.6f)
                                         }
                                     )
                                 }

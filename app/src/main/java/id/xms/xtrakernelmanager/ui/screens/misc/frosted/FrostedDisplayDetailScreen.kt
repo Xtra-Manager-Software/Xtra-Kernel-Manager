@@ -29,7 +29,12 @@ import id.xms.xtrakernelmanager.ui.screens.misc.MiscViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
-private data class SaturationPreset(val name: String, val value: Float, val emoji: String)
+private data class SaturationPreset(
+    val name: String, 
+    val value: Float, 
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val color: Color
+)
 
 @OptIn(FlowPreview::class)
 @Composable
@@ -46,11 +51,11 @@ fun FrostedDisplayDetailScreen(
 
     val presets = remember {
         listOf(
-            SaturationPreset("Mono", 0.5f, "⚫"),
-            SaturationPreset("sRGB", 1.0f, "🎨"),
-            SaturationPreset("P3", 1.1f, "🌈"),
-            SaturationPreset("Vivid", 1.3f, "✨"),
-            SaturationPreset("Ultra", 1.5f, "🔥"),
+            SaturationPreset("Mono", 0.5f, Icons.Default.Circle, Color(0xFF9E9E9E)),
+            SaturationPreset("sRGB", 1.0f, Icons.Default.Palette, Color(0xFF2196F3)),
+            SaturationPreset("P3", 1.1f, Icons.Default.ColorLens, Color(0xFF9C27B0)),
+            SaturationPreset("Vivid", 1.3f, Icons.Default.AutoAwesome, Color(0xFFFF9F0A)),
+            SaturationPreset("Ultra", 1.5f, Icons.Default.Whatshot, Color(0xFFF44336)),
         )
     }
 
@@ -160,45 +165,46 @@ fun FrostedDisplayDetailScreen(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     presets.forEach { preset ->
                         val isSelected = kotlin.math.abs(sliderValue - preset.value) < 0.05f
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(RoundedCornerShape(14.dp))
+                                .clip(RoundedCornerShape(16.dp))
                                 .background(
                                     if (isSelected) {
-                                        if (isLightTheme) Color(0xFFFF9500).copy(0.2f)
-                                        else Color(0xFFFF9F0A).copy(0.25f)
+                                        preset.color.copy(alpha = 0.2f)
                                     } else {
-                                        MaterialTheme.colorScheme.surfaceContainerHighest.copy(0.5f)
+                                        MaterialTheme.colorScheme.surfaceContainerHighest.copy(0.4f)
                                     }
                                 )
                                 .clickable(enabled = isRootAvailable) {
                                     sliderValue = preset.value
                                     viewModel.setDisplaySaturation(preset.value)
                                 }
-                                .padding(vertical = 12.dp),
+                                .padding(vertical = 16.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(
-                                    text = preset.emoji,
-                                    style = MaterialTheme.typography.titleMedium
+                                Icon(
+                                    imageVector = preset.icon,
+                                    contentDescription = preset.name,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = if (isSelected) preset.color else MaterialTheme.colorScheme.onSurface.copy(0.6f)
                                 )
                                 Text(
                                     text = preset.name,
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     color = if (isSelected) {
-                                        if (isLightTheme) Color(0xFFFF9500) else Color(0xFFFF9F0A)
+                                        preset.color
                                     } else {
-                                        MaterialTheme.colorScheme.onSurface.copy(0.7f)
+                                        MaterialTheme.colorScheme.onSurface.copy(0.6f)
                                     }
                                 )
                             }
