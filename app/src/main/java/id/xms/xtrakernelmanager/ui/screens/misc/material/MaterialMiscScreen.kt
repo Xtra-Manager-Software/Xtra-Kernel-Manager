@@ -387,8 +387,14 @@ fun DisplayColorCard(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
 ) {
-  // Local state for slider to prevent stutter, synced on expanded
-  var sliderValue by remember { mutableFloatStateOf(1.0f) }
+  // Sync with ViewModel state
+  val currentSaturation by viewModel.displaySaturation.collectAsState()
+  var sliderValue by remember(currentSaturation) { mutableFloatStateOf(currentSaturation) }
+  
+  // Update slider when ViewModel state changes
+  LaunchedEffect(currentSaturation) {
+    sliderValue = currentSaturation
+  }
 
   Card(
       onClick = { onExpandedChange(!expanded) },
@@ -491,24 +497,30 @@ fun DisplayColorCard(
               // Presets Chips
               Row(
                   modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                  horizontalArrangement = Arrangement.spacedBy(8.dp),
+                  horizontalArrangement = Arrangement.spacedBy(6.dp),
               ) {
-                val presets = listOf(0.0f to "Gray", 1.0f to "Std", 1.2f to "Vivid")
+                val presets = listOf(
+                    0.5f to "Mono", 
+                    1.0f to "sRGB", 
+                    1.1f to "P3",
+                    1.3f to "Vivid",
+                    1.5f to "Ultra"
+                )
                 presets.forEach { (valFloat, name) ->
                   SuggestionChip(
                       onClick = {
                         sliderValue = valFloat
                         viewModel.setDisplaySaturation(valFloat)
                       },
-                      label = { Text(name) },
+                      label = { Text(name, style = MaterialTheme.typography.labelSmall) },
                       colors =
                           SuggestionChipDefaults.suggestionChipColors(
                               containerColor =
-                                  if (sliderValue == valFloat)
+                                  if (kotlin.math.abs(sliderValue - valFloat) < 0.05f)
                                       MaterialTheme.colorScheme.onSecondaryContainer
                                   else Color.Transparent,
                               labelColor =
-                                  if (sliderValue == valFloat)
+                                  if (kotlin.math.abs(sliderValue - valFloat) < 0.05f)
                                       MaterialTheme.colorScheme.secondaryContainer
                                   else MaterialTheme.colorScheme.onSecondaryContainer,
                           ),

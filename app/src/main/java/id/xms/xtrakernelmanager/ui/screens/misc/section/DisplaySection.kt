@@ -6,13 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,7 +20,12 @@ import id.xms.xtrakernelmanager.R
 import id.xms.xtrakernelmanager.ui.components.GlassmorphicCard
 import id.xms.xtrakernelmanager.ui.screens.misc.MiscViewModel
 
-data class SaturationPreset(val name: String, val value: Float, val descRes: Int)
+data class SaturationPreset(
+    val name: String, 
+    val value: Float, 
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val color: Color
+)
 
 @Composable
 fun DisplaySection(viewModel: MiscViewModel) {
@@ -28,22 +33,21 @@ fun DisplaySection(viewModel: MiscViewModel) {
   val isRootAvailable by viewModel.isRootAvailable.collectAsState()
   val applyStatus by viewModel.saturationApplyStatus.collectAsState()
 
-  // Local slider state for smooth interaction - use rememberSaveable to persist across recompositions
-  var sliderValue by rememberSaveable { mutableFloatStateOf(currentSaturation) }
-  var isUserInteracting by remember { mutableStateOf(false) }
+  // Use currentSaturation directly from ViewModel to maintain state
+  var sliderValue by remember(currentSaturation) { mutableFloatStateOf(currentSaturation) }
 
-  // Update slider value only when not interacting and value actually changed
+  // Sync slider with ViewModel state
   LaunchedEffect(currentSaturation) {
-    if (!isUserInteracting && kotlin.math.abs(sliderValue - currentSaturation) > 0.01f) {
-      sliderValue = currentSaturation
-    }
+    sliderValue = currentSaturation
   }
 
   val presets = remember {
     listOf(
-        SaturationPreset("sRGB", 1.0f, R.string.display_mode_srgb_desc),
-        SaturationPreset("P3", 1.1f, R.string.display_mode_p3_desc),
-        SaturationPreset("Vivid", 1.3f, R.string.display_mode_vivid_desc),
+        SaturationPreset("Mono", 0.5f, Icons.Default.Circle, Color(0xFF9E9E9E)),
+        SaturationPreset("sRGB", 1.0f, Icons.Default.Palette, Color(0xFF2196F3)),
+        SaturationPreset("P3", 1.1f, Icons.Default.ColorLens, Color(0xFF9C27B0)),
+        SaturationPreset("Vivid", 1.3f, Icons.Default.AutoAwesome, Color(0xFFFF9F0A)),
+        SaturationPreset("Ultra", 1.5f, Icons.Default.Whatshot, Color(0xFFF44336)),
     )
   }
 
@@ -122,12 +126,10 @@ fun DisplaySection(viewModel: MiscViewModel) {
       Slider(
           value = sliderValue,
           onValueChange = { 
-            isUserInteracting = true
             sliderValue = it 
           },
           onValueChangeFinished = { 
             viewModel.setDisplaySaturation(sliderValue)
-            isUserInteracting = false
           },
           valueRange = 0.5f..2.0f,
           steps = 29, // 0.05 increments
@@ -170,52 +172,40 @@ fun DisplaySection(viewModel: MiscViewModel) {
           color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
       )
 
-      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         presets.forEach { preset ->
-          val isSelected = kotlin.math.abs(sliderValue - preset.value) < 0.01f
-          val backgroundColor by
-              animateColorAsState(
-                  targetValue =
-                      if (isSelected) MaterialTheme.colorScheme.primary
-                      else MaterialTheme.colorScheme.surfaceContainerHighest,
-                  label = "preset_bg",
-              )
-          val contentColor by
-              animateColorAsState(
-                  targetValue =
-                      if (isSelected) MaterialTheme.colorScheme.onPrimary
-                      else MaterialTheme.colorScheme.onSurface,
-                  label = "preset_content",
-              )
+          val isSelected = kotlin.math.abs(sliderValue - preset.value) < 0.05f
 
           Box(
               modifier =
                   Modifier.weight(1f)
-                      .clip(RoundedCornerShape(10.dp))
-                      .background(backgroundColor)
+                      .clip(RoundedCornerShape(14.dp))
+                      .background(
+                          if (isSelected) preset.color.copy(alpha = 0.2f)
+                          else MaterialTheme.colorScheme.surfaceContainerHighest.copy(0.5f)
+                      )
                       .clickable(enabled = isRootAvailable) {
-                        isUserInteracting = true
                         sliderValue = preset.value
                         viewModel.setDisplaySaturation(preset.value)
-                        isUserInteracting = false
                       }
-                      .padding(vertical = 10.dp, horizontal = 8.dp),
+                      .padding(vertical = 14.dp),
               contentAlignment = Alignment.Center,
           ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-              Text(
-                  text = preset.name,
-                  style = MaterialTheme.typography.labelMedium,
-                  fontWeight = FontWeight.Bold,
-                  color = contentColor,
+              Icon(
+                  imageVector = preset.icon,
+                  contentDescription = preset.name,
+                  modifier = Modifier.size(22.dp),
+                  tint = if (isSelected) preset.color else MaterialTheme.colorScheme.onSurface.copy(0.6f)
               )
               Text(
-                  text = String.format("%.1f", preset.value),
+                  text = preset.name,
                   style = MaterialTheme.typography.labelSmall,
-                  color = contentColor.copy(alpha = 0.7f),
+                  fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                  color = if (isSelected) preset.color else MaterialTheme.colorScheme.onSurface.copy(0.6f)
               )
             }
           }
