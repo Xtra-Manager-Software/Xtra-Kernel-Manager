@@ -39,6 +39,9 @@ class XtraKernelApp : Application() {
 
     // Force app to use 410 DPI
     setAppDensity()
+    
+    // Configure Coil for memory optimization
+    configureCoilImageLoader()
 
     // Initialize root shell in background with callback
     // This is important for Magisk 28+ compatibility
@@ -46,6 +49,33 @@ class XtraKernelApp : Application() {
     
     // Schedule donation reminder notification
     scheduleDonationReminder()
+  }
+  
+  /**
+   * Configure Coil image loader with memory optimization
+   * Limits memory cache to 15% of app memory to reduce RAM usage
+   */
+  private fun configureCoilImageLoader() {
+    try {
+      val imageLoader = coil.ImageLoader.Builder(this)
+          .memoryCache {
+            coil.memory.MemoryCache.Builder(this)
+                .maxSizePercent(0.15) // Limit to 15% of app memory
+                .build()
+          }
+          .diskCache {
+            coil.disk.DiskCache.Builder()
+                .directory(cacheDir.resolve("image_cache"))
+                .maxSizeBytes(50 * 1024 * 1024) // 50MB disk cache
+                .build()
+          }
+          .crossfade(true)
+          .build()
+      coil.Coil.setImageLoader(imageLoader)
+      Log.d(TAG, "Coil image loader configured with memory optimization")
+    } catch (e: Exception) {
+      Log.e(TAG, "Error configuring Coil: ${e.message}", e)
+    }
   }
 
   /**
