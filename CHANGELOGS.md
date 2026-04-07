@@ -90,6 +90,12 @@ All notable changes to this project will be documented in here.
   - All tuning screens properly routed based on selected layout
   - CPU Tuning, GPU Tuning, Memory Tuning, and Smart Frequency Lock
   - Smooth transitions between screens
+- **System Information Dialog** - OriginOS-style system details
+  - Tap the hero card in Info screen to view detailed system information
+  - Beautiful gradient header with app branding
+  - Comprehensive device information (Model, Android version, Build ID, Security patch, etc.)
+  - Kernel version, Hardware details, Bootloader, Radio version
+  - Available in all three layouts (Frosted, Material, Classic)
 - **Bottom Padding**
   - Added proper padding to prevent navigation bar overlap
   - Applied to all Classic layout screens
@@ -168,6 +174,14 @@ All notable changes to this project will be documented in here.
 - **ROM-Specific Features**
   - **Smart Detection** - Automatically shows/hides features based on ROM (e.g., Shimoku)
   - **Universal Features** - Standard tools available for all ROMs
+- **Kernel Features**
+  - **Bypass Charging** - Direct power flow without battery charging
+    - Auto-detection of kernel support via sysfs node
+    - Available for XtraAether kernel (Mamad-Ibn-Solowie version onwards)
+    - Toggle to enable/disable bypass charging mode
+    - Disabled and blurred UI when kernel doesn't support it
+    - Descriptive message for unsupported kernels
+    - Available in all three layouts (Classic, Material, Frosted)
 - **New Tools**
   - **Global Refresh Rate** - Set system-wide refresh rate with visual demonstration
     - Animated mockup cards showing refresh rate differences
