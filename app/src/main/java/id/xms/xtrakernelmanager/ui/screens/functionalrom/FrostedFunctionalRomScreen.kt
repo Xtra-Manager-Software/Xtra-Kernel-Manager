@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +33,7 @@ fun LiquidFunctionalRomScreen(
     onNavigateToShimokuRom: () -> Unit,
     onNavigateToHideAccessibility: () -> Unit,
     onNavigateToDisplaySize: () -> Unit,
+    onNavigateToGlobalRefreshRate: () -> Unit = {},
     viewModel: FunctionalRomViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -165,6 +167,15 @@ fun LiquidFunctionalRomScreen(
                                 icon = Icons.Default.VisibilityOff,
                                 iconColor = Color(0xFFFF3B30),
                                 onClick = onNavigateToHideAccessibility,
+                                showDivider = true
+                            )
+                            
+                            LiquidNavigationCell(
+                                title = "Global Refresh Rate",
+                                status = "System-wide",
+                                icon = Icons.Default.Refresh,
+                                iconColor = Color(0xFF007AFF),
+                                onClick = onNavigateToGlobalRefreshRate,
                                 showDivider = false
                             )
                         }

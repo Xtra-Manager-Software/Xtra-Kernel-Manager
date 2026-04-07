@@ -31,6 +31,7 @@ fun ClassicFunctionalRomScreen(
     onNavigateToShimokuRom: () -> Unit,
     onNavigateToHideAccessibility: () -> Unit,
     onNavigateToDisplaySize: () -> Unit,
+    onNavigateToGlobalRefreshRate: () -> Unit = {},
     viewModel: FunctionalRomViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -137,6 +138,17 @@ fun ClassicFunctionalRomScreen(
                     icon = Icons.Rounded.VisibilityOff,
                     iconColor = Color(0xFFEF5350),
                     onClick = onNavigateToHideAccessibility,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            item {
+                ClassicFeatureCard(
+                    title = "Global Refresh Rate",
+                    subtitle = "System-wide refresh rate control",
+                    icon = Icons.Rounded.Refresh,
+                    iconColor = Color(0xFF42A5F5),
+                    onClick = onNavigateToGlobalRefreshRate,
                     modifier = Modifier.fillMaxWidth()
                 )
             }

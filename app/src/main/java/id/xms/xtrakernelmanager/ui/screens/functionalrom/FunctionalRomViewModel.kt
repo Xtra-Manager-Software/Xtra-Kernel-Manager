@@ -772,6 +772,44 @@ class FunctionalRomViewModel(
     }
   }
 
+  // ==================== Global Refresh Rate Functions ====================
+  
+  /**
+   * Set force refresh rate
+   */
+  suspend fun setForceRefreshRate(hz: Int): Result<Unit> {
+    return try {
+      useCase.setForceRefreshRate(hz)
+    } catch (e: Exception) {
+      Log.e(TAG, "Error setting refresh rate: ${e.message}")
+      Result.failure(e)
+    }
+  }
+  
+  /**
+   * Get current refresh rate setting
+   */
+  suspend fun getCurrentRefreshRate(): Int {
+    return try {
+      useCase.getCurrentRefreshRate()
+    } catch (e: Exception) {
+      Log.e(TAG, "Error getting refresh rate: ${e.message}")
+      0
+    }
+  }
+  
+  /**
+   * Reset refresh rate to auto
+   */
+  suspend fun resetRefreshRate(): Result<Unit> {
+    return try {
+      useCase.resetRefreshRate()
+    } catch (e: Exception) {
+      Log.e(TAG, "Error resetting refresh rate: ${e.message}")
+      Result.failure(e)
+    }
+  }
+
   override fun onCleared() {
     super.onCleared()
     Log.d(TAG, "ViewModel cleared")

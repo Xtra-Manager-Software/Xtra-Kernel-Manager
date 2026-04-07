@@ -42,6 +42,9 @@ import id.xms.xtrakernelmanager.ui.screens.functionalrom.HideAccessibilitySettin
 import id.xms.xtrakernelmanager.ui.screens.functionalrom.DisplaySizeScreen
 import id.xms.xtrakernelmanager.ui.screens.functionalrom.MaterialDisplaySizeScreen
 import id.xms.xtrakernelmanager.ui.screens.functionalrom.ClassicDisplaySizeScreen
+import id.xms.xtrakernelmanager.ui.screens.functionalrom.MaterialGlobalRefreshRateScreen
+import id.xms.xtrakernelmanager.ui.screens.functionalrom.ClassicGlobalRefreshRateScreen
+import id.xms.xtrakernelmanager.ui.screens.functionalrom.FrostedGlobalRefreshRateScreen
 import id.xms.xtrakernelmanager.data.model.HideAccessibilityConfig
 import id.xms.xtrakernelmanager.ui.screens.home.HomeScreen
 import id.xms.xtrakernelmanager.ui.screens.donation.DonationScreen
@@ -431,8 +434,27 @@ fun Navigation(
               onNavigateToShimokuRom = { navController.navigate("shimokurom") },
               onNavigateToHideAccessibility = { navController.navigate("hideaccessibilitysettings") },
               onNavigateToDisplaySize = { navController.navigate("display_size") },
+              onNavigateToGlobalRefreshRate = { navController.navigate("global_refresh_rate") },
               viewModel = sharedFunctionalRomViewModel,
           )
+        }
+
+        composable("global_refresh_rate") {
+          val layoutStyle by sharedFunctionalRomViewModel.layoutStyle.collectAsState()
+          when (layoutStyle) {
+            "material" -> MaterialGlobalRefreshRateScreen(
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = sharedFunctionalRomViewModel
+            )
+            "classic" -> ClassicGlobalRefreshRateScreen(
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = sharedFunctionalRomViewModel
+            )
+            else -> FrostedGlobalRefreshRateScreen(
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = sharedFunctionalRomViewModel
+            )
+          }
         }
 
         composable("shimokurom") {

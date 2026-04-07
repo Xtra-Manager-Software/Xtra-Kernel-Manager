@@ -38,6 +38,7 @@ fun MaterialFunctionalRomScreen(
     onNavigateToShimokuRom: () -> Unit,
     onNavigateToHideAccessibility: () -> Unit,
     onNavigateToDisplaySize: () -> Unit,
+    onNavigateToGlobalRefreshRate: () -> Unit = {},
     viewModel: FunctionalRomViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -137,6 +138,16 @@ fun MaterialFunctionalRomScreen(
                             icon = Icons.Default.VisibilityOff,
                             iconTint = Color(0xFFEF5350), // Red
                             onClick = onNavigateToHideAccessibility
+                        )
+                        
+                        HorizontalDivider(modifier = Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        
+                        MaterialSettingsItem(
+                            title = "Global Refresh Rate",
+                            subtitle = "System-wide refresh rate control",
+                            icon = Icons.Default.Refresh,
+                            iconTint = Color(0xFF42A5F5), // Blue
+                            onClick = onNavigateToGlobalRefreshRate
                         )
                     }
                 }

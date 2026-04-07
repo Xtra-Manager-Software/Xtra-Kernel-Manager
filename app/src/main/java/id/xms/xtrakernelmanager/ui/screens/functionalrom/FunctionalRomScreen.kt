@@ -9,6 +9,7 @@ fun FunctionalRomScreen(
     onNavigateToShimokuRom: () -> Unit = {},
     onNavigateToHideAccessibility: () -> Unit = {},
     onNavigateToDisplaySize: () -> Unit,
+    onNavigateToGlobalRefreshRate: () -> Unit = {},
     viewModel: FunctionalRomViewModel,
 ) {
     val layoutStyle by viewModel.layoutStyle.collectAsStateWithLifecycle()
@@ -19,6 +20,7 @@ fun FunctionalRomScreen(
             onNavigateToShimokuRom = onNavigateToShimokuRom,
             onNavigateToHideAccessibility = onNavigateToHideAccessibility,
             onNavigateToDisplaySize = onNavigateToDisplaySize,
+            onNavigateToGlobalRefreshRate = onNavigateToGlobalRefreshRate,
             viewModel = viewModel
         )
         "classic" -> ClassicFunctionalRomScreen(
@@ -26,6 +28,7 @@ fun FunctionalRomScreen(
             onNavigateToShimokuRom = onNavigateToShimokuRom,
             onNavigateToHideAccessibility = onNavigateToHideAccessibility,
             onNavigateToDisplaySize = onNavigateToDisplaySize,
+            onNavigateToGlobalRefreshRate = onNavigateToGlobalRefreshRate,
             viewModel = viewModel
         )
         else -> LiquidFunctionalRomScreen(
@@ -33,6 +36,7 @@ fun FunctionalRomScreen(
             onNavigateToShimokuRom = onNavigateToShimokuRom,
             onNavigateToHideAccessibility = onNavigateToHideAccessibility,
             onNavigateToDisplaySize = onNavigateToDisplaySize,
+            onNavigateToGlobalRefreshRate = onNavigateToGlobalRefreshRate,
             viewModel = viewModel
         )
     }
