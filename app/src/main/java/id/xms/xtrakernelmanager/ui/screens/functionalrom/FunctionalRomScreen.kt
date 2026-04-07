@@ -13,16 +13,22 @@ fun FunctionalRomScreen(
 ) {
     val layoutStyle by viewModel.layoutStyle.collectAsStateWithLifecycle()
 
-    if (layoutStyle == "material") {
-        MaterialFunctionalRomScreen(
+    when (layoutStyle) {
+        "material" -> MaterialFunctionalRomScreen(
             onNavigateBack = onNavigateBack,
             onNavigateToShimokuRom = onNavigateToShimokuRom,
             onNavigateToHideAccessibility = onNavigateToHideAccessibility,
             onNavigateToDisplaySize = onNavigateToDisplaySize,
             viewModel = viewModel
         )
-    } else {
-        LiquidFunctionalRomScreen(
+        "classic" -> ClassicFunctionalRomScreen(
+            onNavigateBack = onNavigateBack,
+            onNavigateToShimokuRom = onNavigateToShimokuRom,
+            onNavigateToHideAccessibility = onNavigateToHideAccessibility,
+            onNavigateToDisplaySize = onNavigateToDisplaySize,
+            viewModel = viewModel
+        )
+        else -> LiquidFunctionalRomScreen(
             onNavigateBack = onNavigateBack,
             onNavigateToShimokuRom = onNavigateToShimokuRom,
             onNavigateToHideAccessibility = onNavigateToHideAccessibility,
