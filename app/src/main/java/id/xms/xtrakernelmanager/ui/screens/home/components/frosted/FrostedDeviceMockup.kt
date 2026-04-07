@@ -53,39 +53,10 @@ fun FrostedDeviceMockup(
     val widthPx = with(density) { size.width.toPx() }
     val heightPx = with(density) { size.height.toPx() }
     
-    // Animation for glow pulsing
-    val infiniteTransition = rememberInfiniteTransition(label = "glow")
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 0.6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glowAlpha"
-    )
-    
-    // Animation for scan line
-    val scanLineOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "scanLine"
-    )
-    
-    // Edge glow shimmer
-    val shimmerOffset by infiniteTransition.animateFloat(
-        initialValue = -1f,
-        targetValue = 2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2500, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer"
-    )
+    // Static values instead of animations for better scroll performance
+    val glowAlpha = 0.45f
+    val scanLineOffset = 0.5f
+    val shimmerOffset = 0.5f
     
     // Load wallpaper
     var wallpaperBitmap by remember { mutableStateOf<ImageBitmap?>(null) }

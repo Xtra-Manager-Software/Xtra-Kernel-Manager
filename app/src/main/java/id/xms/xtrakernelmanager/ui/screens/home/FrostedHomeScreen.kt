@@ -94,13 +94,6 @@ fun FrostedHomeScreen(
             delay(60000)
         }
     }
-
-    var isVisible by remember { mutableStateOf(false) }
-    
-    LaunchedEffect(Unit) {
-        delay(100)
-        isVisible = true
-    }
     
     val frostedBlobColors = listOf(
         Color(0xFF4A9B8E), 
@@ -110,9 +103,7 @@ fun FrostedHomeScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         WavyBlobOrnament(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer { },
+            modifier = Modifier.fillMaxSize(),
             colors = frostedBlobColors
         )
 
@@ -120,103 +111,73 @@ fun FrostedHomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = dimens.screenHorizontalPadding)
-                .graphicsLayer { }
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(dimens.spacingLarge)
         ) {
             Spacer(modifier = Modifier.height(dimens.spacingLarge))
      
             // Header
-            AnimatedComponent(
-                visible = isVisible,
-                delayMillis = 0
+            FrostedHeader(
+                onSettingsClick = onSettingsClick,
+                onPowerClick = { showPowerDialog = true },
+                modifier = Modifier
+            )
+            
+            FrostedDeviceCard(systemInfo = systemInfo, modifier = Modifier.fillMaxWidth())
+            
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(dimens.spacingLarge)
             ) {
-                FrostedHeader(
-                    onSettingsClick = onSettingsClick,
-                    onPowerClick = { showPowerDialog = true },
-                    modifier = Modifier
-                )
-            }
-            AnimatedComponent(
-                visible = isVisible,
-                delayMillis = 100
-            ) {
-                FrostedDeviceCard(systemInfo = systemInfo, modifier = Modifier.fillMaxWidth())
-            }
-            AnimatedComponent(
-                visible = isVisible,
-                delayMillis = 200
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(dimens.spacingLarge)
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                    horizontalArrangement = Arrangement.spacedBy(dimens.spacingLarge)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.spacedBy(dimens.spacingLarge)
-                    ) {
-                        FrostedStatTile(
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                            icon = Icons.Rounded.Memory,
-                            label = "UPTIME",
-                            value = uptime,
-                            subValue = "",
-                            color = Color(0xFF4A9B8E),
-                            badgeText = ""
-                        )
-                        
-                        FrostedStatTile(
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                            icon = Icons.Rounded.Memory,
-                            label = "DEEP SLEEP",
-                            value = deepSleep,
-                            subValue = "",
-                            color = Color(0xFF4A9B8E),
-                            badgeText = ""
-                        )
-                    }
                     FrostedStatTile(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         icon = Icons.Rounded.Memory,
-                        label = "KERNEL REV",
-                        value = systemInfo.kernelVersion,
+                        label = "UPTIME",
+                        value = uptime,
                         subValue = "",
-                        color = NeonOrange,
+                        color = Color(0xFF4A9B8E),
+                        badgeText = ""
+                    )
+                    
+                    FrostedStatTile(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        icon = Icons.Rounded.Memory,
+                        label = "DEEP SLEEP",
+                        value = deepSleep,
+                        subValue = "",
+                        color = Color(0xFF4A9B8E),
                         badgeText = ""
                     )
                 }
-            }
-            AnimatedComponent(
-                visible = isVisible,
-                delayMillis = 300
-            ) {
-                FrostedCPUCard(cpuInfo = cpuInfo, modifier = Modifier.fillMaxWidth())
-            }
-            AnimatedComponent(
-                visible = isVisible,
-                delayMillis = 400
-            ) {
-                FrostedGPUCard(gpuInfo = gpuInfo, modifier = Modifier.fillMaxWidth())
-            }
-            AnimatedComponent(
-                visible = isVisible,
-                delayMillis = 500
-            ) {
-                FrostedBatteryCard(batteryInfo = batteryInfo, modifier = Modifier.fillMaxWidth())
-            }
-            AnimatedComponent(
-                visible = isVisible,
-                delayMillis = 600
-            ) {
-                FrostedTempTile(
+                FrostedStatTile(
                     modifier = Modifier.fillMaxWidth(),
-                    cpuTemp = cpuInfo.temperature.toInt(),
-                    gpuTemp = gpuInfo.temperature.toInt(),
-                    pmicTemp = batteryInfo.pmicTemp.toInt(),
-                    thermalTemp = batteryInfo.temperature.toInt(),
-                    color = Color(0xFFFF1744)
+                    icon = Icons.Rounded.Memory,
+                    label = "KERNEL REV",
+                    value = systemInfo.kernelVersion,
+                    subValue = "",
+                    color = NeonOrange,
+                    badgeText = ""
                 )
             }
+            
+            FrostedCPUCard(cpuInfo = cpuInfo, modifier = Modifier.fillMaxWidth())
+            
+            FrostedGPUCard(gpuInfo = gpuInfo, modifier = Modifier.fillMaxWidth())
+            
+            FrostedBatteryCard(batteryInfo = batteryInfo, modifier = Modifier.fillMaxWidth())
+            
+            FrostedTempTile(
+                modifier = Modifier.fillMaxWidth(),
+                cpuTemp = cpuInfo.temperature.toInt(),
+                gpuTemp = gpuInfo.temperature.toInt(),
+                pmicTemp = batteryInfo.pmicTemp.toInt(),
+                thermalTemp = batteryInfo.temperature.toInt(),
+                color = Color(0xFFFF1744)
+            )
             
             Spacer(modifier = Modifier.height(100.dp))
         }
