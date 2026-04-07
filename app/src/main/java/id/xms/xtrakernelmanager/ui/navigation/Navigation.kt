@@ -50,6 +50,7 @@ import id.xms.xtrakernelmanager.ui.screens.home.HomeScreen
 import id.xms.xtrakernelmanager.ui.screens.donation.DonationScreen
 import id.xms.xtrakernelmanager.ui.screens.home.components.material.PowerMenuContent
 import id.xms.xtrakernelmanager.ui.screens.info.InfoScreen
+import id.xms.xtrakernelmanager.ui.screens.info.SystemInfoScreen
 import id.xms.xtrakernelmanager.ui.screens.webview.MaterialWebViewScreen
 import id.xms.xtrakernelmanager.ui.screens.webview.FrostedWebViewScreen
 import id.xms.xtrakernelmanager.ui.screens.settings.SettingsScreen
@@ -526,7 +527,15 @@ fun Navigation(
           InfoScreen(
               preferencesManager = preferencesManager,
               onNavigateToWebView = { navController.navigate("webview") },
-              onNavigateToLicense = { navController.navigate("license_webview") }
+              onNavigateToLicense = { navController.navigate("license_webview") },
+              onNavigateToSystemInfo = { navController.navigate("system_info") }
+          )
+        }
+        
+        composable("system_info") {
+          SystemInfoScreen(
+              layoutStyle = layoutStyle,
+              onNavigateBack = { navController.popBackStack() }
           )
         }
         

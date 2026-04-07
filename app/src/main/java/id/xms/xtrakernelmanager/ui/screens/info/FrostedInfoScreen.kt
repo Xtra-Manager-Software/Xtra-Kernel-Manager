@@ -12,7 +12,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -146,7 +149,8 @@ private val teamMembers =
 @Composable
 fun FrostedInfoScreen(
     onNavigateToWebView: () -> Unit = {},
-    onNavigateToLicense: () -> Unit = {}
+    onNavigateToLicense: () -> Unit = {},
+    onNavigateToSystemInfo: () -> Unit = {}
 ) {
     val uriHandler = LocalUriHandler.current
     
@@ -184,7 +188,7 @@ fun FrostedInfoScreen(
             ) {
                 // Hero Card - ColorOS Style
                 item {
-                    ColorOSHeroCard()
+                    ColorOSHeroCard(onClick = onNavigateToSystemInfo)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
@@ -281,11 +285,12 @@ fun FrostedInfoScreen(
 
 // ColorOS Style Hero Card
 @Composable
-private fun ColorOSHeroCard() {
+private fun ColorOSHeroCard(onClick: () -> Unit = {}) {
     GlassmorphicCard(
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp),
+            .height(300.dp)
+            .clickable(onClick = onClick),
         contentPadding = PaddingValues(0.dp)
     ) {
         Box(

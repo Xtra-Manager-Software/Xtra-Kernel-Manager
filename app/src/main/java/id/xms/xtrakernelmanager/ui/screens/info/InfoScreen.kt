@@ -44,26 +44,30 @@ import kotlinx.coroutines.delay
 fun InfoScreen(
     preferencesManager: id.xms.xtrakernelmanager.data.preferences.PreferencesManager,
     onNavigateToWebView: () -> Unit = {},
-    onNavigateToLicense: () -> Unit = {}
+    onNavigateToLicense: () -> Unit = {},
+    onNavigateToSystemInfo: () -> Unit = {}
 ) {
   val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "frosted")
   when (layoutStyle) {
     "material" -> {
       MaterialAboutScreen(
           onNavigateToWebView = onNavigateToWebView,
-          onNavigateToLicense = onNavigateToLicense
+          onNavigateToLicense = onNavigateToLicense,
+          onNavigateToSystemInfo = onNavigateToSystemInfo
       )
     }
     "classic" -> {
       ClassicInfoScreen(
           onNavigateToWebView = onNavigateToWebView,
-          onNavigateToLicense = onNavigateToLicense
+          onNavigateToLicense = onNavigateToLicense,
+          onNavigateToSystemInfo = onNavigateToSystemInfo
       )
     }
     else -> {
       FrostedInfoScreen(
           onNavigateToWebView = onNavigateToWebView,
-          onNavigateToLicense = onNavigateToLicense
+          onNavigateToLicense = onNavigateToLicense,
+          onNavigateToSystemInfo = onNavigateToSystemInfo
       )
     }
   }

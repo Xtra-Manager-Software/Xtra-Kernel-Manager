@@ -2,6 +2,7 @@ package id.xms.xtrakernelmanager.ui.screens.info
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -143,7 +144,8 @@ private val teamMembers =
 @Composable
 fun MaterialAboutScreen(
     onNavigateToWebView: () -> Unit = {},
-    onNavigateToLicense: () -> Unit = {}
+    onNavigateToLicense: () -> Unit = {},
+    onNavigateToSystemInfo: () -> Unit = {}
 ) {
   val uriHandler = LocalUriHandler.current
 
@@ -177,7 +179,7 @@ fun MaterialAboutScreen(
     ) {
       // Hero Card - ColorOS Style
       item {
-        MaterialColorOSHeroCard()
+        MaterialColorOSHeroCard(onClick = onNavigateToSystemInfo)
         Spacer(modifier = Modifier.height(16.dp))
       }
 
@@ -284,7 +286,7 @@ private fun SectionHeader(title: String) {
 
 // ColorOS Style Hero Card for Material Theme
 @Composable
-private fun MaterialColorOSHeroCard() {
+private fun MaterialColorOSHeroCard(onClick: () -> Unit = {}) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -292,7 +294,8 @@ private fun MaterialColorOSHeroCard() {
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        ),
+        onClick = onClick
     ) {
         Box(
             modifier = Modifier

@@ -144,7 +144,8 @@ private val teamMembers =
 @Composable
 fun ClassicInfoScreen(
     onNavigateToWebView: () -> Unit = {},
-    onNavigateToLicense: () -> Unit = {}
+    onNavigateToLicense: () -> Unit = {},
+    onNavigateToSystemInfo: () -> Unit = {}
 ) {
     val uriHandler = LocalUriHandler.current
 
@@ -177,7 +178,7 @@ fun ClassicInfoScreen(
             ) {
                 // Hero Card
                 item {
-                    ClassicHeroCard()
+                    ClassicHeroCard(onClick = onNavigateToSystemInfo)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
@@ -273,11 +274,12 @@ fun ClassicInfoScreen(
 }
 
 @Composable
-private fun ClassicHeroCard() {
+private fun ClassicHeroCard(onClick: () -> Unit = {}) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp),
+            .height(300.dp)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         color = ClassicColors.SurfaceContainerHigh
     ) {
