@@ -23,6 +23,7 @@ import id.xms.xtrakernelmanager.ui.screens.misc.section.DisplaySection
 import id.xms.xtrakernelmanager.ui.screens.misc.section.GameControlSection
 import id.xms.xtrakernelmanager.ui.screens.misc.material.MaterialMiscScreen
 import id.xms.xtrakernelmanager.ui.screens.misc.frosted.FrostedMiscScreen
+import id.xms.xtrakernelmanager.ui.screens.misc.classic.ClassicMiscScreen
 
 @Composable
 fun MiscScreen(
@@ -34,18 +35,28 @@ fun MiscScreen(
   val layoutStyle by viewModel.layoutStyle.collectAsState()
 
   // Switch between designs
-  if (layoutStyle == "material") {
-    MaterialMiscScreen(
-        viewModel = viewModel,
-        onNavigate = { route ->
-          when (route) {
-            "functionalrom" -> onNavigateToFunctionalRom()
-            "app_picker" -> onNavigateToAppPicker()
-          }
-        },
-    )
-  } else {
-    FrostedMiscScreen(viewModel, onNavigateToFunctionalRom, onNavigateToAppPicker)
+  when (layoutStyle) {
+    "material" -> {
+      MaterialMiscScreen(
+          viewModel = viewModel,
+          onNavigate = { route ->
+            when (route) {
+              "functionalrom" -> onNavigateToFunctionalRom()
+              "app_picker" -> onNavigateToAppPicker()
+            }
+          },
+      )
+    }
+    "classic" -> {
+      ClassicMiscScreen(
+          viewModel = viewModel,
+          onNavigateToFunctionalRom = onNavigateToFunctionalRom,
+          onNavigateToAppPicker = onNavigateToAppPicker
+      )
+    }
+    else -> {
+      FrostedMiscScreen(viewModel, onNavigateToFunctionalRom, onNavigateToAppPicker)
+    }
   }
 }
 
