@@ -206,7 +206,7 @@ fun Navigation(
       navController.navigate("home") { popUpTo("setup") { inclusive = true } }
     }
   }
-  val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "liquid")
+  val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "frosted")
 
   // Shared FunctionalRomViewModel - created once and reused across all related screens
   // to prevent state flickering when navigating between functionalrom, shimokurom, and hideaccessibilitysettings
@@ -223,16 +223,22 @@ fun Navigation(
           startDestination = startDest,
           modifier = Modifier
               .padding(paddingValues)
-              .padding(bottom = if (layoutStyle == "liquid") 0.dp else 0.dp),
+              .padding(bottom = if (layoutStyle == "frosted") 0.dp else 0.dp),
       ) {
         composable("setup") {
           SetupScreen(
               onSetupComplete = { layoutStyle ->
                 scope.launch {
+                  // Save layout style and setup complete flag
                   preferencesManager.setLayoutStyle(layoutStyle)
                   preferencesManager.setSetupComplete(true)
+                  
+                  // Wait a bit to ensure preferences are saved
+                  kotlinx.coroutines.delay(100)
+                  
+                  // Navigate to home after preferences are saved
+                  navController.navigate("home") { popUpTo("setup") { inclusive = true } }
                 }
-                navController.navigate("home") { popUpTo("setup") { inclusive = true } }
               }
           )
         }
@@ -525,7 +531,7 @@ fun Navigation(
         }
         
         composable("webview") {
-          if (layoutStyle == "liquid") {
+          if (layoutStyle == "frosted") {
             FrostedWebViewScreen(
                 url = "https://xtramanagersoftwares.tech/",
                 title = "XMS Website",
@@ -541,7 +547,7 @@ fun Navigation(
         }
         
         composable("license_webview") {
-          if (layoutStyle == "liquid") {
+          if (layoutStyle == "frosted") {
             FrostedWebViewScreen(
                 url = "https://raw.githubusercontent.com/Xtra-Computing/Xtra-Kernel-Manager/main/LICENSE",
                 title = "MIT License",
@@ -585,7 +591,7 @@ fun Navigation(
         }
       }
 
-      if (layoutStyle == "liquid") {
+      if (layoutStyle == "frosted") {
         val isDark = isSystemInDarkTheme()
         val contentColor = if (isDark) androidx.compose.ui.graphics.Color.White 
                            else androidx.compose.ui.graphics.Color.Black
@@ -640,7 +646,7 @@ fun Navigation(
     }
 
     // Power Menu Bottom Sheet for Material theme
-    if (layoutStyle != "liquid" && layoutStyle != "classic" && showPowerBottomSheet) {
+    if (layoutStyle != "frosted" && layoutStyle != "classic" && showPowerBottomSheet) {
       ModalBottomSheet(
           onDismissRequest = { showPowerBottomSheet = false },
           containerColor = MaterialTheme.colorScheme.surface,

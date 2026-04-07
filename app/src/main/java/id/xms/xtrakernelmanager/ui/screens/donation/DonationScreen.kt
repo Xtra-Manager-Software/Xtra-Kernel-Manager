@@ -20,7 +20,7 @@ fun DonationScreen(
 
     when (layoutStyle) {
         "classic" -> ClassicDonationScreen(onNavigateBack = onNavigateBack)
-        "liquid" -> FrostedDonationScreen(onNavigateBack = onNavigateBack)
+        "frosted" -> FrostedDonationScreen(onNavigateBack = onNavigateBack)
         else -> MaterialDonationScreen(onNavigateBack = onNavigateBack)
     }
 }

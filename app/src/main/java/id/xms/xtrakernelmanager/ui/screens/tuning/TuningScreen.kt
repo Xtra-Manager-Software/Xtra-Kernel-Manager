@@ -56,7 +56,7 @@ fun TuningScreen(preferencesManager: PreferencesManager, onNavigate: (String) ->
   val isLoading by viewModel.isLoading.collectAsState()
 
   val lifecycleOwner = LocalLifecycleOwner.current
-  val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "liquid")
+  val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "frosted")
   var resumeKey by remember { mutableStateOf(0) }
   var showExportDialog by remember { mutableStateOf(false) }
   var showImportDialog by remember { mutableStateOf(false) }
@@ -169,7 +169,7 @@ fun TuningScreen(preferencesManager: PreferencesManager, onNavigate: (String) ->
            onExportConfig = { showExportDialog = true },
            onImportConfig = { showImportDialog = true }
        )
-    } else if (layoutStyle != "liquid") {
+    } else if (layoutStyle != "frosted") {
       MaterialTuningScreen(
           viewModel = viewModel,
           preferencesManager = preferencesManager,

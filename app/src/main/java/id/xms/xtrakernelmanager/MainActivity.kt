@@ -89,12 +89,12 @@ class MainActivity : ComponentActivity() {
     id.xms.xtrakernelmanager.utils.DonationReminderScheduler.scheduleDonationReminder(this)
     
     setContent {
-      val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "liquid")
+      val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "frosted")
       
       // XKM default dark mode only
       XtraKernelManagerTheme(
         darkTheme = true,
-        dynamicColor = layoutStyle != "liquid"
+        dynamicColor = layoutStyle != "frosted"
       ) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
           Navigation(

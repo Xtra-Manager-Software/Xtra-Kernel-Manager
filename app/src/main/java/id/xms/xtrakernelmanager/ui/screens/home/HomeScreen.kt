@@ -92,7 +92,7 @@ fun HomeScreen(
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
 
-        val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "liquid")
+        val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "frosted")
 
         // Data State
         val cpuInfo by viewModel.cpuInfo.collectAsState()

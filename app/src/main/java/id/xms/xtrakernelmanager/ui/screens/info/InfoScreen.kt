@@ -46,7 +46,7 @@ fun InfoScreen(
     onNavigateToWebView: () -> Unit = {},
     onNavigateToLicense: () -> Unit = {}
 ) {
-  val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "liquid")
+  val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "frosted")
   when (layoutStyle) {
     "material" -> {
       MaterialAboutScreen(

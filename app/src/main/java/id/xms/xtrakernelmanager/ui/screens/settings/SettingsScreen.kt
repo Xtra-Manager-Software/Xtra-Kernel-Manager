@@ -28,7 +28,7 @@ fun SettingsScreen(
             onNavigateBack = onNavigateBack,
             onNavigateToDonation = onNavigateToDonation
         )
-        "liquid" -> FrostedSettingsContent(
+        "frosted" -> FrostedSettingsContent(
             preferencesManager = preferencesManager,
             currentLayout = layoutStyle,
             onNavigateBack = onNavigateBack,

@@ -9,10 +9,7 @@ import id.xms.xtrakernelmanager.ui.components.donation.ClassicDonationDialog
 import id.xms.xtrakernelmanager.ui.components.donation.FrostedDonationDialog
 import id.xms.xtrakernelmanager.ui.components.donation.MaterialDonationDialog
 
-/**
- * Wrapper for donation dialog that selects the appropriate style
- * based on the current layout preference
- */
+
 @Composable
 fun DonationDialog(
     onDismiss: () -> Unit,
@@ -27,7 +24,7 @@ fun DonationDialog(
             onDismiss = onDismiss,
             onSupportClick = onSupportClick
         )
-        "liquid" -> FrostedDonationDialog(
+        "frosted" -> FrostedDonationDialog(
             onDismiss = onDismiss,
             onSupportClick = onSupportClick
         )

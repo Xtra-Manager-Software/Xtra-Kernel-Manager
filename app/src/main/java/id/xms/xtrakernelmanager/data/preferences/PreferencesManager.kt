@@ -510,7 +510,7 @@ class PreferencesManager(private val context: Context) {
 
   fun getLayoutStyle(): Flow<String> =
       context.dataStore.data.map { prefs -> 
-          prefs[LAYOUT_STYLE] ?: if (android.os.Build.VERSION.SDK_INT < 31) "classic" else "liquid" 
+          prefs[LAYOUT_STYLE] ?: if (android.os.Build.VERSION.SDK_INT < 31) "classic" else "frosted" 
       }
       
   fun isLayoutSwitching(): Flow<Boolean> =

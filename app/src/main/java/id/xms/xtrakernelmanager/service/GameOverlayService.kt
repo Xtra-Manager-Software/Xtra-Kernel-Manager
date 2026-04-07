@@ -290,9 +290,9 @@ class GameOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
           setViewTreeLifecycleOwner(this@GameOverlayService)
           setViewTreeSavedStateRegistryOwner(this@GameOverlayService)
           setContent { 
-            val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "liquid")
+            val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "frosted")
             when (layoutStyle) {
-              "liquid" -> FrostedGameOverlayTheme { GameOverlayContent() }
+              "frosted" -> FrostedGameOverlayTheme { GameOverlayContent() }
               "classic" -> ClassicGameOverlayTheme { GameOverlayContent() }
               else -> GameOverlayTheme { GameOverlayContent() }
             }
@@ -306,13 +306,13 @@ class GameOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
   private fun GameOverlayContent() {
     val context = LocalContext.current
     val isFpsEnabled by viewModel.isFpsEnabled.collectAsState()
-    val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "liquid")
-    val isLiquidUI = layoutStyle == "liquid"
+    val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "frosted")
+    val isFrostedUI = layoutStyle == "frosted"
     val isClassicUI = layoutStyle == "classic"
 
     Box(modifier = Modifier.wrapContentSize(), contentAlignment = Alignment.TopStart) {
       if (isExpanded) {
-        if (isLiquidUI) {
+        if (isFrostedUI) {
           FrostedGamePanelCard(
               viewModel = viewModel,
               isFpsEnabled = isFpsEnabled,
@@ -454,7 +454,7 @@ class GameOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
       } else {
         val fpsVal by viewModel.fpsValue.collectAsState()
 
-        if (isLiquidUI) {
+        if (isFrostedUI) {
           FrostedGameSidebar(
               isExpanded = isExpanded,
               overlayOnRight = isOverlayOnRight,

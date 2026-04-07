@@ -121,7 +121,7 @@ class MiscViewModel(
   val layoutStyle =
       preferencesManager
           .getLayoutStyle()
-          .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "liquid")
+          .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "frosted")
 
   private val _saturationApplyStatus = MutableStateFlow("")
   val saturationApplyStatus: StateFlow<String> = _saturationApplyStatus.asStateFlow()

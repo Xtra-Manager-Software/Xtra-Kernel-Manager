@@ -260,14 +260,14 @@ fun FrostedSettingsContent(
                             FrostedThemeCard(
                                 title = stringResource(R.string.settings_layout_frosted),
                                 subtitle = stringResource(R.string.settings_layout_frosted_desc),
-                                isSelected = currentLayout == "liquid",
+                                isSelected = currentLayout == "frosted",
                                 isEnabled = isAndroid10Plus,
                                 previewContent = { FrostedPreview() },
                                 onClick = {
                                     if (isAndroid10Plus) {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         scope.launch {
-                                            preferencesManager.setLayoutStyle("liquid")
+                                            preferencesManager.setLayoutStyle("frosted")
                                             onNavigateBack()
                                         }
                                     }

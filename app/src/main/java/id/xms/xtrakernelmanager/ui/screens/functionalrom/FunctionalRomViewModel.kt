@@ -89,7 +89,7 @@ class FunctionalRomViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = "liquid"
+            initialValue = "frosted"
         )
 
   companion object {

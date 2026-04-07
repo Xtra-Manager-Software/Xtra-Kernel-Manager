@@ -23,6 +23,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import id.xms.xtrakernelmanager.ui.screens.misc.components.GameMonitorViewModel
 import java.text.SimpleDateFormat
@@ -30,26 +31,28 @@ import java.util.*
 import kotlinx.coroutines.delay
 
 /**
- * Frosted Game Overlay Theme - Light Mode Glassmorphism
- * Using iOS-style blue as primary color
+ * Frosted Game Overlay Theme - Dark Mode Glassmorphism
+ * Using dark theme with white text
  */
 @Composable
 fun FrostedGameOverlayTheme(content: @Composable () -> Unit) {
-  val colorScheme = lightColorScheme(
-      primary = Color(0xFF007AFF), // iOS Blue
-      secondary = Color(0xFF8B5CF6), // Purple
-      tertiary = Color(0xFFEC4899), // Pink
-      surface = Color.White.copy(alpha = 0.3f),
-      surfaceContainer = Color.White.copy(alpha = 0.25f),
-      surfaceContainerHigh = Color.White.copy(alpha = 0.35f),
+  val colorScheme = darkColorScheme(
+      primary = Color(0xFF38BDF8), // Cyan
+      secondary = Color(0xFFA78BFA), // Purple
+      tertiary = Color(0xFFF472B6), // Pink
+      surface = Color.White.copy(alpha = 0.1f),
+      surfaceContainer = Color.White.copy(alpha = 0.08f),
+      surfaceContainerHigh = Color.White.copy(alpha = 0.12f),
       background = Color.Transparent,
+      onSurface = Color.White,
+      onSurfaceVariant = Color.White.copy(alpha = 0.7f)
   )
 
   MaterialTheme(colorScheme = colorScheme, typography = Typography(), content = content)
 }
 
 /**
- * Frosted Game Sidebar - Glassmorphism Light Mode
+ * Frosted Game Sidebar - Glassmorphism Dark Mode
  */
 @Composable
 fun FrostedGameSidebar(
@@ -62,8 +65,7 @@ fun FrostedGameSidebar(
     onDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-  val pillColor = Color.White.copy(alpha = 0.35f)
-  val contentColor = Color(0xFF007AFF) // iOS Blue
+  val contentColor = Color.White
 
   val shape = if (isDockedToEdge) {
       if (overlayOnRight) {
@@ -75,10 +77,10 @@ fun FrostedGameSidebar(
       CircleShape
   }
 
-  val width = if (isDockedToEdge) 56.dp else 44.dp
-  val height = if (isDockedToEdge) 40.dp else 44.dp
+  val width = if (isDockedToEdge) 72.dp else 52.dp
+  val height = if (isDockedToEdge) 48.dp else 52.dp
 
-  GlassmorphicCardLight(
+  id.xms.xtrakernelmanager.ui.components.GlassmorphicCard(
       modifier = modifier
           .width(width)
           .height(height)
@@ -96,33 +98,27 @@ fun FrostedGameSidebar(
           ) {
             onToggleExpand()
           },
-      cornerRadius = if (isDockedToEdge) 20.dp else 22.dp,
-      backgroundColor = pillColor,
-      borderColor = Color.White.copy(alpha = 0.6f),
+      shape = shape,
   ) {
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+    Box(
+        contentAlignment = Alignment.Center, 
+        modifier = Modifier.fillMaxSize()
+    ) {
       if (fps != null) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.Black.copy(alpha = 0.3f))
-                .padding(horizontal = 6.dp, vertical = 2.dp)
-        ) {
-          Text(
-              text = fps,
-              color = Color.White,
-              style = MaterialTheme.typography.labelSmall,
-              fontWeight = FontWeight.Bold,
-              fontSize = 13.sp,
-              maxLines = 1,
-          )
-        }
+        Text(
+            text = fps,
+            color = Color.White,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Black,
+            fontSize = 14.sp,
+            maxLines = 1
+        )
       } else {
         Icon(
             imageVector = Icons.Rounded.SportsEsports,
             contentDescription = "Expand",
             tint = contentColor,
-            modifier = Modifier.size(22.dp),
+            modifier = Modifier.size(24.dp),
         )
       }
     }
@@ -130,7 +126,7 @@ fun FrostedGameSidebar(
 }
 
 /**
- * Frosted Game Panel Card - Glassmorphism Light Mode
+ * Frosted Game Panel Card - Glassmorphism Dark Mode
  */
 @Composable
 fun FrostedGamePanelCard(
@@ -157,20 +153,12 @@ fun FrostedGamePanelCard(
   val cpuLoad by viewModel.cpuLoad.collectAsStateWithLifecycle()
   val gpuLoad by viewModel.gpuLoad.collectAsStateWithLifecycle()
 
-  GlassmorphicCardLightGradient(
+  id.xms.xtrakernelmanager.ui.components.GlassmorphicCard(
       modifier = modifier
           .width(320.dp)
           .wrapContentHeight()
           .padding(8.dp),
-      cornerRadius = 32.dp,
-      backgroundColor = Color.White.copy(alpha = 0.3f),
-      borderGradient = Brush.linearGradient(
-          colors = listOf(
-              Color.White.copy(alpha = 0.7f),
-              Color.White.copy(alpha = 0.4f),
-              Color.White.copy(alpha = 0.7f)
-          )
-      ),
+      shape = RoundedCornerShape(32.dp),
   ) {
     Column(
         modifier = Modifier.padding(20.dp),
@@ -239,8 +227,8 @@ private fun FrostedGameHeaderWithTools(
           text = time,
           style = MaterialTheme.typography.headlineMedium,
           fontWeight = FontWeight.Black,
-          color = Color(0xFF1E293B),
-          letterSpacing = (-1).sp,
+          color = Color.White,
+          letterSpacing = (-1).sp
       )
 
       Spacer(modifier = Modifier.weight(1f))
@@ -354,16 +342,11 @@ private fun FrostedCompactToolButton(
     isActive: Boolean,
     onClick: () -> Unit,
 ) {
-  val bgColor = if (isActive) Color.White.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.3f)
-  val iconColor = if (isActive) Color(0xFF007AFF) else Color(0xFF64748B)
-  val borderColor = if (isActive) Color.White.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.5f)
+  val iconColor = if (isActive) Color(0xFF38BDF8) else Color.White.copy(alpha = 0.7f)
 
-  GlassmorphicCardLight(
-      modifier = Modifier.size(40.dp), // Compact size
-      cornerRadius = 12.dp,
-      backgroundColor = bgColor,
-      borderColor = borderColor,
-      borderWidth = if (isActive) 2.dp else 1.5.dp,
+  id.xms.xtrakernelmanager.ui.components.GlassmorphicCard(
+      modifier = Modifier.size(40.dp),
+      shape = RoundedCornerShape(12.dp),
   ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -378,11 +361,16 @@ private fun FrostedCompactToolButton(
 
 @Composable
 private fun FrostedStatusPill(icon: ImageVector, text: String, isWarning: Boolean = false) {
-  GlassmorphicCardLight(
-      modifier = Modifier.height(32.dp),
-      cornerRadius = 16.dp,
-      backgroundColor = if (isWarning) Color(0xFFFEE2E2).copy(alpha = 0.5f) else Color(0xFFDCFCE7).copy(alpha = 0.5f),
-      borderColor = if (isWarning) Color(0xFFFCA5A5).copy(alpha = 0.6f) else Color(0xFF86EFAC).copy(alpha = 0.6f),
+  Box(
+      modifier = Modifier
+          .height(32.dp)
+          .clip(RoundedCornerShape(16.dp))
+          .background(
+              if (isWarning) 
+                  Color(0xFFDC2626).copy(alpha = 0.9f) 
+              else 
+                  Color(0xFF16A34A).copy(alpha = 0.9f)
+          )
   ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -394,14 +382,14 @@ private fun FrostedStatusPill(icon: ImageVector, text: String, isWarning: Boolea
           icon, 
           null, 
           modifier = Modifier.size(14.dp),
-          tint = if (isWarning) Color(0xFFDC2626) else Color(0xFF16A34A)
+          tint = Color.White
       )
       Spacer(modifier = Modifier.width(6.dp))
       Text(
           text, 
           style = MaterialTheme.typography.labelMedium, 
           fontWeight = FontWeight.Bold,
-          color = if (isWarning) Color(0xFFDC2626) else Color(0xFF16A34A),
+          color = Color.White,
           fontSize = 13.sp
       )
     }
@@ -414,27 +402,25 @@ private fun FrostedPerformanceBento(fps: String, cpu: Float, gpu: Float) {
       modifier = Modifier.fillMaxWidth().height(90.dp),
       horizontalArrangement = Arrangement.spacedBy(10.dp),
   ) {
-    // FPS Card - iOS Blue dengan background hitam untuk angka
-    GlassmorphicCardLightGradient(
+    // FPS Card - Cyan dengan background hitam untuk angka
+    id.xms.xtrakernelmanager.ui.components.GlassmorphicCard(
         modifier = Modifier.weight(1.3f).fillMaxHeight(),
-        cornerRadius = 24.dp,
-        backgroundColor = Color(0xFF007AFF).copy(alpha = 0.15f),
-        borderGradient = Brush.linearGradient(
-            colors = listOf(
-                Color(0xFF007AFF).copy(alpha = 0.5f),
-                Color(0xFF0051D5).copy(alpha = 0.5f)
-            )
-        ),
+        shape = RoundedCornerShape(24.dp),
     ) {
-      Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+      Box(
+          contentAlignment = Alignment.Center, 
+          modifier = Modifier.fillMaxSize()
+      ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
           val fpsVal = fps.toFloatOrNull()?.toInt() ?: 60
-          // FPS number dengan background hitam semi-transparan
+          // FPS number dengan background hitam solid
           Box(
               modifier = Modifier
                   .clip(RoundedCornerShape(12.dp))
-                  .background(Color.Black.copy(alpha = 0.3f))
-                  .padding(horizontal = 12.dp, vertical = 4.dp)
+                  .background(Color.Black.copy(alpha = 0.7f))
+                  .padding(horizontal = 16.dp, vertical = 6.dp)
           ) {
             Text(
                 text = "$fpsVal",
@@ -445,68 +431,108 @@ private fun FrostedPerformanceBento(fps: String, cpu: Float, gpu: Float) {
                 fontSize = 36.sp
             )
           }
-          Spacer(modifier = Modifier.height(4.dp))
-          Text(
-              text = "FPS",
-              style = MaterialTheme.typography.labelMedium,
-              fontWeight = FontWeight.Bold,
-              color = Color(0xFF007AFF).copy(alpha = 0.7f),
-              fontSize = 12.sp
-          )
+          Spacer(modifier = Modifier.height(6.dp))
+          // Label FPS dengan background
+          Box(
+              modifier = Modifier
+                  .clip(RoundedCornerShape(8.dp))
+                  .background(Color.Black.copy(alpha = 0.6f))
+                  .padding(horizontal = 10.dp, vertical = 3.dp)
+          ) {
+            Text(
+                text = "FPS",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF38BDF8),
+                fontSize = 13.sp
+            )
+          }
         }
       }
     }
 
-    // Load Stats
+    // Load Stats - CPU & GPU
     Column(
-        modifier = Modifier.weight(1f).fillMaxHeight(),
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxHeight(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-      FrostedLoadChip(
-          label = "CPU",
-          value = cpu,
-          color = Color(0xFFEC4899),
-          modifier = Modifier.weight(1f),
-      )
-      FrostedLoadChip(
-          label = "GPU",
-          value = gpu,
-          color = Color(0xFF8B5CF6),
-          modifier = Modifier.weight(1f),
-      )
-    }
-  }
-}
-
-@Composable
-private fun FrostedLoadChip(label: String, value: Float, color: Color, modifier: Modifier = Modifier) {
-  GlassmorphicCardLight(
-      modifier = modifier.fillMaxWidth(),
-      cornerRadius = 16.dp,
-      backgroundColor = Color.White.copy(alpha = 0.4f),
-      borderColor = Color.White.copy(alpha = 0.6f),
-  ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-      Text(
-          label, 
-          style = MaterialTheme.typography.labelMedium, 
-          color = Color(0xFF64748B),
-          fontWeight = FontWeight.SemiBold,
-          fontSize = 12.sp
-      )
-      Text(
-          "${value.toInt()}%",
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold,
-          color = color,
-          fontSize = 16.sp
-      )
+      // CPU Card
+      Box(
+          modifier = Modifier
+              .fillMaxWidth()
+              .weight(1f)
+              .clip(RoundedCornerShape(16.dp))
+              .background(
+                  Brush.horizontalGradient(
+                      colors = listOf(
+                          Color.White.copy(alpha = 0.15f),
+                          Color.White.copy(alpha = 0.1f)
+                      )
+                  )
+              ),
+          contentAlignment = Alignment.Center
+      ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+          Text(
+              "CPU", 
+              style = MaterialTheme.typography.labelSmall, 
+              color = Color.White,
+              fontWeight = FontWeight.Bold,
+              fontSize = 10.sp
+          )
+          Spacer(modifier = Modifier.height(2.dp))
+          Text(
+              "${cpu.toInt()}%",
+              style = MaterialTheme.typography.titleSmall,
+              fontWeight = FontWeight.Black,
+              color = Color(0xFFF472B6),
+              fontSize = 16.sp
+          )
+        }
+      }
+      
+      // GPU Card
+      Box(
+          modifier = Modifier
+              .fillMaxWidth()
+              .weight(1f)
+              .clip(RoundedCornerShape(16.dp))
+              .background(
+                  Brush.horizontalGradient(
+                      colors = listOf(
+                          Color.White.copy(alpha = 0.15f),
+                          Color.White.copy(alpha = 0.1f)
+                      )
+                  )
+              ),
+          contentAlignment = Alignment.Center
+      ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+          Text(
+              "GPU", 
+              style = MaterialTheme.typography.labelSmall, 
+              color = Color.White,
+              fontWeight = FontWeight.Bold,
+              fontSize = 10.sp
+          )
+          Spacer(modifier = Modifier.height(2.dp))
+          Text(
+              "${gpu.toInt()}%",
+              style = MaterialTheme.typography.titleSmall,
+              fontWeight = FontWeight.Black,
+              color = Color(0xFFA78BFA),
+              fontSize = 16.sp
+          )
+        }
+      }
     }
   }
 }
@@ -515,16 +541,14 @@ private fun FrostedLoadChip(label: String, value: Float, color: Color, modifier:
 private fun FrostedModeSelector(viewModel: GameMonitorViewModel) {
   val currentMode by viewModel.currentPerformanceMode.collectAsStateWithLifecycle()
   val modes = listOf(
-      "powersave" to "Power Save",
+      "powersave" to "Power",
       "balanced" to "Balance",
-      "performance" to "Performance"
+      "performance" to "Perform"
   )
 
-  GlassmorphicCardLight(
+  id.xms.xtrakernelmanager.ui.components.GlassmorphicCard(
       modifier = Modifier.fillMaxWidth().height(50.dp),
-      cornerRadius = 25.dp,
-      backgroundColor = Color.White.copy(alpha = 0.35f),
-      borderColor = Color.White.copy(alpha = 0.6f),
+      shape = RoundedCornerShape(25.dp),
   ) {
     Row(
         modifier = Modifier.fillMaxSize().padding(4.dp),
@@ -533,7 +557,7 @@ private fun FrostedModeSelector(viewModel: GameMonitorViewModel) {
       modes.forEach { (modeKey, modeLabel) ->
         val isSelected = currentMode == modeKey
         val animatedColor by animateColorAsState(
-            if (isSelected) Color.White.copy(alpha = 0.8f) else Color.Transparent
+            if (isSelected) Color.White.copy(alpha = 0.2f) else Color.Transparent
         )
 
         Box(
@@ -547,11 +571,11 @@ private fun FrostedModeSelector(viewModel: GameMonitorViewModel) {
         ) {
           Text(
               text = modeLabel,
-              style = MaterialTheme.typography.labelMedium,
+              style = MaterialTheme.typography.labelSmall,
               fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-              color = if (isSelected) Color(0xFF1E293B) else Color(0xFF64748B),
+              color = if (isSelected) Color.White else Color.White.copy(alpha = 0.6f),
               maxLines = 1,
-              fontSize = 12.sp
+              fontSize = 11.sp
           )
         }
       }
@@ -572,11 +596,9 @@ private fun FrostedBrightnessControl(viewModel: GameMonitorViewModel) {
     }
   }
 
-  GlassmorphicCardLight(
+  id.xms.xtrakernelmanager.ui.components.GlassmorphicCard(
       modifier = Modifier.fillMaxWidth().height(46.dp),
-      cornerRadius = 23.dp,
-      backgroundColor = Color.White.copy(alpha = 0.35f),
-      borderColor = Color.White.copy(alpha = 0.6f),
+      shape = RoundedCornerShape(23.dp),
   ) {
     Box(contentAlignment = Alignment.CenterStart) {
       // Track Fill
@@ -587,15 +609,37 @@ private fun FrostedBrightnessControl(viewModel: GameMonitorViewModel) {
               .background(
                   Brush.horizontalGradient(
                       colors = listOf(
-                          Color(0xFFFBBF24).copy(alpha = 0.4f),
-                          Color(0xFFF59E0B).copy(alpha = 0.5f)
+                          Color(0xFFFBBF24).copy(alpha = 0.3f),
+                          Color(0xFFF59E0B).copy(alpha = 0.4f)
                       )
                   ),
                   RoundedCornerShape(23.dp)
               )
       )
 
-      // Slider
+      // Icons (non-interactive, behind slider)
+      Row(
+          modifier = Modifier
+              .fillMaxWidth()
+              .padding(horizontal = 14.dp),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Icon(
+            Icons.Rounded.BrightnessLow,
+            null,
+            tint = Color.White.copy(alpha = 0.6f),
+            modifier = Modifier.size(18.dp),
+        )
+        Icon(
+            Icons.Rounded.BrightnessHigh,
+            null,
+            tint = Color.White,
+            modifier = Modifier.size(18.dp),
+        )
+      }
+
+      // Slider (on top, interactive)
       Slider(
           value = displayValue,
           onValueChange = { 
@@ -613,25 +657,6 @@ private fun FrostedBrightnessControl(viewModel: GameMonitorViewModel) {
           ),
           modifier = Modifier.fillMaxWidth(),
       )
-
-      Row(
-          modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Icon(
-            Icons.Rounded.BrightnessLow,
-            null,
-            tint = Color(0xFF64748B),
-            modifier = Modifier.size(18.dp),
-        )
-        Icon(
-            Icons.Rounded.BrightnessHigh,
-            null,
-            tint = Color(0xFF1E293B),
-            modifier = Modifier.size(18.dp),
-        )
-      }
     }
   }
 }
