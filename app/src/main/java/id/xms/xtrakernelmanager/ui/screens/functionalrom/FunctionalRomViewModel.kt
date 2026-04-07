@@ -78,6 +78,10 @@ data class FunctionalRomUiState(
     
     // Hide Accessibility Service (Universal - moved from Misc)
     val hideAccessibilityConfig: HideAccessibilityConfig = HideAccessibilityConfig(),
+
+    // SELinux
+    val seLinuxMode: String = "Enforcing",  // "Enforcing" or "Permissive"
+    val showSeLinuxWarningDialog: Boolean = false,
 )
 
 class FunctionalRomViewModel(
@@ -192,6 +196,17 @@ class FunctionalRomViewModel(
         val savedChargingLimitValue =
             preferencesManager.getFunctionalRomChargingLimitValue().first()
 
+        // Read current SELinux mode
+        val seLinuxMode = try {
+          val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "getenforce"))
+          val result = process.inputStream.bufferedReader().readText().trim()
+          process.waitFor()
+          if (result.equals("Permissive", ignoreCase = true)) "Permissive" else "Enforcing"
+        } catch (e: Exception) {
+          Log.w(TAG, "Could not read SELinux mode: ${e.message}")
+          "Enforcing"
+        }
+
         _uiState.update { state ->
           state.copy(
               isLoading = false,
@@ -236,6 +251,7 @@ class FunctionalRomViewModel(
               fixDt2wEnabled = fixDt2wModuleInstalled,
               fixDt2wStep = fixDt2wStep,
               smartChargingEnabled = smartChargingState,
+              seLinuxMode = seLinuxMode,
           )
         }
       } catch (e: Exception) {
@@ -581,6 +597,35 @@ class FunctionalRomViewModel(
   fun setSmartCharging(enabled: Boolean) {
     _uiState.update { it.copy(smartChargingEnabled = enabled) }
     viewModelScope.launch { preferencesManager.setFunctionalRomSmartCharging(enabled) }
+  }
+
+  // ==================== SELinux ====================
+
+  fun showSeLinuxWarningDialog() {
+    _uiState.update { it.copy(showSeLinuxWarningDialog = true) }
+  }
+
+  fun dismissSeLinuxWarningDialog() {
+    _uiState.update { it.copy(showSeLinuxWarningDialog = false) }
+  }
+
+  fun setSeLinuxMode(mode: String) {
+    _uiState.update { it.copy(showSeLinuxWarningDialog = false) }
+    viewModelScope.launch {
+      try {
+        val arg = if (mode == "Permissive") "0" else "1"
+        val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "setenforce $arg"))
+        process.waitFor()
+        if (process.exitValue() == 0) {
+          _uiState.update { it.copy(seLinuxMode = mode) }
+          Log.d(TAG, "SELinux mode set to: $mode")
+        } else {
+          Log.e(TAG, "setenforce failed with exit code ${process.exitValue()}")
+        }
+      } catch (e: Exception) {
+        Log.e(TAG, "Failed to set SELinux mode: ${e.message}")
+      }
+    }
   }
 
   // ==================== Hide Accessibility Service (Universal Feature) ====================

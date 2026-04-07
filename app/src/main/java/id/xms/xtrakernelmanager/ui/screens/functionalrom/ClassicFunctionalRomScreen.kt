@@ -154,6 +154,61 @@ fun ClassicFunctionalRomScreen(
                 )
             }
 
+            // SELinux Mode Toggle
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = ClassicColors.SurfaceContainerHigh
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFEF5350).copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Security,
+                                contentDescription = null,
+                                tint = Color(0xFFEF5350),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "SELinux Mode",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = ClassicColors.OnSurface
+                            )
+                            Text(
+                                text = uiState.seLinuxMode,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (uiState.seLinuxMode == "Enforcing")
+                                    Color(0xFF66BB6A) else Color(0xFFFF9800)
+                            )
+                        }
+                        Switch(
+                            checked = uiState.seLinuxMode == "Permissive",
+                            onCheckedChange = { toPermissive ->
+                                if (toPermissive) viewModel.showSeLinuxWarningDialog()
+                                else viewModel.setSeLinuxMode("Enforcing")
+                            }
+                        )
+                    }
+                }
+            }
+
             // Bypass Charging Feature (Kernel-specific)
             item {
                 Text(
@@ -262,6 +317,44 @@ fun ClassicFunctionalRomScreen(
 
             item { Spacer(modifier = Modifier.height(80.dp)) }
         }
+    }
+
+    // SELinux Warning Dialog
+    if (uiState.showSeLinuxWarningDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissSeLinuxWarningDialog() },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.Security,
+                    contentDescription = null,
+                    tint = Color(0xFFEF5350),
+                    modifier = Modifier.size(32.dp)
+                )
+            },
+            title = {
+                Text("Switch to Permissive?", fontWeight = FontWeight.Bold, color = ClassicColors.OnSurface)
+            },
+            text = {
+                Text(
+                    text = "Switching SELinux to Permissive mode will allow all processes to bypass security policies without enforcement.\n\nAll risks resulting from this action — including security vulnerabilities, unauthorized access, and system instability — are entirely at your own responsibility and are outside the scope of Xtra Kernel Manager.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ClassicColors.OnSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.setSeLinuxMode("Permissive") },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF5350))
+                ) {
+                    Text("I Understand, Proceed")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissSeLinuxWarningDialog() }) {
+                    Text("Cancel", color = ClassicColors.Primary)
+                }
+            }
+        )
     }
 }
 

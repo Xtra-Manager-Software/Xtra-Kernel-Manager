@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -179,8 +180,55 @@ fun LiquidFunctionalRomScreen(
                                 icon = Icons.Default.Refresh,
                                 iconColor = Color(0xFF007AFF),
                                 onClick = onNavigateToGlobalRefreshRate,
-                                showDivider = false
+                                showDivider = true
                             )
+
+                            // SELinux Mode Toggle
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0xFFFF3B30).copy(alpha = 0.2f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Security,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFF3B30),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "SELinux Mode",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = uiState.seLinuxMode,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (uiState.seLinuxMode == "Enforcing")
+                                            Color(0xFF34C759) else Color(0xFFFF9500)
+                                    )
+                                }
+                                Switch(
+                                    checked = uiState.seLinuxMode == "Permissive",
+                                    onCheckedChange = { toPermissive ->
+                                        if (toPermissive) {
+                                            viewModel.showSeLinuxWarningDialog()
+                                        } else {
+                                            viewModel.setSeLinuxMode("Enforcing")
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
                     
@@ -292,6 +340,46 @@ fun LiquidFunctionalRomScreen(
                 }
             }
         }
+    }
+
+    // SELinux Warning Dialog
+    if (uiState.showSeLinuxWarningDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissSeLinuxWarningDialog() },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Security,
+                    contentDescription = null,
+                    tint = Color(0xFFFF3B30),
+                    modifier = Modifier.size(32.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "Switch to Permissive?",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "Switching SELinux to Permissive mode will allow all processes to bypass security policies without enforcement.\n\nAll risks resulting from this action — including security vulnerabilities, unauthorized access, and system instability — are entirely at your own responsibility and are outside the scope of Xtra Kernel Manager.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.setSeLinuxMode("Permissive") },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF3B30))
+                ) {
+                    Text("I Understand, Proceed")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissSeLinuxWarningDialog() }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
