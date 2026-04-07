@@ -194,44 +194,8 @@ private fun ClassicDisplaySettingsScreen(
     viewModel: MiscViewModel,
     onBack: () -> Unit
 ) {
-    // Reuse DisplaySection component wrapped in Classic style
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(ClassicColors.Background)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.Rounded.ArrowBack,
-                    contentDescription = "Back",
-                    tint = ClassicColors.OnSurface
-                )
-            }
-            Text(
-                text = stringResource(R.string.display_settings),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = ClassicColors.OnSurface
-            )
-        }
-        
-        // Display Section
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
-        ) {
-            id.xms.xtrakernelmanager.ui.screens.misc.section.DisplaySection(viewModel = viewModel)
-            Spacer(modifier = Modifier.height(80.dp))
-        }
-    }
+    ClassicDisplayDetailScreen(
+        viewModel = viewModel,
+        onBack = onBack
+    )
 }
