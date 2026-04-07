@@ -670,7 +670,7 @@
     <string name="display_requires_root">Requires root access</string>
 
     <!-- Functional ROM / Addons Screen -->
-    <string name="functional_rom_title">Addons</string>
+    <string name="functional_rom_title">Functional ROM</string>
     <string name="functional_rom_card_title">Functional ROM</string>
     <string name="functional_rom_card_desc">Configure additional ROM features</string>
 

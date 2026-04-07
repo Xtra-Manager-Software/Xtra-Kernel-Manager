@@ -646,7 +646,7 @@
     <string name="game_control_grant_overlay">Berikan Izin Overlay (Diperlukan)</string>
 
     <!-- Functional ROM Screen -->
-    <string name="functional_rom_title">Addons</string>
+    <string name="functional_rom_title">ROM Fungsional</string>
     <string name="functional_rom_card_title">ROM Fungsional</string>
     <string name="functional_rom_card_desc">Fitur tambahan ROM</string>
     <string name="category_play_integrity">Play Integrity</string>
