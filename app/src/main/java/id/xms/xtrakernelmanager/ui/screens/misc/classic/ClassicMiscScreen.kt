@@ -22,7 +22,6 @@ import id.xms.xtrakernelmanager.ui.screens.misc.classic.components.ClassicMiscFe
 import id.xms.xtrakernelmanager.ui.screens.misc.classic.components.ClassicMiscHubCard
 import id.xms.xtrakernelmanager.ui.screens.misc.components.GameMonitorViewModel
 import id.xms.xtrakernelmanager.ui.screens.misc.material.*
-import id.xms.xtrakernelmanager.ui.screens.misc.components.BatterySettingsScreen
 import id.xms.xtrakernelmanager.ui.theme.ClassicColors
 
 @Composable
@@ -44,13 +43,13 @@ fun ClassicMiscScreen(
 
     when {
         showBatterySettings ->
-            BatterySettingsScreen(viewModel = viewModel, onBack = { showBatterySettings = false })
+            ClassicBatterySettingsScreen(viewModel = viewModel, onBack = { showBatterySettings = false })
         showCurrentSession ->
             MaterialCurrentSessionScreen(viewModel = viewModel, onBack = { showCurrentSession = false })
         showBatteryGraph ->
             MaterialBatteryAnalyticsScreen(viewModel = viewModel, onBack = { showBatteryGraph = false })
         showBatteryDetail ->
-            MaterialBatteryScreen(
+            ClassicBatteryScreen(
                 viewModel = viewModel,
                 onBack = { showBatteryDetail = false },
                 onSettingsClick = { showBatterySettings = true },
