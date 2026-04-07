@@ -145,7 +145,8 @@ private val teamMembers =
 fun MaterialAboutScreen(
     onNavigateToWebView: () -> Unit = {},
     onNavigateToLicense: () -> Unit = {},
-    onNavigateToSystemInfo: () -> Unit = {}
+    onNavigateToSystemInfo: () -> Unit = {},
+    hasUpdate: Boolean = false
 ) {
   val uriHandler = LocalUriHandler.current
 
@@ -179,7 +180,10 @@ fun MaterialAboutScreen(
     ) {
       // Hero Card - ColorOS Style
       item {
-        MaterialColorOSHeroCard(onClick = onNavigateToSystemInfo)
+        MaterialColorOSHeroCard(
+            onClick = onNavigateToSystemInfo,
+            hasUpdate = hasUpdate
+        )
         Spacer(modifier = Modifier.height(16.dp))
       }
 
@@ -286,7 +290,10 @@ private fun SectionHeader(title: String) {
 
 // ColorOS Style Hero Card for Material Theme
 @Composable
-private fun MaterialColorOSHeroCard(onClick: () -> Unit = {}) {
+private fun MaterialColorOSHeroCard(
+    onClick: () -> Unit = {},
+    hasUpdate: Boolean = false
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -392,13 +399,28 @@ private fun MaterialColorOSHeroCard(onClick: () -> Unit = {}) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Bottom: Status
-                Text(
-                    text = "Version up to date",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(0.7f),
-                    textAlign = TextAlign.Center
-                )
+                // Bottom: Status with update indicator
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (hasUpdate) {
+                        // Update available indicator
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .background(Color(0xFFFF6B6B), CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Text(
+                        text = if (hasUpdate) "New version available, click here" else "Version up to date",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (hasUpdate) Color(0xFFFFD93D) else MaterialTheme.colorScheme.onPrimary.copy(0.7f),
+                        textAlign = TextAlign.Center,
+                        fontWeight = if (hasUpdate) FontWeight.SemiBold else FontWeight.Normal
+                    )
+                }
             }
         }
     }

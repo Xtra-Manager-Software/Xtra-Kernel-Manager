@@ -1,9 +1,5 @@
 package id.xms.xtrakernelmanager.ui.splash
 
-import android.content.Intent
-import android.net.Uri
-import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,12 +24,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
+
 @Composable
 fun ModernSplashScreen(onNavigateToMain: () -> Unit) {
   val context = LocalContext.current
-  var updateConfig by remember { mutableStateOf<UpdateConfig?>(null) }
-  var showUpdateDialog by remember { mutableStateOf(false) }
-  var showOfflineLockDialog by remember { mutableStateOf(false) }
   var isChecking by remember { mutableStateOf(true) }
   var startAnimation by remember { mutableStateOf(false) }
 
@@ -62,57 +56,22 @@ fun ModernSplashScreen(onNavigateToMain: () -> Unit) {
     startAnimation = true
     val minSplashTime = launch { delay(2000) }
 
-    val pendingUpdate = UpdatePrefs.getPendingUpdate(context)
-    if (pendingUpdate != null && isUpdateAvailable(BuildConfig.VERSION_NAME, pendingUpdate.version)) {
-      if (isInternetAvailable(context)) {
-        minSplashTime.join()
-        updateConfig = pendingUpdate
-        isChecking = false
-        showUpdateDialog = true
-
-        val freshConfig = withTimeoutOrNull(3000L) { fetchUpdateConfig() }
-        if (freshConfig != null) {
-          updateConfig = freshConfig
-          UpdatePrefs.savePendingUpdate(context, freshConfig.version, freshConfig.url, freshConfig.changelog)
+    // Fetch & cache update info in background — dialog handled in SystemInfoScreen
+    if (isInternetAvailable(context)) {
+      try {
+        val config = withTimeoutOrNull(3000L) { fetchUpdateConfig() }
+        if (config != null && isUpdateAvailable(BuildConfig.VERSION_NAME, config.version)) {
+          UpdatePrefs.savePendingUpdate(context, config.version, config.url, config.changelog)
+        } else {
+          UpdatePrefs.clear(context)
         }
-      } else {
-        minSplashTime.join()
-        isChecking = false
-        showOfflineLockDialog = true
-      }
-    } else {
-      if (pendingUpdate != null) {
-        UpdatePrefs.clear(context)
-      }
-
-      if (isInternetAvailable(context)) {
-        try {
-          val config = withTimeoutOrNull(5000L) { fetchUpdateConfig() }
-          minSplashTime.join()
-
-          if (config != null && isUpdateAvailable(BuildConfig.VERSION_NAME, config.version)) {
-            UpdatePrefs.savePendingUpdate(context, config.version, config.url, config.changelog)
-            updateConfig = config
-            isChecking = false
-            showUpdateDialog = true
-          } else {
-            isChecking = false
-            delay(500)
-            onNavigateToMain()
-          }
-        } catch (e: Exception) {
-          minSplashTime.join()
-          isChecking = false
-          delay(500)
-          onNavigateToMain()
-        }
-      } else {
-        minSplashTime.join()
-        isChecking = false
-        delay(500)
-        onNavigateToMain()
-      }
+      } catch (_: Exception) { }
     }
+
+    isChecking = false
+    minSplashTime.join()
+    delay(300)
+    onNavigateToMain()
   }
 
   Box(
@@ -203,32 +162,8 @@ fun ModernSplashScreen(onNavigateToMain: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
             MinimalProgressBar()
           }
-        }
-      }
-    }
-
-    if (showUpdateDialog && updateConfig != null) {
-      ForceUpdateDialog(
-        config = updateConfig!!,
-        onUpdateClick = {
-          try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateConfig!!.url))
-            context.startActivity(intent)
-          } catch (e: Exception) {
-            Log.e("OTA", "Browser error", e)
-          }
-        }
-      )
-    }
-
-    if (showOfflineLockDialog) {
-      OfflineLockDialog(
-        onRetry = {
-          val intent = (context as ComponentActivity).intent
-          context.finish()
-          context.startActivity(intent)
-        }
-      )
-    }
-  }
+        }       // end if (isChecking)
+      }         // end Box (progress)
+    }           // end Column
+  }             // end Box (outer)
 }

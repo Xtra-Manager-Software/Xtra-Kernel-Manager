@@ -29,7 +29,11 @@ import id.xms.xtrakernelmanager.ui.components.frosted.FrostedBottomTabs
 import id.xms.xtrakernelmanager.ui.components.frosted.FrostedBottomTab
 import id.xms.xtrakernelmanager.ui.components.classic.ClassicBottomBar
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.ui.res.stringResource
@@ -51,6 +55,7 @@ import id.xms.xtrakernelmanager.ui.screens.donation.DonationScreen
 import id.xms.xtrakernelmanager.ui.screens.home.components.material.PowerMenuContent
 import id.xms.xtrakernelmanager.ui.screens.info.InfoScreen
 import id.xms.xtrakernelmanager.ui.screens.info.SystemInfoScreen
+import id.xms.xtrakernelmanager.ui.screens.info.UpdateViewModel
 import id.xms.xtrakernelmanager.ui.screens.webview.MaterialWebViewScreen
 import id.xms.xtrakernelmanager.ui.screens.webview.FrostedWebViewScreen
 import id.xms.xtrakernelmanager.ui.screens.settings.SettingsScreen
@@ -90,12 +95,22 @@ import androidx.compose.runtime.CompositionLocalProvider
 @Composable
 fun Navigation(
     preferencesManager: PreferencesManager,
-    shouldShowDonationDialog: Boolean = false
+    shouldShowDonationDialog: Boolean = false,
+    updateViewModel: UpdateViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
   val navController = rememberNavController()
   val navBackStackEntry by navController.currentBackStackEntryAsState()
   val currentRoute = navBackStackEntry?.destination?.route
   val scope = rememberCoroutineScope()
+  val context = LocalContext.current
+  
+  // Collect update state
+  val updateState by updateViewModel.updateState.collectAsState()
+  
+  // Check for updates when app starts
+  LaunchedEffect(Unit) {
+    updateViewModel.checkForUpdates(context)
+  }
 
   // Power menu state for Material theme
   var showPowerBottomSheet by remember { mutableStateOf(false) }
@@ -211,7 +226,6 @@ fun Navigation(
 
   // Shared FunctionalRomViewModel - created once and reused across all related screens
   // to prevent state flickering when navigating between functionalrom, shimokurom, and hideaccessibilitysettings
-  val context = LocalContext.current
   val functionalRomFactory = remember { FunctionalRomViewModel.Companion.Factory(preferencesManager, context.applicationContext) }
   val sharedFunctionalRomViewModel: FunctionalRomViewModel = viewModel(factory = functionalRomFactory)
 
@@ -621,17 +635,31 @@ fun Navigation(
                 onPress = { press() },
                 onRelease = { release() }
             ) {
-              Icon(
-                  imageVector = item.icon,
-                  contentDescription = stringResource(item.label),
-                  tint = contentColor,
-                  modifier = Modifier.size(26.dp)
-              )
-              Text(
-                  text = stringResource(item.label),
-                  style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
-                  color = contentColor
-              )
+              Box {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                  Icon(
+                      imageVector = item.icon,
+                      contentDescription = stringResource(item.label),
+                      tint = contentColor,
+                      modifier = Modifier.size(26.dp)
+                  )
+                  Text(
+                      text = stringResource(item.label),
+                      style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                      color = contentColor
+                  )
+                }
+                // Badge for info tab when update is available
+                if (item.route == "info" && updateState.hasUpdate) {
+                  Box(
+                      modifier = Modifier
+                          .align(Alignment.TopEnd)
+                          .offset(x = 8.dp, y = (-4).dp)
+                          .size(8.dp)
+                          .background(androidx.compose.ui.graphics.Color(0xFFFF6B6B), CircleShape)
+                  )
+                }
+              }
             }
           }
         }
@@ -640,6 +668,7 @@ fun Navigation(
             currentRoute = currentRoute,
             onNavigate = navigateToRoute,
             items = bottomNavItems,
+            hasUpdate = updateState.hasUpdate,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
       } else {
@@ -647,6 +676,7 @@ fun Navigation(
             currentRoute = currentRoute,
             onNavigate = navigateToRoute,
             items = bottomNavItems,
+            hasUpdate = updateState.hasUpdate,
             onPowerMenuClick = { showPowerBottomSheet = true },
             modifier = Modifier
                 .align(Alignment.BottomCenter),

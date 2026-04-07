@@ -37,6 +37,7 @@ fun MaterialFloatingBottomBar(
     onNavigate: (String) -> Unit,
     items: List<BottomNavItem>,
     onPowerMenuClick: () -> Unit,
+    hasUpdate: Boolean = false,
     isVisible: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
@@ -86,6 +87,7 @@ fun MaterialFloatingBottomBar(
                             FloatingNavIconButton(
                                 item = item,
                                 isSelected = selected,
+                                hasUpdate = hasUpdate && item.route == "info",
                                 onClick = { onNavigate(item.route) }
                             )
                         }
@@ -119,6 +121,7 @@ fun MaterialFloatingBottomBar(
 private fun FloatingNavIconButton(
     item: BottomNavItem,
     isSelected: Boolean,
+    hasUpdate: Boolean = false,
     onClick: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -172,6 +175,17 @@ private fun FloatingNavIconButton(
             tint = iconColor,
             modifier = Modifier.size(24.dp)
         )
+        
+        // Badge for update indicator
+        if (hasUpdate) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = (-8).dp, y = 8.dp)
+                    .size(8.dp)
+                    .background(Color(0xFFFF6B6B), CircleShape)
+            )
+        }
     }
 }
 

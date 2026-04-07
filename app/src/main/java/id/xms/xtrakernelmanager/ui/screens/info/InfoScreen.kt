@@ -45,29 +45,41 @@ fun InfoScreen(
     preferencesManager: id.xms.xtrakernelmanager.data.preferences.PreferencesManager,
     onNavigateToWebView: () -> Unit = {},
     onNavigateToLicense: () -> Unit = {},
-    onNavigateToSystemInfo: () -> Unit = {}
+    onNavigateToSystemInfo: () -> Unit = {},
+    updateViewModel: UpdateViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
+  val context = androidx.compose.ui.platform.LocalContext.current
   val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "frosted")
+  val updateState by updateViewModel.updateState.collectAsState()
+  
+  // Check for updates when screen is first composed
+  LaunchedEffect(Unit) {
+    updateViewModel.checkForUpdates(context)
+  }
+  
   when (layoutStyle) {
     "material" -> {
       MaterialAboutScreen(
           onNavigateToWebView = onNavigateToWebView,
           onNavigateToLicense = onNavigateToLicense,
-          onNavigateToSystemInfo = onNavigateToSystemInfo
+          onNavigateToSystemInfo = onNavigateToSystemInfo,
+          hasUpdate = updateState.hasUpdate
       )
     }
     "classic" -> {
       ClassicInfoScreen(
           onNavigateToWebView = onNavigateToWebView,
           onNavigateToLicense = onNavigateToLicense,
-          onNavigateToSystemInfo = onNavigateToSystemInfo
+          onNavigateToSystemInfo = onNavigateToSystemInfo,
+          hasUpdate = updateState.hasUpdate
       )
     }
     else -> {
       FrostedInfoScreen(
           onNavigateToWebView = onNavigateToWebView,
           onNavigateToLicense = onNavigateToLicense,
-          onNavigateToSystemInfo = onNavigateToSystemInfo
+          onNavigateToSystemInfo = onNavigateToSystemInfo,
+          hasUpdate = updateState.hasUpdate
       )
     }
   }
