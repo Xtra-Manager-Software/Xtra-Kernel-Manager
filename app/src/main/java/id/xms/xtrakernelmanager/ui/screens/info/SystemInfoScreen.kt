@@ -7,6 +7,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,13 +28,38 @@ import id.xms.xtrakernelmanager.ui.theme.ClassicColors
 @Composable
 fun SystemInfoScreen(
     layoutStyle: String,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    updateViewModel: UpdateViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val updateState by updateViewModel.updateState.collectAsState()
+    val onDownload = { url: String -> updateViewModel.downloadAndInstall(context, url) }
+
     when (layoutStyle) {
-        "frosted" -> FrostedSystemInfoScreen(onNavigateBack)
-        "material" -> MaterialSystemInfoScreen(onNavigateBack)
-        "classic" -> ClassicSystemInfoScreen(onNavigateBack)
-        else -> FrostedSystemInfoScreen(onNavigateBack)
+        "frosted" -> FrostedSystemInfoScreen(
+            onNavigateBack = onNavigateBack,
+            updateState = updateState,
+            onCheckUpdate = { updateViewModel.checkForUpdates(context) },
+            onDownload = onDownload
+        )
+        "material" -> MaterialSystemInfoScreen(
+            onNavigateBack = onNavigateBack,
+            updateState = updateState,
+            onCheckUpdate = { updateViewModel.checkForUpdates(context) },
+            onDownload = onDownload
+        )
+        "classic" -> ClassicSystemInfoScreen(
+            onNavigateBack = onNavigateBack,
+            updateState = updateState,
+            onCheckUpdate = { updateViewModel.checkForUpdates(context) },
+            onDownload = onDownload
+        )
+        else -> FrostedSystemInfoScreen(
+            onNavigateBack = onNavigateBack,
+            updateState = updateState,
+            onCheckUpdate = { updateViewModel.checkForUpdates(context) },
+            onDownload = onDownload
+        )
     }
 }
 
@@ -161,8 +188,15 @@ private fun getBootloaderStatus(): String {
 
 // Frosted System Info Screen
 @Composable
-private fun FrostedSystemInfoScreen(onNavigateBack: () -> Unit) {
+private fun FrostedSystemInfoScreen(
+    onNavigateBack: () -> Unit,
+    updateState: UpdateState,
+    onCheckUpdate: () -> Unit,
+    onDownload: (String) -> Unit
+) {
     val systemInfo = getSystemInfo()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     
     Box(modifier = Modifier.fillMaxSize()) {
         WavyBlobOrnament(modifier = Modifier.fillMaxSize())
@@ -265,9 +299,202 @@ private fun FrostedSystemInfoScreen(onNavigateBack: () -> Unit) {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
                 
+                // Update Section
                 item {
                     Text(
-                        text = "Latest system version",
+                        text = "Software Update",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
+                    )
+                }
+                
+                item {
+                    GlassmorphicCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(20.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Current Version",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White.copy(alpha = 0.7f)
+                                    )
+                                    Text(
+                                        text = id.xms.xtrakernelmanager.BuildConfig.VERSION_NAME,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                                
+                                // Check Update Button
+                                androidx.compose.material3.Button(
+                                    onClick = onCheckUpdate,
+                                    enabled = !updateState.isChecking,
+                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                        containerColor = Color.White.copy(alpha = 0.2f),
+                                        contentColor = Color.White
+                                    ),
+                                    modifier = Modifier.height(40.dp)
+                                ) {
+                                    if (updateState.isChecking) {
+                                        androidx.compose.material3.CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            color = Color.White,
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        Text("Check Update")
+                                    }
+                                }
+                            }
+                            
+                            // Update Status
+                            if (updateState.hasUpdate && updateState.updateConfig != null) {
+                                androidx.compose.material3.HorizontalDivider(
+                                    color = Color.White.copy(alpha = 0.2f)
+                                )
+                                
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(8.dp)
+                                                .background(Color(0xFF4CAF50), androidx.compose.foundation.shape.CircleShape)
+                                        )
+                                        Text(
+                                            text = "New version available!",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = Color(0xFF4CAF50),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    
+                                    Text(
+                                        text = "Version ${updateState.updateConfig.version}",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    
+                                    if (updateState.updateConfig.changelog.isNotEmpty()) {
+                                        Text(
+                                            text = "Changelog:",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.7f),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = updateState.updateConfig.changelog,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.9f)
+                                        )
+                                    }
+                                    
+                                    // Download progress or button
+                                    if (updateState.isDownloading) {
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(
+                                                    text = "Downloading...",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color.White.copy(alpha = 0.9f)
+                                                )
+                                                Text(
+                                                    text = "${updateState.downloadProgress}%",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color.White,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                            androidx.compose.material3.LinearProgressIndicator(
+                                                progress = { updateState.downloadProgress / 100f },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                color = Color(0xFF4CAF50),
+                                                trackColor = Color.White.copy(alpha = 0.2f)
+                                            )
+                                        }
+                                    } else {
+                                        androidx.compose.material3.Button(
+                                            onClick = { onDownload(updateState.updateConfig.url) },
+                                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                                containerColor = Color(0xFF4CAF50),
+                                                contentColor = Color.White
+                                            ),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Download Update")
+                                        }
+                                    }
+                                    if (updateState.downloadError != null) {
+                                        Text(
+                                            text = "Download error: ${updateState.downloadError}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color(0xFFFF6B6B)
+                                        )
+                                    }
+                                }
+                            } else if (!updateState.isChecking && !updateState.hasUpdate) {
+                                androidx.compose.material3.HorizontalDivider(
+                                    color = Color.White.copy(alpha = 0.2f)
+                                )
+                                
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id.xms.xtrakernelmanager.R.drawable.ic_check_circle),
+                                        contentDescription = null,
+                                        tint = Color(0xFF4CAF50),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Text(
+                                        text = "You're up to date",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White.copy(alpha = 0.9f)
+                                    )
+                                }
+                            }
+                            
+                            if (updateState.error != null) {
+                                Text(
+                                    text = "Error: ${updateState.error}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFFF6B6B)
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                
+                item {
+                    Text(
+                        text = "Device Information",
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
@@ -331,7 +558,12 @@ private fun FrostedSystemInfoRow(label: String, value: String) {
 // Material System Info Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MaterialSystemInfoScreen(onNavigateBack: () -> Unit) {
+private fun MaterialSystemInfoScreen(
+    onNavigateBack: () -> Unit,
+    updateState: UpdateState,
+    onCheckUpdate: () -> Unit,
+    onDownload: (String) -> Unit
+) {
     val systemInfo = getSystemInfo()
     
     Scaffold(
@@ -428,6 +660,157 @@ private fun MaterialSystemInfoScreen(onNavigateBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
             }
             
+            // Software Update Section
+            item {
+                Text(
+                    text = "Software Update",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
+                )
+            }
+
+            item {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Current Version",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = id.xms.xtrakernelmanager.BuildConfig.VERSION_NAME,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                            Button(
+                                onClick = onCheckUpdate,
+                                enabled = !updateState.isChecking,
+                                modifier = Modifier.height(40.dp)
+                            ) {
+                                if (updateState.isChecking) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Text("Check Update")
+                                }
+                            }
+                        }
+
+                        if (updateState.hasUpdate && updateState.updateConfig != null) {
+                            HorizontalDivider()
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    text = "New version available: ${updateState.updateConfig.version}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                if (updateState.updateConfig.changelog.isNotEmpty()) {
+                                    Text(
+                                        text = updateState.updateConfig.changelog,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                // Download progress or button
+                                if (updateState.isDownloading) {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "Downloading...",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                text = "${updateState.downloadProgress}%",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        LinearProgressIndicator(
+                                            progress = { updateState.downloadProgress / 100f },
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+                                } else {
+                                    Button(
+                                        onClick = { onDownload(updateState.updateConfig.url) },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Download Update")
+                                    }
+                                }
+                                if (updateState.downloadError != null) {
+                                    Text(
+                                        text = "Download error: ${updateState.downloadError}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                        } else if (!updateState.isChecking && !updateState.hasUpdate) {
+                            HorizontalDivider()
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id.xms.xtrakernelmanager.R.drawable.ic_check_circle),
+                                    contentDescription = null,
+                                    tint = Color(0xFF4CAF50),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "You're up to date",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+
+                        if (updateState.error != null) {
+                            Text(
+                                text = "Error: ${updateState.error}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             item {
                 Text(
                     text = "Latest system version",
@@ -501,7 +884,12 @@ private fun MaterialSystemInfoRow(label: String, value: String) {
 // Classic System Info Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ClassicSystemInfoScreen(onNavigateBack: () -> Unit) {
+private fun ClassicSystemInfoScreen(
+    onNavigateBack: () -> Unit,
+    updateState: UpdateState,
+    onCheckUpdate: () -> Unit,
+    onDownload: (String) -> Unit
+) {
     val systemInfo = getSystemInfo()
     
     Scaffold(
@@ -599,6 +987,161 @@ private fun ClassicSystemInfoScreen(onNavigateBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
             }
             
+            // Software Update Section
+            item {
+                Text(
+                    text = "Software Update",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = ClassicColors.OnSurface,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
+                )
+            }
+
+            item {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = ClassicColors.SurfaceContainerHigh
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Current Version",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = ClassicColors.OnSurfaceVariant
+                                )
+                                Text(
+                                    text = id.xms.xtrakernelmanager.BuildConfig.VERSION_NAME,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = ClassicColors.OnSurface,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                            Button(
+                                onClick = onCheckUpdate,
+                                enabled = !updateState.isChecking,
+                                modifier = Modifier.height(40.dp)
+                            ) {
+                                if (updateState.isChecking) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Text("Check Update")
+                                }
+                            }
+                        }
+
+                        if (updateState.hasUpdate && updateState.updateConfig != null) {
+                            HorizontalDivider(
+                                color = ClassicColors.OnSurface.copy(alpha = 0.15f)
+                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    text = "New version available: ${updateState.updateConfig.version}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color(0xFF4CAF50),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                if (updateState.updateConfig.changelog.isNotEmpty()) {
+                                    Text(
+                                        text = updateState.updateConfig.changelog,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = ClassicColors.OnSurfaceVariant
+                                    )
+                                }
+                                // Download progress or button
+                                if (updateState.isDownloading) {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "Downloading...",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = ClassicColors.OnSurfaceVariant
+                                            )
+                                            Text(
+                                                text = "${updateState.downloadProgress}%",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = ClassicColors.OnSurface,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        LinearProgressIndicator(
+                                            progress = { updateState.downloadProgress / 100f },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = Color(0xFF4CAF50),
+                                            trackColor = ClassicColors.OnSurface.copy(alpha = 0.15f)
+                                        )
+                                    }
+                                } else {
+                                    Button(
+                                        onClick = { onDownload(updateState.updateConfig.url) },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Download Update")
+                                    }
+                                }
+                                if (updateState.downloadError != null) {
+                                    Text(
+                                        text = "Download error: ${updateState.downloadError}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFFFF6B6B)
+                                    )
+                                }
+                            }
+                        } else if (!updateState.isChecking && !updateState.hasUpdate) {
+                            HorizontalDivider(
+                                color = ClassicColors.OnSurface.copy(alpha = 0.15f)
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id.xms.xtrakernelmanager.R.drawable.ic_check_circle),
+                                    contentDescription = null,
+                                    tint = Color(0xFF4CAF50),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "You're up to date",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = ClassicColors.OnSurface
+                                )
+                            }
+                        }
+
+                        if (updateState.error != null) {
+                            Text(
+                                text = "Error: ${updateState.error}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFFF6B6B)
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             item {
                 Text(
                     text = "Latest system version",
