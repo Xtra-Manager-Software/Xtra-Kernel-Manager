@@ -74,7 +74,7 @@ fun ClassicMiscScreen(
                 onGameMonitorClick = { showGameMonitor = true },
             )
         showPerAppProfile ->
-            MaterialPerAppProfileScreen(viewModel = viewModel, onBack = { showPerAppProfile = false })
+            ClassicPerAppProfileScreen(viewModel = viewModel, onBack = { showPerAppProfile = false })
         showDisplaySettings ->
             ClassicDisplaySettingsScreen(viewModel = viewModel, onBack = { showDisplaySettings = false })
         else ->

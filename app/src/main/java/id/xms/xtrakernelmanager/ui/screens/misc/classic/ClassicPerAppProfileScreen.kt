@@ -1,8 +1,7 @@
-package id.xms.xtrakernelmanager.ui.screens.misc.material
+package id.xms.xtrakernelmanager.ui.screens.misc.classic
 
 import id.xms.xtrakernelmanager.ui.screens.misc.MiscViewModel
 import androidx.annotation.StringRes
-
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,18 +33,19 @@ import androidx.compose.ui.res.stringResource
 import id.xms.xtrakernelmanager.R
 import id.xms.xtrakernelmanager.data.model.AppProfile
 import id.xms.xtrakernelmanager.data.preferences.PreferencesManager
+import id.xms.xtrakernelmanager.ui.theme.ClassicColors
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
 import org.json.JSONArray
 import org.json.JSONObject
 
-enum class ProfileType(@StringRes val displayNameRes: Int, @StringRes val descriptionRes: Int, val governor: String, val thermalPreset: String) {
+enum class ClassicProfileType(@StringRes val displayNameRes: Int, @StringRes val descriptionRes: Int, val governor: String, val thermalPreset: String) {
   PERFORMANCE(R.string.profile_performance, R.string.profile_desc_performance, "performance", "Extreme"),
   BALANCED(R.string.profile_balanced, R.string.profile_desc_balanced, "schedutil", "Dynamic"),
   POWER_SAVE(R.string.profile_power_save, R.string.profile_desc_power_save, "powersave", "Class 0"),
 }
 
-enum class RefreshRate(@StringRes val displayNameRes: Int, val value: Int) {
+enum class ClassicRefreshRate(@StringRes val displayNameRes: Int, val value: Int) {
   DEFAULT(R.string.refresh_rate_default, 0),
   HZ_60(R.string.refresh_rate_60, 60),
   HZ_90(R.string.refresh_rate_90, 90),
@@ -55,7 +55,7 @@ enum class RefreshRate(@StringRes val displayNameRes: Int, val value: Int) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MaterialPerAppProfileScreen(
+fun ClassicPerAppProfileScreen(
     viewModel: MiscViewModel,
     onBack: () -> Unit,
 ) {
@@ -66,17 +66,14 @@ fun MaterialPerAppProfileScreen(
   // Master toggle for per-app profile feature
   val isPerAppProfileEnabled by preferencesManager.isPerAppProfileEnabled().collectAsState(initial = false)
   
-  // Detect device max refresh rate
   val maxRefreshRate = remember { getDeviceMaxRefreshRate(context) }
   val availableRefreshRates = remember(maxRefreshRate) { 
     getAvailableRefreshRates(maxRefreshRate) 
   }
   
-  // Load profiles from PreferencesManager
   val profilesJson by preferencesManager.getAppProfiles().collectAsState(initial = "[]")
   val savedProfiles = remember(profilesJson) { parseProfiles(profilesJson) }
   
-  // Get installed apps and merge with saved profiles
   val installedApps = remember { getInstalledApps(context) }
   val appProfiles = remember(installedApps, savedProfiles) {
     installedApps.map { app ->
@@ -85,9 +82,7 @@ fun MaterialPerAppProfileScreen(
   }
   
   var searchQuery by remember { mutableStateOf("") }
-  var selectedFilter by remember { mutableStateOf<ProfileType?>(null) }
-  
-  // Inline expansion state
+  var selectedFilter by remember { mutableStateOf<ClassicProfileType?>(null) }
   var expandedAppPackage by remember { mutableStateOf<String?>(null) }
 
   val filteredApps =
@@ -112,17 +107,30 @@ fun MaterialPerAppProfileScreen(
       }
 
   Scaffold(
-      containerColor = MaterialTheme.colorScheme.background,
+      containerColor = ClassicColors.Background,
       topBar = {
         TopAppBar(
-            title = { Text(stringResource(id.xms.xtrakernelmanager.R.string.per_app_profile), fontWeight = FontWeight.SemiBold, fontSize = 24.sp) },
+            title = { 
+                Text(
+                    stringResource(R.string.per_app_profile), 
+                    fontWeight = FontWeight.SemiBold, 
+                    fontSize = 24.sp,
+                    color = ClassicColors.OnSurface
+                ) 
+            },
             navigationIcon = {
-              IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") }
+              IconButton(onClick = onBack) { 
+                  Icon(
+                      Icons.AutoMirrored.Rounded.ArrowBack, 
+                      "Back",
+                      tint = ClassicColors.OnSurface
+                  ) 
+              }
             },
             colors =
                 TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor = ClassicColors.Background,
+                    scrolledContainerColor = ClassicColors.Background,
                 ),
         )
       },
@@ -138,9 +146,9 @@ fun MaterialPerAppProfileScreen(
           shape = MaterialTheme.shapes.large,
           colors = CardDefaults.cardColors(
               containerColor = if (isPerAppProfileEnabled) {
-                  MaterialTheme.colorScheme.primaryContainer
+                  ClassicColors.Primary.copy(alpha = 0.15f)
               } else {
-                  MaterialTheme.colorScheme.surfaceContainerHigh
+                  ClassicColors.SurfaceContainerHigh
               }
           )
       ) {
@@ -160,9 +168,9 @@ fun MaterialPerAppProfileScreen(
                       Icons.Rounded.Tune,
                       contentDescription = null,
                       tint = if (isPerAppProfileEnabled) {
-                          MaterialTheme.colorScheme.onPrimaryContainer
+                          ClassicColors.Primary
                       } else {
-                          MaterialTheme.colorScheme.onSurfaceVariant
+                          ClassicColors.OnSurfaceVariant
                       },
                       modifier = Modifier.size(24.dp)
                   )
@@ -172,18 +180,18 @@ fun MaterialPerAppProfileScreen(
                           style = MaterialTheme.typography.titleMedium,
                           fontWeight = FontWeight.Bold,
                           color = if (isPerAppProfileEnabled) {
-                              MaterialTheme.colorScheme.onPrimaryContainer
+                              ClassicColors.Primary
                           } else {
-                              MaterialTheme.colorScheme.onSurface
+                              ClassicColors.OnSurface
                           }
                       )
                       Text(
                           if (isPerAppProfileEnabled) "Active" else "Disabled",
                           style = MaterialTheme.typography.bodySmall,
                           color = if (isPerAppProfileEnabled) {
-                              MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                              ClassicColors.Primary.copy(alpha = 0.7f)
                           } else {
-                              MaterialTheme.colorScheme.onSurfaceVariant
+                              ClassicColors.OnSurfaceVariant
                           }
                       )
                   }
@@ -197,30 +205,43 @@ fun MaterialPerAppProfileScreen(
                       }
                   },
                   colors = SwitchDefaults.colors(
-                      checkedThumbColor = MaterialTheme.colorScheme.primary,
-                      checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                      checkedThumbColor = ClassicColors.Primary,
+                      checkedTrackColor = ClassicColors.Primary.copy(alpha = 0.5f),
                   )
               )
           }
       }
       
-      // Search & Filters Row
       Row(
           modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.spacedBy(12.dp),
       ) {
-        // Search Field
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             modifier = Modifier.weight(1f),
-            placeholder = { Text(stringResource(id.xms.xtrakernelmanager.R.string.search_apps_placeholder)) },
-            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+            placeholder = { 
+                Text(
+                    stringResource(R.string.search_apps_placeholder),
+                    color = ClassicColors.OnSurfaceVariant
+                ) 
+            },
+            leadingIcon = { 
+                Icon(
+                    Icons.Rounded.Search, 
+                    contentDescription = null,
+                    tint = ClassicColors.OnSurfaceVariant
+                ) 
+            },
             trailingIcon = {
               if (searchQuery.isNotEmpty()) {
                 IconButton(onClick = { searchQuery = "" }) {
-                  Icon(Icons.Rounded.Clear, contentDescription = "Clear")
+                  Icon(
+                      Icons.Rounded.Clear, 
+                      contentDescription = "Clear",
+                      tint = ClassicColors.OnSurfaceVariant
+                  )
                 }
               }
             },
@@ -228,14 +249,16 @@ fun MaterialPerAppProfileScreen(
             shape = MaterialTheme.shapes.extraLarge,
             colors =
                 OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    focusedContainerColor = ClassicColors.SurfaceContainerHigh,
+                    unfocusedContainerColor = ClassicColors.SurfaceContainer,
+                    focusedBorderColor = ClassicColors.Primary,
                     unfocusedBorderColor = Color.Transparent,
+                    focusedTextColor = ClassicColors.OnSurface,
+                    unfocusedTextColor = ClassicColors.OnSurface,
+                    cursorColor = ClassicColors.Primary,
                 ),
         )
 
-        // Filter Dropdown
         Box {
           var filterExpanded by remember { mutableStateOf(false) }
 
@@ -248,10 +271,10 @@ fun MaterialPerAppProfileScreen(
                       containerColor =
                           if (selectedFilter != null)
                               getProfileColor(selectedFilter!!).copy(alpha = 0.2f)
-                          else MaterialTheme.colorScheme.surfaceContainerHigh,
+                          else ClassicColors.SurfaceContainerHigh,
                       contentColor =
                           if (selectedFilter != null) getProfileColor(selectedFilter!!)
-                          else MaterialTheme.colorScheme.onSurfaceVariant,
+                          else ClassicColors.OnSurfaceVariant,
                   ),
           ) {
             Icon(
@@ -267,22 +290,41 @@ fun MaterialPerAppProfileScreen(
               expanded = filterExpanded,
               onDismissRequest = { filterExpanded = false },
               shape = MaterialTheme.shapes.large,
-              containerColor = MaterialTheme.colorScheme.surfaceContainer,
+              containerColor = ClassicColors.SurfaceContainer,
           ) {
             DropdownMenuItem(
-                text = { Text(stringResource(id.xms.xtrakernelmanager.R.string.filter_all)) },
+                text = { 
+                    Text(
+                        stringResource(R.string.filter_all),
+                        color = ClassicColors.OnSurface
+                    ) 
+                },
                 onClick = {
                   selectedFilter = null
                   filterExpanded = false
                 },
-                leadingIcon = { if (selectedFilter == null) Icon(Icons.Rounded.Check, null) },
+                leadingIcon = { 
+                    if (selectedFilter == null) Icon(
+                        Icons.Rounded.Check, 
+                        null,
+                        tint = ClassicColors.Primary
+                    ) 
+                },
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                color = ClassicColors.OnSurfaceVariant.copy(alpha = 0.2f)
+            )
 
-            ProfileType.entries.forEach { type ->
+            ClassicProfileType.entries.forEach { type ->
                   DropdownMenuItem(
-                      text = { Text(stringResource(type.displayNameRes), color = getProfileColor(type)) },
+                      text = { 
+                          Text(
+                              stringResource(type.displayNameRes), 
+                              color = getProfileColor(type)
+                          ) 
+                      },
                       onClick = {
                         selectedFilter = type
                         filterExpanded = false
@@ -300,13 +342,11 @@ fun MaterialPerAppProfileScreen(
         }
       }
 
-      // App List
       LazyColumn(
           modifier = Modifier.fillMaxSize(),
           contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
           verticalArrangement = Arrangement.spacedBy(12.dp),
       ) {
-        // Active Configs Section (Only show if no filter and search)
         val activeConfigs = appProfiles.filter { 
              it.governor != "schedutil" || it.thermalPreset != "Not Set" || it.refreshRate != 0
         }
@@ -314,9 +354,10 @@ fun MaterialPerAppProfileScreen(
         if (searchQuery.isEmpty() && selectedFilter == null && activeConfigs.isNotEmpty()) {
           item {
             Text(
-                stringResource(id.xms.xtrakernelmanager.R.string.per_app_active_configs),
+                stringResource(R.string.per_app_active_configs),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
+                color = ClassicColors.OnSurface,
                 modifier = Modifier.padding(bottom = 8.dp, start = 8.dp),
             )
           }
@@ -327,7 +368,7 @@ fun MaterialPerAppProfileScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
               items(activeConfigs) { app ->
-                ActiveConfigCard(
+                ClassicActiveConfigCard(
                     app = app, 
                     onClick = { expandedAppPackage = app.packageName }
                 )
@@ -337,16 +378,17 @@ fun MaterialPerAppProfileScreen(
 
           item {
             Text(
-                stringResource(id.xms.xtrakernelmanager.R.string.per_app_all_apps),
+                stringResource(R.string.per_app_all_apps),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
+                color = ClassicColors.OnSurface,
                 modifier = Modifier.padding(bottom = 8.dp, start = 8.dp),
             )
           }
         }
 
         items(filteredApps, key = { it.packageName }) { app ->
-          ExpressiveAppItem(
+          ClassicExpressiveAppItem(
               app = app,
               availableRefreshRates = availableRefreshRates,
               isExpanded = expandedAppPackage == app.packageName,
@@ -361,14 +403,15 @@ fun MaterialPerAppProfileScreen(
           )
         }
 
-        item { Spacer(modifier = Modifier.height(80.dp)) } // Bottom padding
+        item { Spacer(modifier = Modifier.height(80.dp)) }
       }
     }
   }
 }
 
+
 @Composable
-fun ActiveConfigCard(app: AppProfile, onClick: () -> Unit) {
+fun ClassicActiveConfigCard(app: AppProfile, onClick: () -> Unit) {
   val context = LocalContext.current
   val profileType = getProfileTypeFromApp(app)
   val color = getProfileColor(profileType)
@@ -398,7 +441,7 @@ fun ActiveConfigCard(app: AppProfile, onClick: () -> Unit) {
           Icon(
               getProfileIcon(profileType),
               null,
-              tint = MaterialTheme.colorScheme.surface,
+              tint = Color.White,
               modifier = Modifier.padding(4.dp),
           )
         }
@@ -411,6 +454,7 @@ fun ActiveConfigCard(app: AppProfile, onClick: () -> Unit) {
             fontWeight = FontWeight.Bold,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
+            color = ClassicColors.OnSurface,
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
@@ -425,7 +469,7 @@ fun ActiveConfigCard(app: AppProfile, onClick: () -> Unit) {
 }
 
 @Composable
-fun ExpressiveAppItem(
+fun ClassicExpressiveAppItem(
     app: AppProfile,
     availableRefreshRates: List<Int>,
     isExpanded: Boolean,
@@ -446,7 +490,7 @@ fun ExpressiveAppItem(
                   if (isCustomized) {
                     profileColor.copy(alpha = 0.05f)
                   } else {
-                    MaterialTheme.colorScheme.surfaceContainerLow
+                    ClassicColors.SurfaceContainerHigh
                   }
           ),
       border =
@@ -463,7 +507,6 @@ fun ExpressiveAppItem(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.spacedBy(16.dp),
       ) {
-        // App icon
         SubcomposeAsyncImage(
             model =
                 ImageRequest.Builder(context)
@@ -476,13 +519,14 @@ fun ExpressiveAppItem(
                   modifier =
                       Modifier.size(56.dp)
                           .clip(MaterialTheme.shapes.large)
-                          .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                          .background(ClassicColors.SurfaceContainer),
                   contentAlignment = Alignment.Center,
               ) {
                 Text(
                     app.appName.take(2).uppercase(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
+                    color = ClassicColors.OnSurface,
                 )
               }
             },
@@ -491,27 +535,30 @@ fun ExpressiveAppItem(
                   modifier =
                       Modifier.size(56.dp)
                           .clip(MaterialTheme.shapes.large)
-                          .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                          .background(ClassicColors.SurfaceContainer),
                   contentAlignment = Alignment.Center,
               ) {
-                Icon(Icons.Rounded.Android, null)
+                Icon(
+                    Icons.Rounded.Android, 
+                    null,
+                    tint = ClassicColors.OnSurfaceVariant
+                )
               }
             },
             modifier = Modifier.size(56.dp).clip(MaterialTheme.shapes.large),
         )
 
-        // App info
         Column(modifier = Modifier.weight(1f)) {
           Text(
               text = app.appName,
               style = MaterialTheme.typography.titleMedium,
               fontWeight = FontWeight.Bold,
-              color = MaterialTheme.colorScheme.onSurface,
+              color = ClassicColors.OnSurface,
           )
           Text(
               text = app.packageName,
               style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
+              color = ClassicColors.OnSurfaceVariant,
               maxLines = 1,
               overflow = TextOverflow.Ellipsis,
           )
@@ -532,13 +579,13 @@ fun ExpressiveAppItem(
                   }
                   if (app.refreshRate != 0) {
                       Surface(
-                          color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f), 
+                          color = ClassicColors.Secondary.copy(alpha = 0.1f), 
                           shape = RoundedCornerShape(8.dp)
                       ) {
                           Text(
                               "${app.refreshRate}Hz",
                               style = MaterialTheme.typography.labelSmall,
-                              color = MaterialTheme.colorScheme.secondary,
+                              color = ClassicColors.Secondary,
                               modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                           )
                       }
@@ -550,18 +597,17 @@ fun ExpressiveAppItem(
          Icon(
               if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
               contentDescription = null,
-              tint = MaterialTheme.colorScheme.onSurfaceVariant,
+              tint = ClassicColors.OnSurfaceVariant,
           )
       }
       
-      // Inline Expansion Content
       AnimatedVisibility(visible = isExpanded) {
           Column(
             modifier = Modifier.padding(top = 12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
           ) {
               HorizontalDivider(
-                  color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f),
+                  color = ClassicColors.OnSurfaceVariant.copy(alpha = 0.2f),
                   modifier = Modifier.padding(bottom = 12.dp)
               )
               
@@ -581,14 +627,14 @@ fun ExpressiveAppItem(
                       Icon(
                           Icons.Rounded.PowerSettingsNew,
                           null,
-                          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                          tint = ClassicColors.OnSurfaceVariant,
                           modifier = Modifier.size(24.dp)
                       )
                       Text(
                           "Enable Profile",
                           style = MaterialTheme.typography.bodyMedium,
                           fontWeight = FontWeight.Medium,
-                          color = MaterialTheme.colorScheme.onSurface
+                          color = ClassicColors.OnSurface
                       )
                   }
                   
@@ -598,22 +644,26 @@ fun ExpressiveAppItem(
                           onUpdate(app.copy(enabled = enabled))
                       },
                       colors = SwitchDefaults.colors(
-                          checkedThumbColor = MaterialTheme.colorScheme.primary,
-                          checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                          checkedThumbColor = ClassicColors.Primary,
+                          checkedTrackColor = ClassicColors.Primary.copy(alpha = 0.5f),
                       )
                   )
               }
               
-              // Performance Profile Dropdown
-              ConfigDropdownRow(
-                  label = stringResource(id.xms.xtrakernelmanager.R.string.per_app_performance_profile),
+              ClassicConfigDropdownRow(
+                  label = stringResource(R.string.per_app_performance_profile),
                   currentValue = stringResource(getProfileTypeFromApp(app).displayNameRes),
                   icon = Icons.Rounded.Settings,
                   isModified = true
               ) { dismiss ->
-                  ProfileType.entries.forEach { type ->
+                  ClassicProfileType.entries.forEach { type ->
                       DropdownMenuItem(
-                          text = { Text(stringResource(type.displayNameRes)) },
+                          text = { 
+                              Text(
+                                  stringResource(type.displayNameRes),
+                                  color = ClassicColors.OnSurface
+                              ) 
+                          },
                           onClick = { 
                               onUpdate(app.copy(
                                   governor = type.governor,
@@ -627,42 +677,61 @@ fun ExpressiveAppItem(
                               Icon(icon, null, tint = color)
                           },
                           trailingIcon = {
-                              if(getProfileTypeFromApp(app) == type) Icon(Icons.Rounded.Check, null)
+                              if(getProfileTypeFromApp(app) == type) Icon(
+                                  Icons.Rounded.Check, 
+                                  null,
+                                  tint = ClassicColors.Primary
+                              )
                           }
                       )
                   }
               }
 
-             // Refresh Rate Dropdown - Only show if device supports >60Hz
               if (availableRefreshRates.isNotEmpty()) {
-                  ConfigDropdownRow(
-                      label = stringResource(id.xms.xtrakernelmanager.R.string.per_app_refresh_rate),
-                      currentValue = if(app.refreshRate == 0) stringResource(RefreshRate.DEFAULT.displayNameRes) else "${app.refreshRate}Hz",
+                  ClassicConfigDropdownRow(
+                      label = stringResource(R.string.per_app_refresh_rate),
+                      currentValue = if(app.refreshRate == 0) stringResource(ClassicRefreshRate.DEFAULT.displayNameRes) else "${app.refreshRate}Hz",
                       icon = Icons.Rounded.Refresh,
                       isModified = app.refreshRate != 0
                   ) { dismiss ->
-                      // Default option
                       DropdownMenuItem(
-                          text = { Text(stringResource(RefreshRate.DEFAULT.displayNameRes)) },
+                          text = { 
+                              Text(
+                                  stringResource(ClassicRefreshRate.DEFAULT.displayNameRes),
+                                  color = ClassicColors.OnSurface
+                              ) 
+                          },
                           onClick = { 
                               onUpdate(app.copy(refreshRate = 0))
                               dismiss()
                           },
                           leadingIcon = {
-                              if(app.refreshRate == 0) Icon(Icons.Rounded.Check, null)
+                              if(app.refreshRate == 0) Icon(
+                                  Icons.Rounded.Check, 
+                                  null,
+                                  tint = ClassicColors.Primary
+                              )
                           }
                       )
                       
-                      // Available refresh rates
                       availableRefreshRates.forEach { rate ->
                           DropdownMenuItem(
-                              text = { Text("${rate}Hz") },
+                              text = { 
+                                  Text(
+                                      "${rate}Hz",
+                                      color = ClassicColors.OnSurface
+                                  ) 
+                              },
                               onClick = { 
                                   onUpdate(app.copy(refreshRate = rate))
                                   dismiss()
                               },
                               leadingIcon = {
-                                  if(app.refreshRate == rate) Icon(Icons.Rounded.Check, null)
+                                  if(app.refreshRate == rate) Icon(
+                                      Icons.Rounded.Check, 
+                                      null,
+                                      tint = ClassicColors.Primary
+                                  )
                               }
                           )
                       }
@@ -674,8 +743,9 @@ fun ExpressiveAppItem(
   }
 }
 
+
 @Composable
-fun ConfigDropdownRow(
+fun ClassicConfigDropdownRow(
     label: String,
     currentValue: String,
     icon: ImageVector,
@@ -699,21 +769,21 @@ fun ConfigDropdownRow(
              Icon(
                  icon, 
                  null, 
-                 tint = MaterialTheme.colorScheme.onSurfaceVariant, 
+                 tint = ClassicColors.OnSurfaceVariant, 
                  modifier = Modifier.size(24.dp)
              )
             Text(
                 label,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = ClassicColors.OnSurface
             )
         }
         
         Box {
              Surface(
                  shape = RoundedCornerShape(12.dp),
-                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                 color = ClassicColors.SurfaceContainer,
                  modifier = Modifier.height(36.dp).clickable { expanded = true }
              ) {
                  Row(
@@ -724,14 +794,14 @@ fun ConfigDropdownRow(
                          currentValue,
                          style = MaterialTheme.typography.labelMedium,
                          fontWeight = FontWeight.SemiBold,
-                         color = if(isModified) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                         color = if(isModified) ClassicColors.Primary else ClassicColors.OnSurface
                      )
                      Spacer(modifier = Modifier.width(8.dp))
                      Icon(
                          Icons.Rounded.ArrowDropDown,
                          null,
                          modifier = Modifier.size(16.dp),
-                         tint = MaterialTheme.colorScheme.onSurfaceVariant
+                         tint = ClassicColors.OnSurfaceVariant
                      )
                  }
              }
@@ -740,7 +810,7 @@ fun ConfigDropdownRow(
                  expanded = expanded,
                  onDismissRequest = { expanded = false },
                  shape = RoundedCornerShape(16.dp),
-                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                 containerColor = ClassicColors.SurfaceContainer,
                  tonalElevation = 4.dp
              ) {
                  content { expanded = false }
@@ -750,19 +820,19 @@ fun ConfigDropdownRow(
 }
 
 @Composable
-private fun getProfileColor(profile: ProfileType): Color {
+private fun getProfileColor(profile: ClassicProfileType): Color {
   return when (profile) {
-    ProfileType.PERFORMANCE -> MaterialTheme.colorScheme.primary
-    ProfileType.BALANCED -> MaterialTheme.colorScheme.secondary
-    ProfileType.POWER_SAVE -> MaterialTheme.colorScheme.tertiary
+    ClassicProfileType.PERFORMANCE -> ClassicColors.Primary
+    ClassicProfileType.BALANCED -> ClassicColors.Secondary
+    ClassicProfileType.POWER_SAVE -> ClassicColors.Accent
   }
 }
 
-private fun getProfileIcon(profile: ProfileType): ImageVector {
+private fun getProfileIcon(profile: ClassicProfileType): ImageVector {
   return when (profile) {
-    ProfileType.PERFORMANCE -> Icons.Rounded.RocketLaunch
-    ProfileType.BALANCED -> Icons.Rounded.Balance
-    ProfileType.POWER_SAVE -> Icons.Rounded.BatteryChargingFull
+    ClassicProfileType.PERFORMANCE -> Icons.Rounded.RocketLaunch
+    ClassicProfileType.BALANCED -> Icons.Rounded.Balance
+    ClassicProfileType.POWER_SAVE -> Icons.Rounded.BatteryChargingFull
   }
 }
 
@@ -772,7 +842,6 @@ private fun getInstalledApps(context: android.content.Context): List<AppProfile>
     val apps = pm.getInstalledApplications(android.content.pm.PackageManager.GET_META_DATA)
     apps
         .filter {
-          // Only show user-installed apps (not system apps)
           (it.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0
         }
         .map { info ->
@@ -801,18 +870,15 @@ private fun getAppIcon(
   }
 }
 
-// Helper function to determine ProfileType from AppProfile
-private fun getProfileTypeFromApp(app: AppProfile): ProfileType {
+private fun getProfileTypeFromApp(app: AppProfile): ClassicProfileType {
     return when {
-        app.governor == "performance" && app.thermalPreset == "Extreme" -> ProfileType.PERFORMANCE
-        app.governor == "powersave" && app.thermalPreset == "Class 0" -> ProfileType.POWER_SAVE
-        app.governor == "schedutil" && app.thermalPreset == "Dynamic" -> ProfileType.BALANCED
-        // Default to BALANCED if no match
-        else -> ProfileType.BALANCED
+        app.governor == "performance" && app.thermalPreset == "Extreme" -> ClassicProfileType.PERFORMANCE
+        app.governor == "powersave" && app.thermalPreset == "Class 0" -> ClassicProfileType.POWER_SAVE
+        app.governor == "schedutil" && app.thermalPreset == "Dynamic" -> ClassicProfileType.BALANCED
+        else -> ClassicProfileType.BALANCED
     }
 }
 
-// Helper functions for refresh rate detection
 private fun getDeviceMaxRefreshRate(context: android.content.Context): Int {
     return try {
         val windowManager = context.getSystemService(android.content.Context.WINDOW_SERVICE) as android.view.WindowManager
@@ -834,11 +900,10 @@ private fun getAvailableRefreshRates(maxRate: Int): List<Int> {
         maxRate >= 144 -> listOf(60, 90, 120, 144)
         maxRate >= 120 -> listOf(60, 90, 120)
         maxRate >= 90 -> listOf(60, 90)
-        else -> emptyList() // 60Hz or less = no refresh rate options
+        else -> emptyList()
     }
 }
 
-// Parse profiles from JSON
 private fun parseProfiles(json: String): List<AppProfile> {
     return try {
         val jsonArray = JSONArray(json)
@@ -862,27 +927,17 @@ private fun parseProfiles(json: String): List<AppProfile> {
     }
 }
 
-// Save a single profile
 private suspend fun saveProfile(
     preferencesManager: PreferencesManager,
     updatedApp: AppProfile,
     allApps: List<AppProfile>
 ) {
-    // Get current saved profiles
     val currentJson = preferencesManager.getAppProfiles().first()
     val currentProfiles = parseProfiles(currentJson).toMutableList()
     
-    // Get system default governor to determine if this is truly customized
-    // We'll use the first cluster's governor as the system default
-    // Note: In a real scenario, you might want to pass this as a parameter
-    val systemDefaultGovernor = updatedApp.governor // This will be set correctly from the UI
-    
-    // Check if this app is customized (not default)
-    // An app is considered default if it uses system governor and "Not Set" thermal, and no refresh rate
     val isCustomized = updatedApp.thermalPreset != "Not Set" || updatedApp.refreshRate != 0
     
     if (isCustomized) {
-        // Add or update the profile
         val existingIndex = currentProfiles.indexOfFirst { it.packageName == updatedApp.packageName }
         if (existingIndex >= 0) {
             currentProfiles[existingIndex] = updatedApp
@@ -890,11 +945,9 @@ private suspend fun saveProfile(
             currentProfiles.add(updatedApp)
         }
     } else {
-        // Remove the profile if it's set to default
         currentProfiles.removeAll { it.packageName == updatedApp.packageName }
     }
     
-    // Save to preferences
     val jsonArray = JSONArray()
     currentProfiles.forEach { profile ->
         val obj = JSONObject().apply {
