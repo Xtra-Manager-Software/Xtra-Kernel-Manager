@@ -159,6 +159,12 @@ All notable changes to this project will be documented in here.
   - **Smart Detection** - Automatically shows/hides features based on ROM (e.g., Shimoku)
   - **Universal Features** - Standard tools available for all ROMs
 - **New Tools**
+  - **Global Refresh Rate** - Set system-wide refresh rate with visual demonstration
+    - Animated mockup cards showing refresh rate differences
+    - Side-by-side comparison (60Hz vs higher refresh rates)
+    - Automatic detection of device capabilities (60Hz, 90Hz, 120Hz, 144Hz)
+    - Toast notifications for instant feedback
+    - Available in all three layouts (Classic, Material, Frosted)
   - **Display Size Changer** - Adjust DPI on the fly with a dedicated card
   - **Developer Options** - Quick access shortcut (root required)
 
