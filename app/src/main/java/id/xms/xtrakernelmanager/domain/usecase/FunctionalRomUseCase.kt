@@ -25,6 +25,7 @@ class FunctionalRomUseCase {
       // Alternative paths for different devices
       val BYPASS_CHARGING_PATHS =
           listOf(
+              "/sys/class/qcom-battery/bypass_charging_enable", // XtraAether kernel (Mamad-Ibn-Solowie+)
               "/sys/class/power_supply/battery/input_suspend",
               "/sys/class/power_supply/battery/charging_enabled",
               "/sys/class/power_supply/usb/device/razer_charge_limit_enable",

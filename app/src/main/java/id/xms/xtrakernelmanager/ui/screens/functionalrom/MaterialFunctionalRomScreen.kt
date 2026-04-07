@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -151,6 +152,88 @@ fun MaterialFunctionalRomScreen(
                         )
                     }
                 }
+            }
+
+            // Bypass Charging Feature (Kernel-specific)
+            item {
+                Text(
+                    text = "Kernel Features",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                )
+                
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            if (!uiState.bypassChargingAvailable) Modifier.blur(2.dp)
+                            else Modifier
+                        )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFFFF9500).copy(alpha = 0.1f),
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.BatteryChargingFull,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFF9500),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Bypass Charging",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = if (uiState.bypassChargingAvailable) {
+                                    if (uiState.bypassChargingEnabled) "Enabled" else "Disabled"
+                                } else {
+                                    "Not Available"
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Switch(
+                            checked = uiState.bypassChargingEnabled,
+                            onCheckedChange = { viewModel.setBypassCharging(it) },
+                            enabled = uiState.bypassChargingAvailable
+                        )
+                    }
+                }
+                
+                Text(
+                    text = if (uiState.bypassChargingAvailable) {
+                        "Bypass charging allows power to flow directly to the device without charging the battery."
+                    } else {
+                        "This feature is only available in XtraAether kernel version Mamad-Ibn-Solowie and later. If you are a kernel developer with bypass charging support, please contact XMS team to implement it in your kernel."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp, top = 8.dp)
+                )
             }
 
             // ROM Specific Features Group

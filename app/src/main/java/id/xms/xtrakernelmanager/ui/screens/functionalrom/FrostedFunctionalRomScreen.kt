@@ -1,6 +1,7 @@
 package id.xms.xtrakernelmanager.ui.screens.functionalrom
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,9 +14,11 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -183,6 +186,81 @@ fun LiquidFunctionalRomScreen(
                     
                     Text(
                         text = "Manage system accessibility features visibility.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(start = 4.dp, top = 8.dp)
+                    )
+                }
+
+                // Bypass Charging Feature (Kernel-specific)
+                item {
+                    Text(
+                        text = "KERNEL FEATURES",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                    )
+                    
+                    id.xms.xtrakernelmanager.ui.components.GlassmorphicCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(
+                                if (!uiState.bypassChargingAvailable) Modifier.blur(2.dp)
+                                else Modifier
+                            ),
+                        contentPadding = PaddingValues(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFFFF9500).copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.BatteryChargingFull,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFF9500),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Bypass Charging",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = if (uiState.bypassChargingAvailable) {
+                                        if (uiState.bypassChargingEnabled) "Enabled" else "Disabled"
+                                    } else {
+                                        "Not Available"
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            }
+                            
+                            Switch(
+                                checked = uiState.bypassChargingEnabled,
+                                onCheckedChange = { viewModel.setBypassCharging(it) },
+                                enabled = uiState.bypassChargingAvailable
+                            )
+                        }
+                    }
+                    
+                    Text(
+                        text = if (uiState.bypassChargingAvailable) {
+                            "Bypass charging allows power to flow directly to the device without charging the battery."
+                        } else {
+                            "This feature is only available in XtraAether kernel version Mamad-Ibn-Solowie and later. If you are a kernel developer with bypass charging support, please contact XMS team to implement it in your kernel."
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.padding(start = 4.dp, top = 8.dp)
