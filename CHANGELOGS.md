@@ -22,6 +22,7 @@ All notable changes to this project will be documented in here.
   - System Performance header with core management
   - Per-cluster governor and frequency controls
   - Independent core online/offline management
+  - Governor Parameters editor for advanced tuning
   - Set on Boot toggle with bottom padding
 - **GPU Tuning Screen**
   - System Core Status header with GPU Tuner branding
@@ -96,6 +97,15 @@ All notable changes to this project will be documented in here.
   - Classic layout uses unified ClassicColors palette throughout
   - Proper color usage (Good, Moderate, Error, Primary, Secondary, Accent)
   - No undefined colors (removed "Warning" references)
+
+### CPU Tuning Enhancements
+- **Governor Parameters** - Advanced governor tuning interface
+  - Device-specific parameters auto-detected from sysfs
+  - Per-cluster parameter editing (Little, Big, Prime)
+  - Manual text input for precise control
+  - Available in all three layouts (Classic, Material, Frosted)
+  - Real-time parameter application
+  - Dedicated dialog interface for each layout style
 
 ### Bug Fixes
 - Fixed method call from `setCoreOnline` to `setCpuCoreOnline` in Classic CPU Tuning
