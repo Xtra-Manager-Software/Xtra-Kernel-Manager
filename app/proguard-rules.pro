@@ -3,6 +3,19 @@
 -dontusemixedcaseclassnames
 -dontskipnonpubliclibraryclasses
 -verbose
+-repackageclasses ''
+-allowaccessmodification
+-optimizations !code/simplification/cast,!field/*,!class/merging/*
+
+# Remove unused code more aggressively
+-assumenosideeffects class kotlin.jvm.internal.Intrinsics {
+    public static void check*(...);
+    public static void throw*(...);
+}
+
+# Remove Kotlin metadata for smaller APK
+-dontwarn kotlin.Metadata
+-dontwarn kotlin.reflect.**
 
 # ===== Keep Application class =====
 -keep public class * extends android.app.Application
@@ -35,8 +48,16 @@
 }
 
 # ===== Compose =====
-# -keep class androidx.compose.** { *; } <-- Removed for shrinking
+# Allow Compose to be shrunk more aggressively
 -dontwarn androidx.compose.**
+-dontnote androidx.compose.**
+
+# Remove Compose debug/preview code
+-assumenosideeffects class androidx.compose.runtime.ComposerKt {
+    void sourceInformation(...);
+    void sourceInformationMarkerStart(...);
+    void sourceInformationMarkerEnd(...);
+}
 
 # ===== Data classes & Models =====
 -keep class id.xms.xtrakernelmanager.data.model.** { *; }
@@ -63,6 +84,22 @@
     public static *** v(...);
     public static *** i(...);
     public static *** w(...);
+    public static *** e(...);
+}
+
+# Remove println statements
+-assumenosideeffects class kotlin.io.ConsoleKt {
+    public static *** println(...);
+    public static *** print(...);
+}
+
+# Remove Timber logging if used
+-assumenosideeffects class timber.log.Timber* {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+    public static *** w(...);
+    public static *** e(...);
 }
 
 # ===== LibSu (if used) =====

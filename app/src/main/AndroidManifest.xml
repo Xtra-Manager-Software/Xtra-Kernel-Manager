@@ -80,12 +80,22 @@
         </receiver>
 
         <!-- Game Overlay Service -->
-        <service android:name=".service.GameOverlayService" android:enabled="true" android:exported="false" android:foregroundServiceType="specialUse" android:description="@string/game_overlay_service_description">
+        <service android:name=".service.GameOverlayService" 
+                 android:enabled="true" 
+                 android:exported="false" 
+                 android:stopWithTask="true"
+                 android:foregroundServiceType="specialUse" 
+                 android:description="@string/game_overlay_service_description">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Game overlay controls and performance monitoring during gameplay for enhanced gaming experience" />
         </service>
 
         <!-- Floating Window Service for Quick Apps -->
-        <service android:name=".service.FloatingWindowService" android:enabled="true" android:exported="false" android:foregroundServiceType="specialUse" android:description="@string/floating_window_service_description">
+        <service android:name=".service.FloatingWindowService" 
+                 android:enabled="true" 
+                 android:exported="false" 
+                 android:stopWithTask="true"
+                 android:foregroundServiceType="specialUse" 
+                 android:description="@string/floating_window_service_description">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Floating window for quick apps during gaming to improve user productivity" />
         </service>
 
@@ -95,7 +105,12 @@
         </service>
 
         <!-- Per-App Profile Monitoring Service -->
-        <service android:name=".service.AppProfileService" android:enabled="true" android:exported="false" android:foregroundServiceType="specialUse" android:description="@string/app_profile_service_description">
+        <service android:name=".service.AppProfileService" 
+                 android:enabled="true" 
+                 android:exported="false" 
+                 android:stopWithTask="true"
+                 android:foregroundServiceType="specialUse" 
+                 android:description="@string/app_profile_service_description">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Per-app profile monitoring and automatic settings adjustment for optimal performance" />
         </service>
 
@@ -122,6 +137,7 @@
         <service android:name=".service.AlternativeGameDetectionService" 
                  android:enabled="true" 
                  android:exported="false" 
+                 android:stopWithTask="true"
                  android:foregroundServiceType="specialUse">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" 
                       android:value="Game detection using usage statistics for performance optimization" />

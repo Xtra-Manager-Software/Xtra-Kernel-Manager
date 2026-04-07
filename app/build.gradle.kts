@@ -94,6 +94,14 @@ android {
             isJniDebuggable = false
             isPseudoLocalesEnabled = false
             isCrunchPngs = true
+            
+            // Aggressive size optimizations
+            packaging {
+                jniLibs {
+                    // Exclude unused ABIs in release
+                    excludes += listOf("**/x86/**", "**/x86_64/**", "**/armeabi-v7a/**", "**/armeabi/**")
+                }
+            }
         }
     }
     splits {
@@ -131,9 +139,19 @@ android {
             excludes += "/kotlin/**"
             excludes += "/*.txt"
             excludes += "/*.properties"
+            excludes += "/META-INF/versions/**"
+            excludes += "/META-INF/proguard/**"
+            excludes += "**/*.proto"
+            excludes += "**/*.kotlin_builtins"
+            excludes += "DebugProbesKt.bin"
+            excludes += "/okhttp3/**"
+            excludes += "/org/bouncycastle/**"
+            excludes += "/org/conscrypt/**"
         }
         jniLibs {
             useLegacyPackaging = false
+            // Keep only arm64-v8a for release
+            pickFirsts += "**/*.so"
         }
     }
 }
@@ -200,10 +218,13 @@ dependencies {
     implementation("com.google.accompanist:accompanist-pager-indicators:0.36.0")
 
     // Coil for image loading
-    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.coil-kt:coil-compose:2.7.0") {
+        exclude(group = "androidx.appcompat")
+        exclude(group = "androidx.lifecycle")
+    }
 
-    // Lottie for animations
-    implementation("com.airbnb.android:lottie-compose:6.4.0")
+    // Lottie for animations - REMOVED (not used anymore, replaced with Material3 Switch)
+    // implementation("com.airbnb.android:lottie-compose:6.4.0")
 
     implementation("com.patrykandpatrick.vico:compose-m3:3.0.0-beta.3")
 
