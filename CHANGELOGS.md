@@ -113,6 +113,26 @@ All notable changes to this project will be documented in here.
   - Real-time parameter application
   - Dedicated dialog interface for each layout style
 
+### OTA Update System (In-App Download & Install)
+- **In-App APK Download** - Update now downloaded directly inside XKM, no browser redirect
+  - Real-time download progress bar (0–100%) shown inside the update card
+  - Percentage counter displayed alongside the progress indicator
+  - APK stored in app's internal files directory (secure, no external storage needed)
+  - GitHub release redirect handling — follows redirects automatically to CDN download
+- **Automatic Package Installer Launch** - After download completes, Android package installer pops up automatically via `FileProvider`
+- **Software Update Section** — Now present in **all three layouts** (Frosted, Material, Classic)
+  - Previously only existed in Frosted layout
+  - Consistent update card above "Latest System Version" in all styles
+  - Shows current version, Check Update button, update info, and download controls
+- **Download Error Handling** - Shows error message below button if download fails
+- **Splash Screen — Removed OTA Popup Dialog**
+  - `ForceUpdateDialog` and `OfflineLockDialog` removed from splash screen
+  - Users are no longer blocked or forced to update at launch
+  - Update info still fetched in background during splash (max 3 seconds) and cached to preferences
+  - Update notification is shown non-intrusively in System Information screen instead
+- **Manifest** - Added `REQUEST_INSTALL_PACKAGES` permission for package installer launch
+- **FileProvider** - Added `files-path` entry to serve internal APK files securely
+
 ### Bug Fixes
 - Fixed method call from `setCoreOnline` to `setCpuCoreOnline` in Classic CPU Tuning
 - Fixed icon reference from `Icons.Rounded.BoltRounded` to `Icons.Rounded.Bolt`
@@ -120,6 +140,7 @@ All notable changes to this project will be documented in here.
 - Fixed missing imports for coroutines in GPU renderer dialogs
 - Fixed navigation routing for memory tuning in Classic layout
 - Fixed I/O scheduler in Frosted to show all block devices
+- Fixed `CheckCircle` icon unresolved reference — replaced with custom `ic_check_circle.xml` vector drawable
 
 ### Technical Improvements
 - **Code Organization**
@@ -130,10 +151,12 @@ All notable changes to this project will be documented in here.
   - Proper state handling for expandable cards
   - Local state for sliders to prevent stuttering
   - Coroutine-based async operations for GPU renderer changes
+  - `UpdateState` extended with `isDownloading`, `downloadProgress`, `downloadError`, `isInstallReady` fields
 - **Import Optimization**
   - Added missing imports for new features
   - Organized imports by category
   - Removed unused imports
+
 
 ---
 
