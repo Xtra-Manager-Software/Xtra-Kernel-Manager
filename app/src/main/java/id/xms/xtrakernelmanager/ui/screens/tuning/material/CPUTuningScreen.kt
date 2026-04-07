@@ -16,6 +16,7 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.PowerSettingsNew
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -109,6 +110,7 @@ fun ClusterCard(cluster: ClusterInfo, viewModel: TuningViewModel) {
   
   // Use state from clusterStates for immediate UI updates, fallback to cluster data
   val currentGovernor = clusterState?.governor ?: cluster.governor
+  var showGovernorParams by remember { mutableStateOf(false) }
   
   Card(
       shape = RoundedCornerShape(24.dp),
@@ -191,7 +193,63 @@ fun ClusterCard(cluster: ClusterInfo, viewModel: TuningViewModel) {
             viewModel.setCpuClusterGovernor(cluster.clusterNumber, newGov)
           },
       )
+      
+      // Governor Parameters Button
+      Surface(
+          modifier = Modifier
+              .fillMaxWidth()
+              .clickable { showGovernorParams = true },
+          shape = RoundedCornerShape(12.dp),
+          color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+      ) {
+          Row(
+              modifier = Modifier
+                  .fillMaxWidth()
+                  .padding(16.dp),
+              horizontalArrangement = Arrangement.SpaceBetween,
+              verticalAlignment = Alignment.CenterVertically
+          ) {
+              Row(
+                  horizontalArrangement = Arrangement.spacedBy(12.dp),
+                  verticalAlignment = Alignment.CenterVertically
+              ) {
+                  Icon(
+                      Icons.Rounded.Settings,
+                      contentDescription = null,
+                      tint = MaterialTheme.colorScheme.primary,
+                      modifier = Modifier.size(20.dp)
+                  )
+                  Text(
+                      text = "Governor Parameters",
+                      style = MaterialTheme.typography.bodyMedium,
+                      fontWeight = FontWeight.Medium,
+                      color = MaterialTheme.colorScheme.onSurface
+                  )
+              }
+              Icon(
+                  Icons.Rounded.ChevronRight,
+                  contentDescription = null,
+                  tint = MaterialTheme.colorScheme.onSurfaceVariant
+              )
+          }
+      }
     }
+  }
+  
+  // Governor Parameters Dialog
+  if (showGovernorParams) {
+      id.xms.xtrakernelmanager.ui.screens.tuning.components.GovernorParametersDialog(
+          clusterIndex = cluster.clusterNumber,
+          clusterName = when (cluster.clusterNumber) {
+              0 -> "Little"
+              1 -> "Big"
+              2 -> "Prime"
+              else -> "Cluster ${cluster.clusterNumber}"
+          },
+          governor = currentGovernor,
+          viewModel = viewModel,
+          onDismiss = { showGovernorParams = false }
+      )
   }
 }
 

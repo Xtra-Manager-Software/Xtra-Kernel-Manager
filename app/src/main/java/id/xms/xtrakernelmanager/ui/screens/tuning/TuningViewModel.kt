@@ -387,6 +387,64 @@ class TuningViewModel(
     }
   }
 
+  // ============ GOVERNOR PARAMETERS ============
+  
+  /**
+   * Get all governor parameters for a specific cluster
+   * Returns a map of parameter name to current value
+   */
+  suspend fun getGovernorParameters(clusterIndex: Int): Map<String, String> = withContext(Dispatchers.IO) {
+    val cluster = _cpuClusters.value.find { it.clusterNumber == clusterIndex } ?: return@withContext emptyMap()
+    val firstCore = cluster.cores.firstOrNull() ?: return@withContext emptyMap()
+    val governor = cluster.governor
+    
+    val basePath = "/sys/devices/system/cpu/cpu$firstCore/cpufreq/$governor"
+    
+    // Check if governor directory exists
+    val checkResult = RootManager.executeCommand("[ -d $basePath ] && echo exists || echo notfound").getOrNull()?.trim()
+    if (checkResult != "exists") {
+      Log.d("TuningViewModel", "Governor directory not found: $basePath")
+      return@withContext emptyMap()
+    }
+    
+    // List all files in governor directory
+    val filesResult = RootManager.executeCommand("ls $basePath 2>/dev/null").getOrNull() ?: return@withContext emptyMap()
+    val files = filesResult.split("\n").filter { it.isNotBlank() }
+    
+    val parameters = mutableMapOf<String, String>()
+    
+    // Read each parameter file
+    files.forEach { file ->
+      val value = RootManager.executeCommand("cat $basePath/$file 2>/dev/null").getOrNull()?.trim()
+      if (!value.isNullOrBlank()) {
+        parameters[file] = value
+      }
+    }
+    
+    Log.d("TuningViewModel", "Cluster $clusterIndex governor $governor parameters: ${parameters.size} found")
+    return@withContext parameters
+  }
+  
+  /**
+   * Set a specific governor parameter for a cluster
+   */
+  fun setGovernorParameter(clusterIndex: Int, parameterName: String, value: String) {
+    viewModelScope.launch(Dispatchers.IO) {
+      val cluster = _cpuClusters.value.find { it.clusterNumber == clusterIndex } ?: return@launch
+      val firstCore = cluster.cores.firstOrNull() ?: return@launch
+      val governor = cluster.governor
+      
+      val paramPath = "/sys/devices/system/cpu/cpu$firstCore/cpufreq/$governor/$parameterName"
+      
+      val result = RootManager.executeCommand("echo $value > $paramPath 2>/dev/null")
+      if (result.isSuccess) {
+        Log.d("TuningViewModel", "Set cluster $clusterIndex governor parameter $parameterName = $value")
+      } else {
+        Log.e("TuningViewModel", "Failed to set governor parameter: ${result.exceptionOrNull()?.message}")
+      }
+    }
+  }
+
   private val _availableCompressionAlgorithms = MutableStateFlow<List<String>>(emptyList())
   val availableCompressionAlgorithms: StateFlow<List<String>>
     get() = _availableCompressionAlgorithms.asStateFlow()

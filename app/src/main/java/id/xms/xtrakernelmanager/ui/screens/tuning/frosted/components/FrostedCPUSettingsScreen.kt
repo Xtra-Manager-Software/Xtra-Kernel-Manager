@@ -903,6 +903,62 @@ private fun ModernClusterCard(
               currentGovernor = currentGovernor,
               onClick = { showGovernorDialog = true },
           )
+          
+          // Governor Parameters Button
+          var showGovernorParams by remember { mutableStateOf(false) }
+          
+          Surface(
+              onClick = { showGovernorParams = true },
+              shape = RoundedCornerShape(16.dp),
+              color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+              modifier = Modifier.fillMaxWidth()
+          ) {
+              Row(
+                  modifier = Modifier
+                      .fillMaxWidth()
+                      .padding(16.dp),
+                  horizontalArrangement = Arrangement.SpaceBetween,
+                  verticalAlignment = Alignment.CenterVertically
+              ) {
+                  Row(
+                      horizontalArrangement = Arrangement.spacedBy(12.dp),
+                      verticalAlignment = Alignment.CenterVertically
+                  ) {
+                      Icon(
+                          Icons.Rounded.Settings,
+                          contentDescription = null,
+                          tint = MaterialTheme.colorScheme.primary,
+                          modifier = Modifier.size(20.dp)
+                      )
+                      Text(
+                          text = "Governor Parameters",
+                          style = MaterialTheme.typography.bodyMedium,
+                          fontWeight = FontWeight.Medium,
+                          color = MaterialTheme.colorScheme.onSurface
+                      )
+                  }
+                  Icon(
+                      Icons.Rounded.ChevronRight,
+                      contentDescription = null,
+                      tint = MaterialTheme.colorScheme.onSurfaceVariant
+                  )
+              }
+          }
+          
+          if (showGovernorParams) {
+              FrostedGovernorParametersDialog(
+                  clusterIndex = cluster.clusterNumber,
+                  clusterName = when (clusterIndex) {
+                      0 -> "Little"
+                      1 -> "Big"
+                      2 -> "Prime"
+                      else -> "Cluster ${clusterIndex}"
+                  },
+                  governor = currentGovernor,
+                  viewModel = viewModel,
+                  onDismiss = { showGovernorParams = false }
+              )
+          }
         }
       }
     }

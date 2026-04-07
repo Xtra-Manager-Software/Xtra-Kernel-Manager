@@ -338,6 +338,7 @@ fun ClassicClusterCard(
     val currentGovernor = clusterState?.governor ?: cluster.governor
     
     var expanded by remember { mutableStateOf(false) }
+    var showGovernorParams by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -438,6 +439,48 @@ fun ClassicClusterCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Governor Parameters Button
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showGovernorParams = true },
+                shape = RoundedCornerShape(12.dp),
+                color = ClassicColors.Primary.copy(alpha = 0.1f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Rounded.Settings,
+                            contentDescription = null,
+                            tint = ClassicColors.Primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Governor Parameters",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = ClassicColors.OnSurface
+                        )
+                    }
+                    Icon(
+                        Icons.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = ClassicColors.OnSurface.copy(alpha = 0.4f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             // Frequencies
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -465,6 +508,26 @@ fun ClassicClusterCard(
                 )
             }
         }
+    }
+    
+    // Governor Parameters Dialog
+    if (showGovernorParams) {
+        id.xms.xtrakernelmanager.ui.screens.tuning.components.GovernorParametersDialog(
+            clusterIndex = cluster.clusterNumber,
+            clusterName = when (cluster.clusterNumber) {
+                0 -> "Little"
+                1 -> "Big"
+                2 -> "Prime"
+                else -> "Cluster ${cluster.clusterNumber}"
+            },
+            governor = currentGovernor,
+            viewModel = viewModel,
+            onDismiss = { showGovernorParams = false },
+            containerColor = ClassicColors.Surface,
+            onSurfaceColor = ClassicColors.OnSurface,
+            primaryColor = ClassicColors.Primary,
+            surfaceVariantColor = ClassicColors.SurfaceContainerHigh
+        )
     }
 }
 
