@@ -77,7 +77,26 @@ All notable changes to this project will be documented in here.
   - Individual scheduler selection per device
   - Real-time scheduler switching
   - Device status indicators
+ 
 
+### Functional ROM Manager
+- **Kernel Features**
+  - **Bypass Charging** - Direct power flow without battery charging
+    - Auto-detection of kernel support via sysfs node
+    - Available for XtraAether kernel (Mamad-Ibn-Solowie version onwards)
+    - Toggle to enable/disable bypass charging mode
+    - Disabled and blurred UI when kernel doesn't support it
+    - Descriptive message for unsupported kernels
+    - Available in all three layouts (Classic, Material, Frosted)
+- **New Tools**
+  - **Global Refresh Rate** - Set system-wide refresh rate with visual demonstration
+    - Animated mockup cards showing refresh rate differences
+    - Side-by-side comparison (60Hz vs higher refresh rates)
+    - Automatic detection of device capabilities (60Hz, 90Hz, 120Hz, 144Hz)
+    - Toast notifications for instant feedback
+    - Available in all three layouts (Classic, Material, Frosted)
+   
+    
 ### Setup Screen Improvements
 - **Accessibility Permission**
   - Changed from required to optional
@@ -197,21 +216,6 @@ All notable changes to this project will be documented in here.
 - **ROM-Specific Features**
   - **Smart Detection** - Automatically shows/hides features based on ROM (e.g., Shimoku)
   - **Universal Features** - Standard tools available for all ROMs
-- **Kernel Features**
-  - **Bypass Charging** - Direct power flow without battery charging
-    - Auto-detection of kernel support via sysfs node
-    - Available for XtraAether kernel (Mamad-Ibn-Solowie version onwards)
-    - Toggle to enable/disable bypass charging mode
-    - Disabled and blurred UI when kernel doesn't support it
-    - Descriptive message for unsupported kernels
-    - Available in all three layouts (Classic, Material, Frosted)
-- **New Tools**
-  - **Global Refresh Rate** - Set system-wide refresh rate with visual demonstration
-    - Animated mockup cards showing refresh rate differences
-    - Side-by-side comparison (60Hz vs higher refresh rates)
-    - Automatic detection of device capabilities (60Hz, 90Hz, 120Hz, 144Hz)
-    - Toast notifications for instant feedback
-    - Available in all three layouts (Classic, Material, Frosted)
   - **Display Size Changer** - Adjust DPI on the fly with a dedicated card
   - **Developer Options** - Quick access shortcut (root required)
 
