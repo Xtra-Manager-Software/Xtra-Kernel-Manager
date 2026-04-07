@@ -10,7 +10,7 @@ All notable changes to this project will be documented in here.
 - **Three Distinct Design Languages** - Choose your preferred visual experience
   - **Frosted UI** (formerly Liquid) - Signature glassmorphic design with wavy blob ornaments and neon aesthetics
   - **Material UI** - Clean, standard Material 3 design following Google's guidelines
-  - **Classic UI** - NEW! Minimalist dark theme with "Nebula Core" color palette inspired by Google AI Stitch
+  - **Classic UI** - NEW! Minimalist dark theme with "Nebula Core" color palette
     - Deep matte foundation with cyan/teal accents
     - Consistent card-based layout with rounded corners
     - Optimized for readability and performance
