@@ -47,16 +47,25 @@ fun InfoScreen(
     onNavigateToLicense: () -> Unit = {}
 ) {
   val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "liquid")
-  if (layoutStyle == "material") {
-    MaterialAboutScreen(
-        onNavigateToWebView = onNavigateToWebView,
-        onNavigateToLicense = onNavigateToLicense
-    )
-  } else {
-    FrostedInfoScreen(
-        onNavigateToWebView = onNavigateToWebView,
-        onNavigateToLicense = onNavigateToLicense
-    )
+  when (layoutStyle) {
+    "material" -> {
+      MaterialAboutScreen(
+          onNavigateToWebView = onNavigateToWebView,
+          onNavigateToLicense = onNavigateToLicense
+      )
+    }
+    "classic" -> {
+      ClassicInfoScreen(
+          onNavigateToWebView = onNavigateToWebView,
+          onNavigateToLicense = onNavigateToLicense
+      )
+    }
+    else -> {
+      FrostedInfoScreen(
+          onNavigateToWebView = onNavigateToWebView,
+          onNavigateToLicense = onNavigateToLicense
+      )
+    }
   }
 }
 
