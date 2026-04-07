@@ -67,7 +67,7 @@ fun ClassicMiscScreen(
         showProcessManager ->
             MaterialProcessManagerScreen(viewModel = viewModel, onBack = { showProcessManager = false })
         showGameSpace ->
-            MaterialGameSpaceScreen(
+            ClassicGameSpaceScreen(
                 viewModel = viewModel,
                 onBack = { showGameSpace = false },
                 onAddGames = onNavigateToAppPicker,

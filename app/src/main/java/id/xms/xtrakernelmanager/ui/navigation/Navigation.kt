@@ -51,6 +51,7 @@ import id.xms.xtrakernelmanager.ui.screens.webview.FrostedWebViewScreen
 import id.xms.xtrakernelmanager.ui.screens.settings.SettingsScreen
 import id.xms.xtrakernelmanager.utils.RootShell
 import id.xms.xtrakernelmanager.ui.screens.misc.material.MaterialGameAppSelectorScreen
+import id.xms.xtrakernelmanager.ui.screens.misc.classic.ClassicGameAppSelectorScreen
 import id.xms.xtrakernelmanager.ui.screens.misc.MiscScreen
 import id.xms.xtrakernelmanager.ui.screens.misc.MiscViewModel
 import id.xms.xtrakernelmanager.ui.screens.setup.SetupScreen
@@ -392,10 +393,21 @@ fun Navigation(
                 context = context.applicationContext,
             )
           }
-          MaterialGameAppSelectorScreen(
-              viewModel = miscViewModel,
-              onBack = { navController.popBackStack() },
-          )
+          when (layoutStyle) {
+            "classic" -> {
+              ClassicGameAppSelectorScreen(
+                  viewModel = miscViewModel,
+                  onBack = { navController.popBackStack() },
+              )
+            }
+            else -> {
+              // Material and Frosted use the same material design
+              MaterialGameAppSelectorScreen(
+                  viewModel = miscViewModel,
+                  onBack = { navController.popBackStack() },
+              )
+            }
+          }
         }
         composable("profiles") {
           val context = LocalContext.current
