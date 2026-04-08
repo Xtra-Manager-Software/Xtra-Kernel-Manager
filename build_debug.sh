@@ -130,7 +130,10 @@ fi
 
 # Build Debug APK
 echo -e "${YELLOW}Building Debug APK...${NC}"
-./gradlew :$APP_MODULE:assembleDebug
+# Force Gradle to use System JDK to prevent using incomplete extension JREs
+export JAVA_HOME=/usr/lib/jvm/default
+./gradlew --stop > /dev/null 2>&1
+./gradlew :$APP_MODULE:clean :$APP_MODULE:assembleDebug
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Build Failed!${NC}"
