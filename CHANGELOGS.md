@@ -95,6 +95,19 @@ All notable changes to this project will be documented in here.
     - Automatic detection of device capabilities (60Hz, 90Hz, 120Hz, 144Hz)
     - Toast notifications for instant feedback
     - Available in all three layouts (Classic, Material, Frosted)
+  
+  ### SELinux Mode Control (All Layouts)
+- **SELinux Toggle** — Switch between Enforcing and Permissive mode directly inside XKM
+  - Available in all three layouts (Frosted, Material, Classic) under Universal Features
+  - Reads current SELinux mode at app startup via `getenforce` (root)
+  - Applies change instantly via `setenforce 0/1` (root) — no reboot required
+  - Status label color-coded: **green** = Enforcing, **orange** = Permissive
+- **Risk Disclaimer Dialog** — Shown when user attempts to switch to Permissive mode
+  - Warns that bypassing SELinux enforcement can expose security vulnerabilities and system instability
+  - Clearly states all risks are outside the scope of Xtra Kernel Manager
+  - Requires explicit confirmation ("I Understand, Proceed") before applying
+  - Switching back to Enforcing applies immediately without any dialog
+
    
     
 ### Setup Screen Improvements
