@@ -52,6 +52,24 @@ All notable changes to this project will be documented in here.
   - SkiaGL - Skia rendering with OpenGL backend
   - SkiaVulkan - Skia rendering with Vulkan backend
 
+### Shimoku Features — PIF & Keybox Importer (Contributor Feature)
+- **Import pif.json** — Pick any `pif.json` from device storage and copy it to `/data/adb/pif.json` via root
+  - Compatible with PIF Magisk module and similar Play Integrity Fix implementations
+  - Visual import status: green checkmark on success, red error on failure
+- **Import keybox.xml** — Pick any `keybox.xml` and copy it to `/data/adb/keybox.xml` via root
+  - Intended for Strong Integrity attestation spoofing
+  - File is written with `chmod 644` permissions for module compatibility
+- Both importers use Android file picker — no external storage permissions needed
+- Import progress shown via `CircularProgressIndicator` during root copy operation
+- Result feedback via Snackbar with full path confirmation or error message
+
+### Shimoku Features — Debug Build Bypass
+- **Debug builds now bypass Shimoku ROM detection** — all Shimoku features are fully accessible in debug builds regardless of ROM
+  - Allows contributors and developers to test features without owning a Shimoku ROM device
+- **Debug banner** shown at top of Shimoku screen in debug builds to clearly indicate unlocked state
+- **ROM info card** in debug mode shows `BugReport` icon and "Non-Shimoku ROM (Debug Access)" instead of lock/error state
+- **Release builds** continue to enforce `isShimokuRom && isVipCommunity` detection as before — no behavior change for users
+
 ### Removed Features
 - **Thermal Policy** - Removed from all layouts due to persistent issues
   - UI state synchronization problems across navigation
