@@ -198,7 +198,7 @@ fun ClassicDonationScreen(
                         primaryAccent = primaryAccent,
                         glowAlpha = glowAlpha,
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://paypal.me/yourpaypal"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://paypal.me/gustyxpower"))
                             context.startActivity(intent)
                         }
                     )
@@ -214,7 +214,7 @@ fun ClassicDonationScreen(
                         primaryAccent = primaryAccent,
                         glowAlpha = glowAlpha,
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/yourusername"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/gustiadityam"))
                             context.startActivity(intent)
                         }
                     )
@@ -230,7 +230,7 @@ fun ClassicDonationScreen(
                         primaryAccent = primaryAccent,
                         glowAlpha = glowAlpha,
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/yourusername"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/Xtra-Manager-Softwares"))
                             context.startActivity(intent)
                         }
                     )
@@ -246,7 +246,7 @@ fun ClassicDonationScreen(
                         primaryAccent = primaryAccent,
                         glowAlpha = glowAlpha,
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/yourusername"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/xtramanagersoftwares"))
                             context.startActivity(intent)
                         }
                     )

@@ -103,7 +103,7 @@ fun MaterialDonationScreen(
                 description = stringResource(R.string.donation_paypal_desc),
                 color = Color(0xFF0070BA),
                 onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://paypal.me/yourpaypal"))
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://paypal.me/gustyxpower"))
                     context.startActivity(intent)
                 }
             )
@@ -115,7 +115,7 @@ fun MaterialDonationScreen(
                 description = stringResource(R.string.donation_buymeacoffee_desc),
                 color = Color(0xFFFFDD00),
                 onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/yourusername"))
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/gustiadityam"))
                     context.startActivity(intent)
                 }
             )
@@ -127,7 +127,7 @@ fun MaterialDonationScreen(
                 description = stringResource(R.string.donation_github_desc),
                 color = Color(0xFF6E40C9),
                 onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/yourusername"))
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/Xtra-Manager-Softwares"))
                     context.startActivity(intent)
                 }
             )
@@ -139,7 +139,7 @@ fun MaterialDonationScreen(
                 description = stringResource(R.string.donation_kofi_desc),
                 color = Color(0xFFFF5E5B),
                 onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/yourusername"))
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/xtramanagersoftwares"))
                     context.startActivity(intent)
                 }
             )
