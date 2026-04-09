@@ -4,7 +4,7 @@ All notable changes to this project will be documented in here.
 
 ---
 
-## [3.1-Release] - NO ETA
+## [3.1-Release] - 09 April 2026
 
 ### Triple Layout System
 - **Three Distinct Design Languages** - Choose your preferred visual experience
