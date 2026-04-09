@@ -431,11 +431,29 @@ private fun FrostedSystemInfoScreen(
                                             color = Color.White.copy(alpha = 0.7f),
                                             fontWeight = FontWeight.SemiBold
                                         )
-                                        Text(
-                                            text = updateState.updateConfig.changelog,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White.copy(alpha = 0.9f)
-                                        )
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            updateState.updateConfig.changelog.forEach { line ->
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "•",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = Color.White.copy(alpha = 0.9f)
+                                                    )
+                                                    Text(
+                                                        text = line,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = Color.White.copy(alpha = 0.9f),
+                                                        modifier = Modifier.weight(1f)
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                     
                                     // Download progress or button
@@ -624,11 +642,29 @@ private fun FrostedSystemInfoScreen(
                                             color = Color.White.copy(alpha = 0.7f),
                                             fontWeight = FontWeight.SemiBold
                                         )
-                                        Text(
-                                            text = updateState.betaUpdateConfig.changelog,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color.White.copy(alpha = 0.9f)
-                                        )
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            updateState.betaUpdateConfig.changelog.forEach { line ->
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "•",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = Color.White.copy(alpha = 0.9f)
+                                                    )
+                                                    Text(
+                                                        text = line,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = Color.White.copy(alpha = 0.9f),
+                                                        modifier = Modifier.weight(1f)
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                     
                                     // Download progress or button
@@ -974,10 +1010,34 @@ private fun MaterialSystemInfoScreen(
                                 )
                                 if (updateState.updateConfig.changelog.isNotEmpty()) {
                                     Text(
-                                        text = updateState.updateConfig.changelog,
+                                        text = "Changelog:",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.SemiBold
                                     )
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        updateState.updateConfig.changelog.forEach { line ->
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Text(
+                                                    text = "•",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                                Text(
+                                                    text = line,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                                 // Download progress or button
                                 if (updateState.isDownloading && updateState.updateConfig.channel == "release") {
@@ -1125,10 +1185,34 @@ private fun MaterialSystemInfoScreen(
                                 )
                                 if (updateState.betaUpdateConfig.changelog.isNotEmpty()) {
                                     Text(
-                                        text = updateState.betaUpdateConfig.changelog,
+                                        text = "Changelog:",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.SemiBold
                                     )
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        updateState.betaUpdateConfig.changelog.forEach { line ->
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Text(
+                                                    text = "•",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                                Text(
+                                                    text = line,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                                 // Download progress or button
                                 if (updateState.isDownloading && updateState.betaUpdateConfig.channel == "beta") {
@@ -1476,10 +1560,34 @@ private fun ClassicSystemInfoScreen(
                                 )
                                 if (updateState.updateConfig.changelog.isNotEmpty()) {
                                     Text(
-                                        text = updateState.updateConfig.changelog,
+                                        text = "Changelog:",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = ClassicColors.OnSurfaceVariant
+                                        color = ClassicColors.OnSurfaceVariant,
+                                        fontWeight = FontWeight.SemiBold
                                     )
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        updateState.updateConfig.changelog.forEach { line ->
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Text(
+                                                    text = "•",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = ClassicColors.OnSurfaceVariant
+                                                )
+                                                Text(
+                                                    text = line,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = ClassicColors.OnSurfaceVariant,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                                 // Download progress or button
                                 if (updateState.isDownloading && updateState.updateConfig.channel == "release") {
@@ -1631,10 +1739,34 @@ private fun ClassicSystemInfoScreen(
                                 )
                                 if (updateState.betaUpdateConfig.changelog.isNotEmpty()) {
                                     Text(
-                                        text = updateState.betaUpdateConfig.changelog,
+                                        text = "Changelog:",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = ClassicColors.OnSurfaceVariant
+                                        color = ClassicColors.OnSurfaceVariant,
+                                        fontWeight = FontWeight.SemiBold
                                     )
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        updateState.betaUpdateConfig.changelog.forEach { line ->
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Text(
+                                                    text = "•",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = ClassicColors.OnSurfaceVariant
+                                                )
+                                                Text(
+                                                    text = line,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = ClassicColors.OnSurfaceVariant,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                                 // Download progress or button
                                 if (updateState.isDownloading && updateState.betaUpdateConfig.channel == "beta") {

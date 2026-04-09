@@ -16,24 +16,23 @@ import kotlin.math.max
 // --- DATA CLASSES ---
 data class UpdateConfig(
     val version: String = "",
-    val changelog: String = "",
+    val changelog: List<String> = emptyList(),
     val url: String = "",
     val force: Boolean = false,
     val channel: String = "release" // "release" or "beta"
 )
 
-// --- PREFERENCES MANAGER (Untuk menyimpan info update) ---
 object UpdatePrefs {
     private const val PREF_NAME = "update_prefs"
     private const val KEY_PENDING_VERSION = "pending_version"
     private const val KEY_UPDATE_URL = "update_url"
     private const val KEY_CHANGELOG = "update_changelog"
 
-    fun savePendingUpdate(context: Context, version: String, url: String, changelog: String) {
+    fun savePendingUpdate(context: Context, version: String, url: String, changelog: List<String>) {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit().apply {
             putString(KEY_PENDING_VERSION, version)
             putString(KEY_UPDATE_URL, url)
-            putString(KEY_CHANGELOG, changelog)
+            putString(KEY_CHANGELOG, changelog.joinToString("\n"))
             apply()
         }
     }
@@ -42,7 +41,13 @@ object UpdatePrefs {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         val version = prefs.getString(KEY_PENDING_VERSION, null) ?: return null
         val url = prefs.getString(KEY_UPDATE_URL, "") ?: ""
-        val changelog = prefs.getString(KEY_CHANGELOG, "") ?: ""
+        val changelogStr = prefs.getString(KEY_CHANGELOG, "") ?: ""
+        // Split changelog back to list
+        val changelog = if (changelogStr.isNotEmpty()) {
+            changelogStr.split("\n").filter { it.isNotBlank() }
+        } else {
+            emptyList()
+        }
         return UpdateConfig(version, changelog, url, force = true) // Diasumsikan force jika tersimpan
     }
 
@@ -100,7 +105,23 @@ suspend fun fetchUpdateConfig(): UpdateConfig? = suspendCancellableCoroutine { c
             try {
                 val versionRaw = snapshot.child("version").value
                 val version = versionRaw?.toString() ?: ""
-                val changelog = snapshot.child("changelog").getValue(String::class.java) ?: ""
+                
+                // Parse changelog as array or fallback to single string
+                val changelog = mutableListOf<String>()
+                val changelogSnapshot = snapshot.child("changelog")
+                if (changelogSnapshot.hasChildren()) {
+                    // It's an array
+                    changelogSnapshot.children.forEach { child ->
+                        child.getValue(String::class.java)?.let { changelog.add(it) }
+                    }
+                } else {
+                    // It's a single string, split by newlines
+                    val changelogStr = changelogSnapshot.getValue(String::class.java) ?: ""
+                    if (changelogStr.isNotEmpty()) {
+                        changelog.addAll(changelogStr.split("\n").filter { it.isNotBlank() })
+                    }
+                }
+                
                 val url = snapshot.child("url").getValue(String::class.java) ?: ""
                 val force = snapshot.child("force").getValue(Boolean::class.java) ?: false
                 if (continuation.isActive)
@@ -128,7 +149,23 @@ suspend fun fetchBetaUpdateConfig(): UpdateConfig? = suspendCancellableCoroutine
             try {
                 val versionRaw = snapshot.child("version").value
                 val version = versionRaw?.toString() ?: ""
-                val changelog = snapshot.child("changelog").getValue(String::class.java) ?: ""
+                
+                // Parse changelog as array or fallback to single string
+                val changelog = mutableListOf<String>()
+                val changelogSnapshot = snapshot.child("changelog")
+                if (changelogSnapshot.hasChildren()) {
+                    // It's an array
+                    changelogSnapshot.children.forEach { child ->
+                        child.getValue(String::class.java)?.let { changelog.add(it) }
+                    }
+                } else {
+                    // It's a single string, split by newlines
+                    val changelogStr = changelogSnapshot.getValue(String::class.java) ?: ""
+                    if (changelogStr.isNotEmpty()) {
+                        changelog.addAll(changelogStr.split("\n").filter { it.isNotBlank() })
+                    }
+                }
+                
                 val url = snapshot.child("url").getValue(String::class.java) ?: ""
                 val force = snapshot.child("force").getValue(Boolean::class.java) ?: false
                 if (continuation.isActive)
@@ -198,34 +235,27 @@ fun isUpdateAvailable(currentVersion: String, remoteVersion: String): Boolean {
     }
 }
 
-/**
- * Mendapatkan priority suffix untuk perbandingan versi.
- * Urutan prioritas: (tanpa suffix/stable) < Alpha < Beta < RC < Release
- * Semakin tinggi angka = semakin baru/stabil
- */
+
 fun getSuffixPriority(suffix: String): Int {
     if (suffix.isEmpty()) return 50 // Versi tanpa suffix (2.0) = stable release
 
     val lowerSuffix = suffix.lowercase()
 
     return when {
-        lowerSuffix.startsWith("release") -> 100 // Release adalah yang tertinggi
-        lowerSuffix.startsWith("stable") -> 90 // Stable setara release
+        lowerSuffix.startsWith("release") -> 100
+        lowerSuffix.startsWith("stable") -> 90 
         lowerSuffix.startsWith("rc") -> {
-            // RC dengan nomor: RC1 = 40, RC2 = 41, dst
             val num = Regex("[0-9]+").find(suffix)?.value?.toIntOrNull() ?: 0
             40 + num
         }
         lowerSuffix.startsWith("beta") -> {
-            // Beta dengan nomor: Beta1 = 20, Beta2 = 21, dst
             val num = Regex("[0-9]+").find(suffix)?.value?.toIntOrNull() ?: 0
             20 + num
         }
         lowerSuffix.startsWith("alpha") -> {
-            // Alpha dengan nomor: Alpha1 = 10, Alpha2 = 11, dst
             val num = Regex("[0-9]+").find(suffix)?.value?.toIntOrNull() ?: 0
             10 + num
         }
-        else -> 0 // Unknown suffix = lowest priority
+        else -> 0
     }
 }
