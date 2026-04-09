@@ -24,27 +24,6 @@
 **Xtra Kernel Manager** is a modern, rooted Android application built with **Kotlin** and **Jetpack Compose**, designed for kernel enthusiasts and power users.
 
 It provides **real-time visibility and precise control** over CPU performance, thermal behavior, and power efficiency on custom kernels, while prioritizing **clarity, responsiveness, and minimal system overhead**.
-
----
-
-## Features
-
-- **Real-time CPU Monitoring**  
-  Per-core frequency and temperature monitoring.
-
-- **Thermal Zone Status**  
-  Read system thermal zones for advanced debugging.
-
-- **CPU Tuning**  
-  Dynamically apply governors such as `performance` or `powersave`  
-  via native shell execution using [libsu](https://github.com/topjohnwu/libsu).
-
-- **Material 3 UI**  
-  Clean, modern interface built with Jetpack Compose.
-
-- **Fast & Minimal**  
-  Lightweight architecture optimized for rooted devices.
-
 ---
 
 ## Supported Root Managers
@@ -103,7 +82,7 @@ This project includes optimizations to reduce Play Protect detection:
 ## Requirements
 
 - **Root Access** – Mandatory for all core features
-- **Android Version** – Android 10 (API 29) or above
+- **Android Version** – Android 8 Oreo (API 26) or above
 - **Have a brain** – without understanding what you’re doing is a bad idea
 
 ---
