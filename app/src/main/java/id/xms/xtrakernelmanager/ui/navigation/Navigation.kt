@@ -65,6 +65,8 @@ import id.xms.xtrakernelmanager.ui.screens.misc.classic.ClassicGameAppSelectorSc
 import id.xms.xtrakernelmanager.ui.screens.misc.MiscScreen
 import id.xms.xtrakernelmanager.ui.screens.misc.MiscViewModel
 import id.xms.xtrakernelmanager.ui.screens.setup.SetupScreen
+import id.xms.xtrakernelmanager.ui.screens.root.RootAccessScreen
+import id.xms.xtrakernelmanager.ui.splash.checkRootAccess
 import id.xms.xtrakernelmanager.ui.screens.tuning.TuningScreen
 import id.xms.xtrakernelmanager.ui.screens.tuning.TuningViewModel
 import id.xms.xtrakernelmanager.ui.screens.tuning.classic.ClassicCPUTuningScreen
@@ -210,16 +212,39 @@ fun Navigation(
 
   // Collect Setup State
   val isSetupCompleteState by preferencesManager.isSetupComplete.collectAsState(initial = null)
+  
+  // Check root access
+  var hasRootAccess by remember { mutableStateOf<Boolean?>(null) }
+  
+  LaunchedEffect(isSetupCompleteState) {
+    if (isSetupCompleteState == true) {
+      // Check root access after setup is complete
+      hasRootAccess = checkRootAccess()
+    }
+  }
 
   // Show nothing while checking setup state to confirm start destination
   if (isSetupCompleteState == null) return
-
-  val startDest = if (isSetupCompleteState == true) "home" else "setup"
+  
+  // Determine start destination based on setup and root status
+  val startDest = when {
+    isSetupCompleteState == false -> "setup"
+    hasRootAccess == null -> "home" // Still checking root, show home temporarily
+    hasRootAccess == false -> "root_access"
+    else -> "home"
+  }
 
   // Redirect to Home if setup is completed while on setup screen
   LaunchedEffect(isSetupCompleteState, currentRoute) {
     if (isSetupCompleteState == true && currentRoute == "setup") {
-      navController.navigate("home") { popUpTo("setup") { inclusive = true } }
+      // Check root first before going to home
+      val rootCheck = checkRootAccess()
+      
+      if (rootCheck) {
+        navController.navigate("home") { popUpTo("setup") { inclusive = true } }
+      } else {
+        navController.navigate("root_access") { popUpTo("setup") { inclusive = true } }
+      }
     }
   }
   val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "frosted")
@@ -251,12 +276,48 @@ fun Navigation(
                   // Wait a bit to ensure preferences are saved
                   kotlinx.coroutines.delay(100)
                   
-                  // Navigate to home after preferences are saved
-                  navController.navigate("home") { popUpTo("setup") { inclusive = true } }
+                  // Check root access before navigating
+                  val rootCheck = checkRootAccess()
+                  
+                  // Navigate based on root status
+                  if (rootCheck) {
+                    navController.navigate("home") { popUpTo("setup") { inclusive = true } }
+                  } else {
+                    navController.navigate("root_access") { popUpTo("setup") { inclusive = true } }
+                  }
                 }
               }
           )
         }
+        
+        composable("root_access") {
+          RootAccessScreen(
+              onGrantPermissions = {
+                scope.launch {
+                  // Try to request root access
+                  val rootGranted = checkRootAccess()
+                  if (rootGranted) {
+                    // Root granted, navigate to home
+                    navController.navigate("home") { 
+                      popUpTo("root_access") { inclusive = true } 
+                    }
+                  }
+                }
+              },
+              onTryAgain = {
+                scope.launch {
+                  // Check root again
+                  val rootGranted = checkRootAccess()
+                  if (rootGranted) {
+                    navController.navigate("home") { 
+                      popUpTo("root_access") { inclusive = true } 
+                    }
+                  }
+                }
+              }
+          )
+        }
+        
         composable("home") { 
           HomeScreen(
               preferencesManager = preferencesManager,
@@ -602,7 +663,7 @@ fun Navigation(
     }
 
     // Floating Bottom Dock
-    if (currentRoute != "setup") {
+    if (currentRoute != "setup" && currentRoute != "root_access") {
       val selectedIndex = bottomNavItems.indexOfFirst { it.route == currentRoute }.coerceAtLeast(0)
       val navigateToRoute: (String) -> Unit = { route ->
         if (currentRoute != route) {
