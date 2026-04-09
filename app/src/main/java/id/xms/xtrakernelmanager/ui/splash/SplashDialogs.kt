@@ -86,11 +86,31 @@ fun ForceUpdateDialog(config: UpdateConfig, onUpdateClick: () -> Unit) {
             )
           }
           Spacer(modifier = Modifier.height(8.dp))
-          Text(
-            config.changelog,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
+          if (config.changelog.isNotEmpty()) {
+            Column(
+              modifier = Modifier.fillMaxWidth(),
+              verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+              config.changelog.forEach { line ->
+                Row(
+                  modifier = Modifier.fillMaxWidth(),
+                  horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                  Text(
+                    text = "•",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                  )
+                  Text(
+                    text = line,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                  )
+                }
+              }
+            }
+          }
         }
         Spacer(modifier = Modifier.height(24.dp))
         Button(
