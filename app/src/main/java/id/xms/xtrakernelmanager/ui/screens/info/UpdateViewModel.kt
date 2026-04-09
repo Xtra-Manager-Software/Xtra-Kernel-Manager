@@ -10,6 +10,7 @@ import id.xms.xtrakernelmanager.BuildConfig
 import id.xms.xtrakernelmanager.ui.splash.UpdateConfig
 import id.xms.xtrakernelmanager.ui.splash.UpdatePrefs
 import id.xms.xtrakernelmanager.ui.splash.fetchUpdateConfig
+import id.xms.xtrakernelmanager.ui.splash.fetchBetaUpdateConfig
 import id.xms.xtrakernelmanager.ui.splash.isInternetAvailable
 import id.xms.xtrakernelmanager.ui.splash.isUpdateAvailable
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,11 @@ data class UpdateState(
     val hasUpdate: Boolean = false,
     val updateConfig: UpdateConfig? = null,
     val error: String? = null,
+    // Beta channel
+    val isCheckingBeta: Boolean = false,
+    val hasBetaUpdate: Boolean = false,
+    val betaUpdateConfig: UpdateConfig? = null,
+    val betaError: String? = null,
     // Download
     val isDownloading: Boolean = false,
     val downloadProgress: Int = 0,       // 0–100
@@ -213,5 +219,44 @@ class UpdateViewModel : ViewModel() {
     fun clearUpdate(context: Context) {
         UpdatePrefs.clear(context)
         _updateState.value = UpdateState(isChecking = false, hasUpdate = false)
+    }
+
+    fun checkForBetaUpdates(context: Context) {
+        viewModelScope.launch {
+            val current = _updateState.value
+            _updateState.value = current.copy(isCheckingBeta = true, betaError = null)
+
+            try {
+                if (isInternetAvailable(context)) {
+                    val config = withTimeoutOrNull(5000L) { fetchBetaUpdateConfig() }
+
+                    if (config != null && isUpdateAvailable(BuildConfig.VERSION_NAME, config.version)) {
+                        _updateState.value = _updateState.value.copy(
+                            isCheckingBeta = false,
+                            hasBetaUpdate = true,
+                            betaUpdateConfig = config
+                        )
+                    } else {
+                        _updateState.value = _updateState.value.copy(
+                            isCheckingBeta = false,
+                            hasBetaUpdate = false
+                        )
+                    }
+                } else {
+                    _updateState.value = _updateState.value.copy(
+                        isCheckingBeta = false,
+                        hasBetaUpdate = false,
+                        betaError = "No internet connection"
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("UpdateViewModel", "Error checking for beta updates", e)
+                _updateState.value = _updateState.value.copy(
+                    isCheckingBeta = false,
+                    hasBetaUpdate = false,
+                    betaError = e.message
+                )
+            }
+        }
     }
 }

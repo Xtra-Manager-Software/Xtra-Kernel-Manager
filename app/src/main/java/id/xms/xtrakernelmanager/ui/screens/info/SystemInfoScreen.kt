@@ -40,25 +40,29 @@ fun SystemInfoScreen(
             onNavigateBack = onNavigateBack,
             updateState = updateState,
             onCheckUpdate = { updateViewModel.checkForUpdates(context) },
-            onDownload = onDownload
+            onDownload = onDownload,
+            updateViewModel = updateViewModel
         )
         "material" -> MaterialSystemInfoScreen(
             onNavigateBack = onNavigateBack,
             updateState = updateState,
             onCheckUpdate = { updateViewModel.checkForUpdates(context) },
-            onDownload = onDownload
+            onDownload = onDownload,
+            updateViewModel = updateViewModel
         )
         "classic" -> ClassicSystemInfoScreen(
             onNavigateBack = onNavigateBack,
             updateState = updateState,
             onCheckUpdate = { updateViewModel.checkForUpdates(context) },
-            onDownload = onDownload
+            onDownload = onDownload,
+            updateViewModel = updateViewModel
         )
         else -> FrostedSystemInfoScreen(
             onNavigateBack = onNavigateBack,
             updateState = updateState,
             onCheckUpdate = { updateViewModel.checkForUpdates(context) },
-            onDownload = onDownload
+            onDownload = onDownload,
+            updateViewModel = updateViewModel
         )
     }
 }
@@ -192,7 +196,8 @@ private fun FrostedSystemInfoScreen(
     onNavigateBack: () -> Unit,
     updateState: UpdateState,
     onCheckUpdate: () -> Unit,
-    onDownload: (String) -> Unit
+    onDownload: (String) -> Unit,
+    updateViewModel: UpdateViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val systemInfo = getSystemInfo()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -310,6 +315,7 @@ private fun FrostedSystemInfoScreen(
                     )
                 }
                 
+                // Release Channel
                 item {
                     GlassmorphicCard(
                         modifier = Modifier.fillMaxWidth(),
@@ -319,6 +325,30 @@ private fun FrostedSystemInfoScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
+                            // Channel Header
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(Color(0xFF4CAF50), androidx.compose.foundation.shape.CircleShape)
+                                    )
+                                    Text(
+                                        text = "Release Channel",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -355,7 +385,7 @@ private fun FrostedSystemInfoScreen(
                                             strokeWidth = 2.dp
                                         )
                                     } else {
-                                        Text("Check Update")
+                                        Text("Check")
                                     }
                                 }
                             }
@@ -409,7 +439,7 @@ private fun FrostedSystemInfoScreen(
                                     }
                                     
                                     // Download progress or button
-                                    if (updateState.isDownloading) {
+                                    if (updateState.isDownloading && updateState.updateConfig.channel == "release") {
                                         Column(
                                             modifier = Modifier.fillMaxWidth(),
                                             verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -437,7 +467,7 @@ private fun FrostedSystemInfoScreen(
                                                 trackColor = Color.White.copy(alpha = 0.2f)
                                             )
                                         }
-                                    } else {
+                                    } else if (!updateState.isDownloading || updateState.updateConfig.channel != "release") {
                                         androidx.compose.material3.Button(
                                             onClick = { onDownload(updateState.updateConfig.url) },
                                             colors = androidx.compose.material3.ButtonDefaults.buttonColors(
@@ -449,7 +479,7 @@ private fun FrostedSystemInfoScreen(
                                             Text("Download Update")
                                         }
                                     }
-                                    if (updateState.downloadError != null) {
+                                    if (updateState.downloadError != null && updateState.updateConfig.channel == "release") {
                                         Text(
                                             text = "Download error: ${updateState.downloadError}",
                                             style = MaterialTheme.typography.bodySmall,
@@ -483,6 +513,199 @@ private fun FrostedSystemInfoScreen(
                             if (updateState.error != null) {
                                 Text(
                                     text = "Error: ${updateState.error}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFFF6B6B)
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+                
+                // Beta Channel
+                item {
+                    GlassmorphicCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(20.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Channel Header
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(Color(0xFFFF9800), androidx.compose.foundation.shape.CircleShape)
+                                    )
+                                    Text(
+                                        text = "Beta Channel",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                
+                                // Check Beta Update Button
+                                androidx.compose.material3.Button(
+                                    onClick = { updateViewModel.checkForBetaUpdates(context) },
+                                    enabled = !updateState.isCheckingBeta,
+                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                        containerColor = Color.White.copy(alpha = 0.2f),
+                                        contentColor = Color.White
+                                    ),
+                                    modifier = Modifier.height(40.dp)
+                                ) {
+                                    if (updateState.isCheckingBeta) {
+                                        androidx.compose.material3.CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            color = Color.White,
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        Text("Check")
+                                    }
+                                }
+                            }
+                            
+                            Text(
+                                text = "Get early access to new features",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                            
+                            // Beta Update Status
+                            if (updateState.hasBetaUpdate && updateState.betaUpdateConfig != null) {
+                                androidx.compose.material3.HorizontalDivider(
+                                    color = Color.White.copy(alpha = 0.2f)
+                                )
+                                
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(8.dp)
+                                                .background(Color(0xFFFF9800), androidx.compose.foundation.shape.CircleShape)
+                                        )
+                                        Text(
+                                            text = "Beta version available!",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = Color(0xFFFF9800),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    
+                                    Text(
+                                        text = "Version ${updateState.betaUpdateConfig.version}",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    
+                                    if (updateState.betaUpdateConfig.changelog.isNotEmpty()) {
+                                        Text(
+                                            text = "Changelog:",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.7f),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = updateState.betaUpdateConfig.changelog,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.9f)
+                                        )
+                                    }
+                                    
+                                    // Download progress or button
+                                    if (updateState.isDownloading && updateState.betaUpdateConfig.channel == "beta") {
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(
+                                                    text = "Downloading...",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color.White.copy(alpha = 0.9f)
+                                                )
+                                                Text(
+                                                    text = "${updateState.downloadProgress}%",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color.White,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                            androidx.compose.material3.LinearProgressIndicator(
+                                                progress = { updateState.downloadProgress / 100f },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                color = Color(0xFFFF9800),
+                                                trackColor = Color.White.copy(alpha = 0.2f)
+                                            )
+                                        }
+                                    } else if (!updateState.isDownloading || updateState.betaUpdateConfig.channel != "beta") {
+                                        androidx.compose.material3.Button(
+                                            onClick = { onDownload(updateState.betaUpdateConfig.url) },
+                                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                                containerColor = Color(0xFFFF9800),
+                                                contentColor = Color.White
+                                            ),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Download Beta")
+                                        }
+                                    }
+                                    if (updateState.downloadError != null && updateState.betaUpdateConfig.channel == "beta") {
+                                        Text(
+                                            text = "Download error: ${updateState.downloadError}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color(0xFFFF6B6B)
+                                        )
+                                    }
+                                }
+                            } else if (!updateState.isCheckingBeta && !updateState.hasBetaUpdate) {
+                                androidx.compose.material3.HorizontalDivider(
+                                    color = Color.White.copy(alpha = 0.2f)
+                                )
+                                
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id.xms.xtrakernelmanager.R.drawable.ic_check_circle),
+                                        contentDescription = null,
+                                        tint = Color(0xFFFF9800),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Text(
+                                        text = "No beta updates available",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White.copy(alpha = 0.9f)
+                                    )
+                                }
+                            }
+                            
+                            if (updateState.betaError != null) {
+                                Text(
+                                    text = "Error: ${updateState.betaError}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFFFF6B6B)
                                 )
@@ -562,9 +785,11 @@ private fun MaterialSystemInfoScreen(
     onNavigateBack: () -> Unit,
     updateState: UpdateState,
     onCheckUpdate: () -> Unit,
-    onDownload: (String) -> Unit
+    onDownload: (String) -> Unit,
+    updateViewModel: UpdateViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val systemInfo = getSystemInfo()
+    val context = androidx.compose.ui.platform.LocalContext.current
     
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -671,8 +896,8 @@ private fun MaterialSystemInfoScreen(
                 )
             }
 
+            // Release Channel
             item {
-                val context = androidx.compose.ui.platform.LocalContext.current
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -686,6 +911,24 @@ private fun MaterialSystemInfoScreen(
                             .padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        // Channel Header
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .background(Color(0xFF4CAF50), androidx.compose.foundation.shape.CircleShape)
+                            )
+                            Text(
+                                text = "Release Channel",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -715,7 +958,7 @@ private fun MaterialSystemInfoScreen(
                                         strokeWidth = 2.dp
                                     )
                                 } else {
-                                    Text("Check Update")
+                                    Text("Check")
                                 }
                             }
                         }
@@ -737,7 +980,7 @@ private fun MaterialSystemInfoScreen(
                                     )
                                 }
                                 // Download progress or button
-                                if (updateState.isDownloading) {
+                                if (updateState.isDownloading && updateState.updateConfig.channel == "release") {
                                     Column(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -763,7 +1006,7 @@ private fun MaterialSystemInfoScreen(
                                             modifier = Modifier.fillMaxWidth()
                                         )
                                     }
-                                } else {
+                                } else if (!updateState.isDownloading || updateState.updateConfig.channel != "release") {
                                     Button(
                                         onClick = { onDownload(updateState.updateConfig.url) },
                                         modifier = Modifier.fillMaxWidth()
@@ -771,7 +1014,7 @@ private fun MaterialSystemInfoScreen(
                                         Text("Download Update")
                                     }
                                 }
-                                if (updateState.downloadError != null) {
+                                if (updateState.downloadError != null && updateState.updateConfig.channel == "release") {
                                     Text(
                                         text = "Download error: ${updateState.downloadError}",
                                         style = MaterialTheme.typography.bodySmall,
@@ -802,6 +1045,161 @@ private fun MaterialSystemInfoScreen(
                         if (updateState.error != null) {
                             Text(
                                 text = "Error: ${updateState.error}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            
+            // Beta Channel
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Channel Header
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(Color(0xFFFF9800), androidx.compose.foundation.shape.CircleShape)
+                                )
+                                Text(
+                                    text = "Beta Channel",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            
+                            Button(
+                                onClick = { updateViewModel.checkForBetaUpdates(context) },
+                                enabled = !updateState.isCheckingBeta,
+                                modifier = Modifier.height(40.dp)
+                            ) {
+                                if (updateState.isCheckingBeta) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Text("Check")
+                                }
+                            }
+                        }
+                        
+                        Text(
+                            text = "Get early access to new features",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        if (updateState.hasBetaUpdate && updateState.betaUpdateConfig != null) {
+                            HorizontalDivider()
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    text = "Beta version available: ${updateState.betaUpdateConfig.version}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color(0xFFFF9800),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                if (updateState.betaUpdateConfig.changelog.isNotEmpty()) {
+                                    Text(
+                                        text = updateState.betaUpdateConfig.changelog,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                // Download progress or button
+                                if (updateState.isDownloading && updateState.betaUpdateConfig.channel == "beta") {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "Downloading...",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                text = "${updateState.downloadProgress}%",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        LinearProgressIndicator(
+                                            progress = { updateState.downloadProgress / 100f },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = Color(0xFFFF9800)
+                                        )
+                                    }
+                                } else if (!updateState.isDownloading || updateState.betaUpdateConfig.channel != "beta") {
+                                    Button(
+                                        onClick = { onDownload(updateState.betaUpdateConfig.url) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFFFF9800)
+                                        )
+                                    ) {
+                                        Text("Download Beta")
+                                    }
+                                }
+                                if (updateState.downloadError != null && updateState.betaUpdateConfig.channel == "beta") {
+                                    Text(
+                                        text = "Download error: ${updateState.downloadError}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                        } else if (!updateState.isCheckingBeta && !updateState.hasBetaUpdate) {
+                            HorizontalDivider()
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id.xms.xtrakernelmanager.R.drawable.ic_check_circle),
+                                    contentDescription = null,
+                                    tint = Color(0xFFFF9800),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "No beta updates available",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+
+                        if (updateState.betaError != null) {
+                            Text(
+                                text = "Error: ${updateState.betaError}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -888,9 +1286,11 @@ private fun ClassicSystemInfoScreen(
     onNavigateBack: () -> Unit,
     updateState: UpdateState,
     onCheckUpdate: () -> Unit,
-    onDownload: (String) -> Unit
+    onDownload: (String) -> Unit,
+    updateViewModel: UpdateViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val systemInfo = getSystemInfo()
+    val context = androidx.compose.ui.platform.LocalContext.current
     
     Scaffold(
         containerColor = ClassicColors.Background,
@@ -998,8 +1398,8 @@ private fun ClassicSystemInfoScreen(
                 )
             }
 
+            // Release Channel
             item {
-                val context = androidx.compose.ui.platform.LocalContext.current
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -1011,6 +1411,24 @@ private fun ClassicSystemInfoScreen(
                             .padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        // Channel Header
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .background(Color(0xFF4CAF50), androidx.compose.foundation.shape.CircleShape)
+                            )
+                            Text(
+                                text = "Release Channel",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = ClassicColors.OnSurface,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1040,7 +1458,7 @@ private fun ClassicSystemInfoScreen(
                                         strokeWidth = 2.dp
                                     )
                                 } else {
-                                    Text("Check Update")
+                                    Text("Check")
                                 }
                             }
                         }
@@ -1064,7 +1482,7 @@ private fun ClassicSystemInfoScreen(
                                     )
                                 }
                                 // Download progress or button
-                                if (updateState.isDownloading) {
+                                if (updateState.isDownloading && updateState.updateConfig.channel == "release") {
                                     Column(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -1092,7 +1510,7 @@ private fun ClassicSystemInfoScreen(
                                             trackColor = ClassicColors.OnSurface.copy(alpha = 0.15f)
                                         )
                                     }
-                                } else {
+                                } else if (!updateState.isDownloading || updateState.updateConfig.channel != "release") {
                                     Button(
                                         onClick = { onDownload(updateState.updateConfig.url) },
                                         modifier = Modifier.fillMaxWidth()
@@ -1100,7 +1518,7 @@ private fun ClassicSystemInfoScreen(
                                         Text("Download Update")
                                     }
                                 }
-                                if (updateState.downloadError != null) {
+                                if (updateState.downloadError != null && updateState.updateConfig.channel == "release") {
                                     Text(
                                         text = "Download error: ${updateState.downloadError}",
                                         style = MaterialTheme.typography.bodySmall,
@@ -1133,6 +1551,164 @@ private fun ClassicSystemInfoScreen(
                         if (updateState.error != null) {
                             Text(
                                 text = "Error: ${updateState.error}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFFF6B6B)
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            
+            // Beta Channel
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = ClassicColors.SurfaceContainerHigh
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Channel Header
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(Color(0xFFFF9800), androidx.compose.foundation.shape.CircleShape)
+                                )
+                                Text(
+                                    text = "Beta Channel",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = ClassicColors.OnSurface,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            
+                            Button(
+                                onClick = { updateViewModel.checkForBetaUpdates(context) },
+                                enabled = !updateState.isCheckingBeta,
+                                modifier = Modifier.height(40.dp)
+                            ) {
+                                if (updateState.isCheckingBeta) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Text("Check")
+                                }
+                            }
+                        }
+                        
+                        Text(
+                            text = "Get early access to new features",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = ClassicColors.OnSurfaceVariant
+                        )
+
+                        if (updateState.hasBetaUpdate && updateState.betaUpdateConfig != null) {
+                            HorizontalDivider(
+                                color = ClassicColors.OnSurface.copy(alpha = 0.15f)
+                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    text = "Beta version available: ${updateState.betaUpdateConfig.version}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color(0xFFFF9800),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                if (updateState.betaUpdateConfig.changelog.isNotEmpty()) {
+                                    Text(
+                                        text = updateState.betaUpdateConfig.changelog,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = ClassicColors.OnSurfaceVariant
+                                    )
+                                }
+                                // Download progress or button
+                                if (updateState.isDownloading && updateState.betaUpdateConfig.channel == "beta") {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "Downloading...",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = ClassicColors.OnSurfaceVariant
+                                            )
+                                            Text(
+                                                text = "${updateState.downloadProgress}%",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = ClassicColors.OnSurface,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        LinearProgressIndicator(
+                                            progress = { updateState.downloadProgress / 100f },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = Color(0xFFFF9800),
+                                            trackColor = ClassicColors.OnSurface.copy(alpha = 0.15f)
+                                        )
+                                    }
+                                } else if (!updateState.isDownloading || updateState.betaUpdateConfig.channel != "beta") {
+                                    Button(
+                                        onClick = { onDownload(updateState.betaUpdateConfig.url) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFFFF9800)
+                                        )
+                                    ) {
+                                        Text("Download Beta")
+                                    }
+                                }
+                                if (updateState.downloadError != null && updateState.betaUpdateConfig.channel == "beta") {
+                                    Text(
+                                        text = "Download error: ${updateState.downloadError}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFFFF6B6B)
+                                    )
+                                }
+                            }
+                        } else if (!updateState.isCheckingBeta && !updateState.hasBetaUpdate) {
+                            HorizontalDivider(
+                                color = ClassicColors.OnSurface.copy(alpha = 0.15f)
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id.xms.xtrakernelmanager.R.drawable.ic_check_circle),
+                                    contentDescription = null,
+                                    tint = Color(0xFFFF9800),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "No beta updates available",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = ClassicColors.OnSurface
+                                )
+                            }
+                        }
+
+                        if (updateState.betaError != null) {
+                            Text(
+                                text = "Error: ${updateState.betaError}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFFFF6B6B)
                             )

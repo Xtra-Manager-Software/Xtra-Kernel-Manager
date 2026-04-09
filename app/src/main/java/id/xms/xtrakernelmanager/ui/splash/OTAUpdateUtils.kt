@@ -19,6 +19,7 @@ data class UpdateConfig(
     val changelog: String = "",
     val url: String = "",
     val force: Boolean = false,
+    val channel: String = "release" // "release" or "beta"
 )
 
 // --- PREFERENCES MANAGER (Untuk menyimpan info update) ---
@@ -93,7 +94,7 @@ suspend fun fetchUpdateConfig(): UpdateConfig? = suspendCancellableCoroutine { c
     val database = FirebaseDatabase.getInstance(
         "https://xtrakernelmanager-default-rtdb.asia-southeast1.firebasedatabase.app"
     )
-    val myRef = database.getReference("update")
+    val myRef = database.getReference("update/release")
     val listener = object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
             try {
@@ -103,7 +104,35 @@ suspend fun fetchUpdateConfig(): UpdateConfig? = suspendCancellableCoroutine { c
                 val url = snapshot.child("url").getValue(String::class.java) ?: ""
                 val force = snapshot.child("force").getValue(Boolean::class.java) ?: false
                 if (continuation.isActive)
-                    continuation.resume(UpdateConfig(version, changelog, url, force))
+                    continuation.resume(UpdateConfig(version, changelog, url, force, "release"))
+            } catch (e: Exception) {
+                if (continuation.isActive) continuation.resume(null)
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            if (continuation.isActive) continuation.resume(null)
+        }
+    }
+    myRef.addListenerForSingleValueEvent(listener)
+    continuation.invokeOnCancellation { myRef.removeEventListener(listener) }
+}
+
+suspend fun fetchBetaUpdateConfig(): UpdateConfig? = suspendCancellableCoroutine { continuation ->
+    val database = FirebaseDatabase.getInstance(
+        "https://xtrakernelmanager-default-rtdb.asia-southeast1.firebasedatabase.app"
+    )
+    val myRef = database.getReference("update/beta")
+    val listener = object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            try {
+                val versionRaw = snapshot.child("version").value
+                val version = versionRaw?.toString() ?: ""
+                val changelog = snapshot.child("changelog").getValue(String::class.java) ?: ""
+                val url = snapshot.child("url").getValue(String::class.java) ?: ""
+                val force = snapshot.child("force").getValue(Boolean::class.java) ?: false
+                if (continuation.isActive)
+                    continuation.resume(UpdateConfig(version, changelog, url, force, "beta"))
             } catch (e: Exception) {
                 if (continuation.isActive) continuation.resume(null)
             }
