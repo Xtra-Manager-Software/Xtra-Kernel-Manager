@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -136,8 +137,8 @@ fun MaterialFunctionalRomScreen(
                 .fillMaxWidth()
                 .weight(1f),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 1.dp
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            tonalElevation = 0.dp
         ) {
             LazyColumn(
                 modifier = Modifier
@@ -257,11 +258,11 @@ fun MaterialFunctionalRomScreen(
 private fun SectionHeader(title: String) {
     Text(
         text = title,
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.Bold,
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.ExtraBold,
         color = MaterialTheme.colorScheme.primary,
-        letterSpacing = 0.5.sp,
-        modifier = Modifier.padding(start = 6.dp, top = 8.dp, bottom = 4.dp)
+        letterSpacing = 1.sp,
+        modifier = Modifier.padding(start = 6.dp, top = 14.dp, bottom = 6.dp)
     )
 }
 
@@ -285,8 +286,9 @@ private fun ConnectedNavCard(
             .clip(shape)
             .clickable(enabled = enabled, onClick = onClick),
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 1.dp
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
+        tonalElevation = 2.dp
     ) {
         Row(
             modifier = Modifier
@@ -294,18 +296,18 @@ private fun ConnectedNavCard(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Squircle icon badge with dynamic Monet palette
+            // Squircle icon badge with vibrant Monet palette
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)),
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -324,7 +326,7 @@ private fun ConnectedNavCard(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 16.sp
@@ -336,7 +338,7 @@ private fun ConnectedNavCard(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -364,8 +366,9 @@ private fun ConnectedSwitchCard(
             .fillMaxWidth()
             .clip(shape),
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 1.dp
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
+        tonalElevation = 2.dp
     ) {
         Row(
             modifier = Modifier
@@ -373,18 +376,18 @@ private fun ConnectedSwitchCard(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Squircle icon badge with dynamic Monet palette
+            // Squircle icon badge with vibrant Monet palette
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)),
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -403,7 +406,7 @@ private fun ConnectedSwitchCard(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = subtitleColor ?: MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                    color = subtitleColor ?: MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     lineHeight = 16.sp
