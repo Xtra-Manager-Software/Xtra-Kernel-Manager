@@ -12,11 +12,9 @@ pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_app
     _class: JClass,
     preset_name: JString,
 ) -> jboolean {
-    if let Some(name) = jstring_to_string(&mut env, &preset_name) {
-        let result = preset::apply_preset(&name);
-        (result.is_ok()) as jboolean
-    } else {
-        0
+    match jstring_to_string(&mut env, &preset_name) {
+        Some(name) => preset::apply_preset(&name).is_ok() as jboolean,
+        None => 0,
     }
 }
 
@@ -54,10 +52,9 @@ pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_set
     cluster: jint,
     governor: JString,
 ) -> jboolean {
-    if let Some(gov) = jstring_to_string(&mut env, &governor) {
-        (cpu::set_governor_for_cluster(cluster, &gov).is_ok()) as jboolean
-    } else {
-        0
+    match jstring_to_string(&mut env, &governor) {
+        Some(gov) => cpu::set_governor_for_cluster(cluster, &gov).is_ok() as jboolean,
+        None => 0,
     }
 }
 

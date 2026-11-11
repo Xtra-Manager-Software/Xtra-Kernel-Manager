@@ -127,10 +127,9 @@ pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_isC
     _env: JNIEnv,
     _class: JClass,
 ) -> jint {
-    if battery::read_battery_snapshot().is_charging {
-        1
-    } else {
-        0
+    match battery::read_battery_snapshot().is_charging {
+        true => 1,
+        false => 0,
     }
 }
 
@@ -250,11 +249,12 @@ pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_get
     _class: JClass,
 ) -> jfloat {
     let (mem, _) = memory::read_memory_and_swap();
-    if mem.total_kb > 0 {
-        let used = mem.total_kb.saturating_sub(mem.available_kb);
-        ((used as f32 / mem.total_kb as f32) * 100.0).clamp(0.0, 100.0)
-    } else {
-        0.0
+    match mem.total_kb > 0 {
+        true => {
+            let used = mem.total_kb.saturating_sub(mem.available_kb);
+            ((used as f32 / mem.total_kb as f32) * 100.0).clamp(0.0, 100.0)
+        }
+        false => 0.0,
     }
 }
 
