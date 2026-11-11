@@ -6,6 +6,7 @@
   <img src="https://img.shields.io/badge/Android_API-26+-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android API 26+">
   <img src="https://img.shields.io/badge/IPC-Native_Binder_NDK-007ACC?style=for-the-badge&logo=cplusplus&logoColor=white" alt="Native Binder">
   <img src="https://img.shields.io/badge/Engine-eBPF_Uprobe-7952B3?style=for-the-badge&logo=linux&logoColor=white" alt="eBPF Engine">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-white?style=for-the-badge&logo=gnu&logoColor=white&labelColor=222" alt="License"></a>
 </p>
 
 ## About `xkm_native`
@@ -151,3 +152,9 @@ Special thanks to the following open-source projects:
 - **[kala](https://github.com/pavelc4/kala)** by [@pavelc4](https://github.com/pavelc4) — eBPF uprobe engine and frame timing hooks on `libgui.so` (`Surface::hook_queueBuffer`) for zero-overhead FPS metering and jank diagnosis.
 - **[rsbinder](https://github.com/jinserk/rsbinder)** — Pure Rust implementation of Android Binder IPC.
 - **[Aya](https://github.com/aya-rs/aya)** — Pure Rust eBPF library for Linux.
+
+---
+
+## License
+
+`xkm_native` is open-source software licensed under the **[GNU General Public License v3.0](LICENSE)** (GPL-3.0) to comply with Linux kernel eBPF ecosystem requirements and downstream copyleft obligations.
