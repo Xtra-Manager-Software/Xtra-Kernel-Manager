@@ -94,7 +94,10 @@ fn test_fps_meter_target_and_detach_lifecycle() {
     assert_eq!(meter.get_target_package(), Some("com.mihoyo.genshin".to_string()));
 
     // Whitelist
-    meter.set_target_whitelist(vec!["com.mobile.legends".to_string(), "com.pubg.imobile".to_string()]);
+    meter.set_target_whitelist(vec![
+        "com.mobile.legends".to_string(),
+        "com.moonton.mobilelegends".to_string(),
+    ]);
     assert_eq!(meter.get_target_whitelist().len(), 2);
 
     // Detach and clear
