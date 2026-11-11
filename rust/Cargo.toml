@@ -22,6 +22,7 @@ rustix = { version = "1.1.3", default-features = false, features = ["fs"] }
 once_cell = "1.21"
 parking_lot = "0.12"
 android-properties = "0.2"
+kala-ebpf = "0.2.0"
 
 procfs = { version = "0.18", optional = true, default-features = false, features = [
     "serde1",
