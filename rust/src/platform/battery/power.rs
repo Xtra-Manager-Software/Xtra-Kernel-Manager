@@ -46,7 +46,14 @@ pub fn read_battery_snapshot() -> BatterySnapshot {
 
     let status = common::read_sysfs_trimmed(&format!("{}/status", base))
         .unwrap_or_else(|| "Discharging".to_string());
-    let is_charging = status.eq_ignore_ascii_case("charging") || current_ma > 0;
+    let is_charging = status.eq_ignore_ascii_case("charging");
+
+    // Standardize charging current convention (positive while charging)
+    let current_ma = if is_charging && current_ma < 0 {
+        current_ma.abs()
+    } else {
+        current_ma
+    };
 
     let health = common::read_sysfs_trimmed(&format!("{}/health", base))
         .unwrap_or_else(|| "Good".to_string());

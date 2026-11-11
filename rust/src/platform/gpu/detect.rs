@@ -61,10 +61,15 @@ fn detect_adreno_model() -> Option<String> {
     ];
     for path in paths {
         if let Some(m) = common::read_sysfs_trimmed(path) {
-            if m.to_lowercase().starts_with("adreno") {
-                return Some(m);
+            let trimmed = m.trim();
+            if let Some(rest) = trimmed.strip_prefix("Adreno").or_else(|| trimmed.strip_prefix("adreno")) {
+                if let Some(idx) = rest.find('v') {
+                    let (num, ver) = rest.split_at(idx);
+                    return Some(format!("Adreno {} ({})", num.trim(), ver.trim()));
+                }
+                return Some(format!("Adreno {}", rest.trim()));
             }
-            return Some(format!("Adreno {}", m));
+            return Some(format!("Adreno {}", trimmed));
         }
     }
     None

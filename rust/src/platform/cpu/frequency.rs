@@ -93,12 +93,36 @@ pub fn read_cpu_load() -> f32 {
 
     let cache = CPU_STAT_CACHE.get_or_init(|| {
         Mutex::new(CpuTimeSnapshot {
-            total: total_time,
-            idle: idle_time,
+            total: 0,
+            idle: 0,
         })
     });
 
     let mut lock = cache.lock();
+    if lock.total == 0 {
+        lock.total = total_time;
+        lock.idle = idle_time;
+        // Sample brief 10ms delta on initial call so first reading is meaningful
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        if let Ok(c2) = fs::read_to_string("/proc/stat") {
+            if let Some(l2) = c2.lines().next().filter(|l| l.starts_with("cpu ")) {
+                let f2: Vec<u64> = l2.split_whitespace().skip(1).filter_map(|s| s.parse().ok()).collect();
+                if f2.len() >= 4 {
+                    let t2 = f2.iter().take(8).sum::<u64>();
+                    let i2 = f2[3] + f2.get(4).copied().unwrap_or(0);
+                    let dt = t2.saturating_sub(total_time);
+                    let di = i2.saturating_sub(idle_time);
+                    lock.total = t2;
+                    lock.idle = i2;
+                    if dt > 0 {
+                        let active = dt.saturating_sub(di);
+                        return ((active as f32 / dt as f32) * 100.0).clamp(0.0, 100.0);
+                    }
+                }
+            }
+        }
+        return 0.0;
+    }
     let total_delta = total_time.saturating_sub(lock.total);
     let idle_delta = idle_time.saturating_sub(lock.idle);
 

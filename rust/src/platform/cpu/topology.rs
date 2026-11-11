@@ -34,29 +34,69 @@ pub struct CoreInfo {
 
 static CPU_MODEL: OnceLock<String> = OnceLock::new();
 
+fn format_soc_model(model: &str) -> String {
+    let upper = model.trim().to_uppercase();
+    match upper.as_str() {
+        "SM7475" => "Snapdragon 7+ Gen 2 (SM7475)".to_string(),
+        "SM8450" => "Snapdragon 8 Gen 1 (SM8450)".to_string(),
+        "SM8475" => "Snapdragon 8+ Gen 1 (SM8475)".to_string(),
+        "SM8550" => "Snapdragon 8 Gen 2 (SM8550)".to_string(),
+        "SM8650" => "Snapdragon 8 Gen 3 (SM8650)".to_string(),
+        "SM8750" => "Snapdragon 8 Elite (SM8750)".to_string(),
+        "SM8350" => "Snapdragon 888 (SM8350)".to_string(),
+        "SM8250" => "Snapdragon 865 (SM8250)".to_string(),
+        "SM8150" => "Snapdragon 855 (SM8150)".to_string(),
+        "SM7325" => "Snapdragon 778G (SM7325)".to_string(),
+        "SM7150" => "Snapdragon 730G (SM7150)".to_string(),
+        "SM6375" => "Snapdragon 695 (SM6375)".to_string(),
+        _ if upper.starts_with("SM") || upper.starts_with("SDM") => {
+            format!("Snapdragon {}", upper)
+        }
+        _ if upper.starts_with("MT") => {
+            format!("MediaTek {}", upper)
+        }
+        _ => model.trim().to_string(),
+    }
+}
+
 pub fn get_cpu_model() -> String {
     CPU_MODEL
         .get_or_init(|| {
-            if let Some(hardware) = common::get_system_property("ro.hardware") {
-                if !hardware.is_empty() {
-                    return hardware;
+            // 1. Try ro.soc.model first (e.g. SM7475)
+            if let Some(soc) = common::get_system_property("ro.soc.model") {
+                if !soc.is_empty() {
+                    return format_soc_model(&soc);
                 }
             }
+            // 2. Try ro.chipname
             if let Some(chipname) = common::get_system_property("ro.chipname") {
                 if !chipname.is_empty() {
                     return chipname;
                 }
             }
+            // 3. Try /proc/cpuinfo Hardware line
             if let Ok(content) = fs::read_to_string("/proc/cpuinfo") {
                 for line in content.lines() {
                     if line.starts_with("Hardware") || line.starts_with("model name") {
                         if let Some((_, val)) = line.split_once(':') {
                             let trimmed = val.trim();
-                            if !trimmed.is_empty() {
+                            if !trimmed.is_empty() && trimmed.to_lowercase() != "qcom" {
                                 return trimmed.to_string();
                             }
                         }
                     }
+                }
+            }
+            // 4. Try ro.board.platform (e.g. taro, lahaina)
+            if let Some(platform) = common::get_system_property("ro.board.platform") {
+                if !platform.is_empty() {
+                    return platform;
+                }
+            }
+            // 5. Fallback to ro.hardware
+            if let Some(hardware) = common::get_system_property("ro.hardware") {
+                if !hardware.is_empty() {
+                    return hardware;
                 }
             }
             "Unknown CPU".to_string()

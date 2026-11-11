@@ -61,8 +61,8 @@ pub fn collect_snapshot() -> TelemetrySnapshot {
         swappiness,
     };
 
-    // Thermal
-    let thermal_summary = thermal::scan_thermal_zones();
+    // Thermal (high-efficiency primary sensor polling)
+    let thermal_summary = thermal::read_primary_thermal_summary();
     let thermal_telemetry = ThermalTelemetry {
         cpu_temp_c: thermal_summary.cpu_temp_c.unwrap_or(0.0),
         gpu_temp_c: thermal_summary.gpu_temp_c.unwrap_or(0.0),

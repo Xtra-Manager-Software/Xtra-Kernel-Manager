@@ -1,17 +1,7 @@
-use parking_lot::Mutex;
 use std::fs;
-use std::sync::OnceLock;
 
 use super::detect::{get_gpu_info, GpuVendor};
 use crate::platform::common;
-
-#[derive(Default, Clone, Copy)]
-struct BusyState {
-    busy: i64,
-    total: i64,
-}
-
-static LAST_BUSY_STATE: OnceLock<Mutex<Option<BusyState>>> = OnceLock::new();
 
 pub fn read_gpu_busy_pct() -> i32 {
     let (vendor, _) = get_gpu_info();
@@ -31,7 +21,7 @@ pub fn read_gpu_busy_pct() -> i32 {
                 }
             }
 
-            // Fallback to gpubusy delta (busy total)
+            // Fallback to gpubusy (busy total)
             if let Some(s) = common::read_sysfs_trimmed("/sys/class/kgsl/kgsl-3d0/gpubusy") {
                 let parts: Vec<i64> = s
                     .split_whitespace()
@@ -42,19 +32,9 @@ pub fn read_gpu_busy_pct() -> i32 {
                     let busy = parts[0];
                     let total = parts[1];
 
-                    let cache = LAST_BUSY_STATE.get_or_init(|| Mutex::new(None));
-                    let mut lock = cache.lock();
-
-                    if let Some(prev) = *lock {
-                        let d_busy = busy.saturating_sub(prev.busy);
-                        let d_total = total.saturating_sub(prev.total);
-                        *lock = Some(BusyState { busy, total });
-
-                        if d_total > 0 {
-                            return ((d_busy as f64 / d_total as f64) * 100.0).clamp(0.0, 100.0) as i32;
-                        }
-                    } else {
-                        *lock = Some(BusyState { busy, total });
+                    if total > 0 && busy >= 0 {
+                        let pct = ((busy as f64 / total as f64) * 100.0).round().clamp(0.0, 100.0) as i32;
+                        return pct;
                     }
                 }
             }
@@ -94,6 +74,5 @@ pub fn read_gpu_busy_pct() -> i32 {
 }
 
 pub fn reset_gpu_busy_stats() {
-    let cache = LAST_BUSY_STATE.get_or_init(|| Mutex::new(None));
-    *cache.lock() = None;
+    // No-op: GPU busy is calculated directly from instantaneous governor statistics
 }
