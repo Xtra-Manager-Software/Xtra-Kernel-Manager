@@ -113,23 +113,55 @@ fn main() {
     let fg_app = binder::get_foreground_app();
     println!("  * Top-App Target : {:?}", fg_app);
 
-    // 8. FPS Meter (libgui.so eBPF with sysfs fallback)
-    println!("\n[8] FPS METER (LIBGUI.SO EBPF & SYSFS FALLBACK)");
+    // 8. FPS Meter Lifecycle (libgui.so eBPF on-demand & safe detach like Auriya)
+    println!("\n[8] FPS METER LIFECYCLE (AURIYA-STYLE TARGET PROBING & SAFE DETACH)");
+    println!("  * Detected Hardware Sysfs Node: {:?}", fps::SysfsFpsReader::detect_sysfs());
+
+    // Phase A: No target set -> zero eBPF probe injected, pure passive sysfs
+    println!("  --- Phase A: Passive Baseline (No Target App Set) ---");
+    let init_attached = fps::is_ebpf_attached();
+    let init_fps = fps::read_fps();
+    println!("  * eBPF Probe Attached : {} (Expected: false)", init_attached);
+    println!("  * Baseline FPS Reading: {:?}", init_fps);
+
+    // Phase B: Attach only to specific target app
     if let Some(ref fg) = fg_app {
-        if let Some(pid) = fg.pid {
-            let attached = fps::attach_fps_pid(pid);
-            println!("  * Attached eBPF to target PID {} ({}): {}", pid, fg.package_name, attached);
+        println!("  --- Phase B: Target App Monitoring ({}) ---", fg.package_name);
+        fps::set_target_package(Some(fg.package_name.clone()));
+        // First read triggers dynamic attach to matching target
+        let _ = fps::read_fps();
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        println!(
+            "  * eBPF Attached to Target: {} (PID: {:?})",
+            fps::is_ebpf_attached(),
+            fps::get_attached_pid()
+        );
+        println!("  * Sampling 5 frames with target active...");
+        for i in 1..=5 {
+            std::thread::sleep(std::time::Duration::from_millis(150));
+            match fps::read_fps() {
+                Some(r) => println!("    [Sample {:>2}] FPS: {:>5.1} (Source: {:?})", i, r.fps, r.source),
+                None => println!("    [Sample {:>2}] FPS: None", i),
+            }
         }
     }
-    println!("  * Detected Sysfs Node: {:?}", fps::SysfsFpsReader::detect_sysfs());
-    println!("  * Sampling FPS for 1.5s (10 samples @ 150ms)...");
-    for i in 1..=10 {
-        std::thread::sleep(std::time::Duration::from_millis(150));
-        match fps::read_fps() {
-            Some(r) => println!("    [Sample {:>2}] FPS: {:>5.1} (Source: {:?})", i, r.fps, r.source),
-            None => println!("    [Sample {:>2}] FPS: None", i),
-        }
-    }
+
+    // Phase C: Safe Detach (Probe dicabut dari process & eBPF di-unload)
+    println!("  --- Phase C: Safe Detach / Unload Probe ---");
+    let detached_ok = fps::detach_fps_pid();
+    std::thread::sleep(std::time::Duration::from_millis(50));
+    println!("  * detach_fps_pid() returned   : {}", detached_ok);
+    println!("  * eBPF Probe Attached After Detach: {} (Expected: false)", fps::is_ebpf_attached());
+    let fallback_fps = fps::read_fps();
+    println!("  * Immediate Fallback FPS Reading  : {:?}", fallback_fps);
+
+    // Phase D: Out-of-Target App Protection (Probe is NEVER attached to untargeted apps)
+    println!("  --- Phase D: Out-of-Target App Isolation ---");
+    fps::set_target_package(Some("com.fake.nonexistent.game".to_string()));
+    let _ = fps::read_fps();
+    println!("  * Probing untargeted foreground app : is_attached = {} (Expected: false)", fps::is_ebpf_attached());
+    fps::clear_fps();
+    println!("  * Full cleanup done via clear_fps()");
 
     // 9. Bind-Mount Frequency Ceiling Lock Test
     println!("\n[9] MOUNT CEILING FREQUENCY LOCK TEST");
