@@ -27,7 +27,7 @@ afterEvaluate {
 
 android {
     namespace = "id.xms.xtrakernelmanager"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "id.xms.xtrakernelmanager"
@@ -169,11 +169,11 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.core:core-splashscreen:1.2.0")
     implementation("com.google.android.material:material:1.13.0")
-    implementation("androidx.work:work-runtime-ktx:2.11.2")
+    implementation("androidx.work:work-runtime-ktx:2.12.0")
 
 
     // Compose BOM
-    val composeBom = platform("androidx.compose:compose-bom:2026.03.01")
+    val composeBom = platform("androidx.compose:compose-bom:2026.09.00")
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -202,7 +202,7 @@ dependencies {
     implementation("com.github.topjohnwu.libsu:nio:6.0.0")
     
     // Firebase 
-    implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
+    implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
     implementation("com.google.firebase:firebase-database") 
     
     // Google Play Services (for Play Protect compatibility)
@@ -235,7 +235,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     
     // Serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
     
     // YukiHookAPI - Xposed Module for Banking Hide Mode
     compileOnly("de.robv.android.xposed:api:82")

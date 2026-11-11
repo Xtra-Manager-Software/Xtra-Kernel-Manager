@@ -42,13 +42,13 @@ jobs:
       commit_count: ${{ steps.check.outputs.commit_count }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Restore last build commit
         id: cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .last-build-commit
           key: last-build-commit-${{ github.ref_name }}
@@ -130,7 +130,7 @@ jobs:
     
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -256,7 +256,7 @@ jobs:
           chmod +x update_progress.sh
 
       - name: Setup JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DISTRIBUTION }}
@@ -280,7 +280,7 @@ jobs:
           ./update_progress.sh "$MESSAGE_ID" "15" "Setting up Environment..."
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
 
 
@@ -301,7 +301,7 @@ jobs:
         run: cargo install cargo-ndk
 
       - name: Cache Rust dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -366,7 +366,7 @@ jobs:
         if: |
           (github.event_name == 'push') || 
           (github.event_name == 'workflow_dispatch' && inputs.build_type == 'release' && inputs.sign_apk == true)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: Xtra-Manager-Software/XMS-Keystore-Apps
           token: ${{ secrets.PRIVATE_REPO_TOKEN }}
@@ -679,7 +679,7 @@ jobs:
 
       - name: Update cache with new commit
         if: success()
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: .last-build-commit
           key: last-build-commit-${{ github.ref_name }}-${{ github.sha }}
