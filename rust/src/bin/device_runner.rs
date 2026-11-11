@@ -136,11 +136,14 @@ fn main() {
             fps::is_ebpf_attached(),
             fps::get_attached_pid()
         );
-        println!("  * Sampling 5 frames with target active...");
+        println!("  * Sampling 5 frames with target active (Jank, 1% Low & Cause telemetry)...");
         for i in 1..=5 {
             std::thread::sleep(std::time::Duration::from_millis(150));
             match fps::read_fps() {
-                Some(r) => println!("    [Sample {:>2}] FPS: {:>5.1} (Source: {:?})", i, r.fps, r.source),
+                Some(r) => println!(
+                    "    [Sample {:>2}] FPS: {:>5.1} | FT: {:>5.2}ms | Avg: {:>5.1} | 1% Low: {:>5.1} | Jank: {} ({:>4.1}%) | Cause: {} ({:?})",
+                    i, r.fps, r.frametime_ms, r.avg_fps, r.low_1pct_fps, r.jank_count, r.jank_percent, r.drop_cause.as_str(), r.source
+                ),
                 None => println!("    [Sample {:>2}] FPS: None", i),
             }
         }

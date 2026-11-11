@@ -71,10 +71,14 @@ fn test_fps_meter_pid_guard() {
 
 #[test]
 fn test_fps_types_serialization() {
-    let reading = FpsReading::new(120.5, FpsSource::Ebpf);
+    let mut reading = FpsReading::new(120.5, FpsSource::Ebpf);
+    reading.jank_count = 2;
+    reading.drop_cause = xkm_native::platform::fps::FrameDropCause::GpuBound;
+
     let json = serde_json::to_string(&reading).unwrap();
     assert!(json.contains("120.5"));
-    assert!(json.contains("Ebpf"));
+    assert!(json.contains("ebpf"));
+    assert!(json.contains("gpu_bound"));
 
     let deserialized: FpsReading = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized, reading);
@@ -107,4 +111,22 @@ fn test_fps_meter_target_and_detach_lifecycle() {
     meter.clear();
     assert_eq!(meter.get_target_package(), None);
     assert_eq!(meter.get_target_whitelist().len(), 0);
+}
+
+#[test]
+fn test_fps_diagnose_drop_cause_and_target_fps() {
+    use xkm_native::platform::fps::diagnose_drop_cause;
+
+    let mut meter = FpsMeter::new();
+    assert_eq!(meter.get_target_fps(), None);
+
+    meter.set_target_fps(Some(120.0));
+    assert_eq!(meter.get_target_fps(), Some(120.0));
+
+    meter.set_target_fps(Some(60.0));
+    assert_eq!(meter.get_target_fps(), Some(60.0));
+
+    // Verify diagnosis runs safely without panic
+    let cause = diagnose_drop_cause();
+    assert!(!cause.as_str().is_empty());
 }
