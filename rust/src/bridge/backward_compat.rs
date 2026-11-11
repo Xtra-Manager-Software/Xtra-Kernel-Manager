@@ -448,3 +448,37 @@ pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_get
 ) -> jint {
     crate::platform::fps::get_attached_pid().unwrap_or(-1) as jint
 }
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_setFpsTargetFpsNative(
+    _env: JNIEnv,
+    _class: JClass,
+    target: jfloat,
+) {
+    if target > 0.0 {
+        crate::platform::fps::set_target_fps(Some(target as f64));
+    } else {
+        crate::platform::fps::set_target_fps(None);
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_getFpsTargetFpsNative(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jfloat {
+    crate::platform::fps::get_target_fps().unwrap_or(0.0) as jfloat
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_getFpsDropCauseNative(
+    env: JNIEnv,
+    _class: JClass,
+) -> jstring {
+    let reading = crate::platform::fps::read_fps();
+    let cause_str = match reading {
+        Some(r) => r.drop_cause.as_str(),
+        None => "None",
+    };
+    create_jstring_safe(&env, cause_str)
+}
