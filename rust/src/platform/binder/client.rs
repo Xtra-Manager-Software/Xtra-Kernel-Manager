@@ -52,9 +52,8 @@ fn get_pkg_from_cmdline(pid: i32) -> Option<String> {
     let first_null = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
     let raw = std::str::from_utf8(&bytes[..first_null]).ok()?;
     let pkg = raw.split(':').next()?.trim();
-    if pkg.is_empty() {
-        None
-    } else {
-        Some(pkg.to_string())
+    match pkg.is_empty() {
+        true => None,
+        false => Some(pkg.to_string()),
     }
 }
