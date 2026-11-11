@@ -21,7 +21,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import id.xms.xtrakernelmanager.R
-import id.xms.xtrakernelmanager.data.model.HideAccessibilityConfig
 import id.xms.xtrakernelmanager.data.preferences.PreferencesManager
 import id.xms.xtrakernelmanager.ui.components.BottomNavItem
 import id.xms.xtrakernelmanager.ui.components.HolidayCelebrationDialog
@@ -355,8 +354,6 @@ fun Navigation(
         composable("functionalrom") {
           FunctionalRomScreen(
               onNavigateBack = { navController.popBackStack() },
-              onNavigateToShimokuRom = { navController.navigate("shimokurom") },
-              onNavigateToHideAccessibility = { navController.navigate("hideaccessibilitysettings") },
               onNavigateToDisplaySize = { navController.navigate("display_size") },
               onNavigateToGlobalRefreshRate = { navController.navigate("global_refresh_rate") },
               viewModel = sharedFunctionalRomViewModel,
@@ -370,51 +367,8 @@ fun Navigation(
           )
         }
 
-        composable("shimokurom") {
-          ShimokuRomScreen(
-              onNavigateBack = { navController.popBackStack() },
-              onNavigateToPlayIntegrity = { navController.navigate("playintegritysettings") },
-              onNavigateToXiaomiTouch = { navController.navigate("xiaomitouchsettings") },
-              viewModel = sharedFunctionalRomViewModel,
-          )
-        }
-
-        composable("playintegritysettings") {
-          PlayIntegritySettingsScreen(onNavigateBack = { navController.popBackStack() })
-        }
-
-        composable("xiaomitouchsettings") {
-          XiaomiTouchSettingsScreen(onNavigateBack = { navController.popBackStack() })
-        }
-
         composable("display_size") {
           MaterialDisplaySizeScreen(onNavigateBack = { navController.popBackStack() })
-        }
-
-        composable("hideaccessibilitysettings") {
-          val uiState by sharedFunctionalRomViewModel.uiState.collectAsState()
-          
-          HideAccessibilitySettingsScreen(
-              config = uiState.hideAccessibilityConfig,
-              onNavigateBack = { navController.popBackStack() },
-              onConfigChange = { newConfig: HideAccessibilityConfig ->
-                if (newConfig.isEnabled != uiState.hideAccessibilityConfig.isEnabled) {
-                  sharedFunctionalRomViewModel.setHideAccessibilityEnabled(newConfig.isEnabled)
-                }
-                if (newConfig.currentTab != uiState.hideAccessibilityConfig.currentTab) {
-                  sharedFunctionalRomViewModel.setHideAccessibilityTab(newConfig.currentTab)
-                }
-                if (newConfig.appsToHide != uiState.hideAccessibilityConfig.appsToHide) {
-                  sharedFunctionalRomViewModel.setHideAccessibilityAppsToHide(newConfig.appsToHide)
-                }
-                if (newConfig.detectorApps != uiState.hideAccessibilityConfig.detectorApps) {
-                  sharedFunctionalRomViewModel.setHideAccessibilityDetectorApps(newConfig.detectorApps)
-                }
-              },
-              onRefreshLSPosedStatus = {
-                sharedFunctionalRomViewModel.refreshLSPosedStatus()
-              }
-          )
         }
 
         composable("info") { 

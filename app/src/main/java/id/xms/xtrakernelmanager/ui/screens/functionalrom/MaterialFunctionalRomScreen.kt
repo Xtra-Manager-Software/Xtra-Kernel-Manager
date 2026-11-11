@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -30,14 +29,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 
 import id.xms.xtrakernelmanager.R
-import id.xms.xtrakernelmanager.data.model.HideAccessibilityConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MaterialFunctionalRomScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToShimokuRom: () -> Unit,
-    onNavigateToHideAccessibility: () -> Unit,
     onNavigateToDisplaySize: () -> Unit,
     onNavigateToGlobalRefreshRate: () -> Unit = {},
     viewModel: FunctionalRomViewModel,
@@ -86,18 +82,6 @@ fun MaterialFunctionalRomScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // ROM Info Section
-            item {
-                uiState.romInfo?.let { romInfo ->
-                    RomInfoCard(
-                        romName = romInfo.displayName,
-                        androidVersion = romInfo.androidVersion,
-                        brand = romInfo.systemBrand,
-                        isShimoku = romInfo.isShimokuRom
-                    )
-                }
-            }
-
             // Universal Features Group
             item {
                 Text(
@@ -128,18 +112,6 @@ fun MaterialFunctionalRomScreen(
                         HorizontalDivider(modifier = Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                         
                         DPIChangerItem(onClick = onNavigateToDisplaySize)
-                        
-                        HorizontalDivider(modifier = Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-                        MaterialSettingsItem(
-                            title = "Hide Accessibility Service",
-                            subtitle = if (uiState.hideAccessibilityConfig.isEnabled) {
-                                "${uiState.hideAccessibilityConfig.currentTab.displayName} • ${getTotalSelectedApps(uiState.hideAccessibilityConfig)} apps"
-                            } else "Disabled",
-                            icon = Icons.Default.VisibilityOff,
-                            iconTint = Color(0xFFEF5350), // Red
-                            onClick = onNavigateToHideAccessibility
-                        )
                         
                         HorizontalDivider(modifier = Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                         
@@ -199,116 +171,6 @@ fun MaterialFunctionalRomScreen(
                     }
                 }
             }
-
-            // Bypass Charging Feature (Kernel-specific)
-            item {
-                Text(
-                    text = "Kernel Features",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-                )
-                
-                Card(
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .then(
-                            if (!uiState.bypassChargingAvailable) Modifier.blur(2.dp)
-                            else Modifier
-                        )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFFFF9500).copy(alpha = 0.1f),
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.BatteryChargingFull,
-                                    contentDescription = null,
-                                    tint = Color(0xFFFF9500),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Bypass Charging",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = if (uiState.bypassChargingAvailable) {
-                                    if (uiState.bypassChargingEnabled) "Enabled" else "Disabled"
-                                } else {
-                                    "Not Available"
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        Switch(
-                            checked = uiState.bypassChargingEnabled,
-                            onCheckedChange = { viewModel.setBypassCharging(it) },
-                            enabled = uiState.bypassChargingAvailable
-                        )
-                    }
-                }
-                
-                Text(
-                    text = if (uiState.bypassChargingAvailable) {
-                        "Bypass charging allows power to flow directly to the device without charging the battery."
-                    } else {
-                        "This feature is only available in XtraAether kernel version Mamad-Ibn-Solowie and later. If you are a kernel developer with bypass charging support, please contact XMS team to implement it in your kernel."
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp, top = 8.dp)
-                )
-            }
-
-            // ROM Specific Features Group
-            item {
-                Text(
-                    text = "ROM-Specific Features",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-                )
-
-                Card(
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    MaterialSettingsItem(
-                        title = "Shimoku ROM Features",
-                        subtitle = if (uiState.isShimokuRom) "Available" else "Locked",
-                        icon = Icons.Default.Verified,
-                        iconTint = Color(0xFF66BB6A), // Green
-                        onClick = onNavigateToShimokuRom,
-                        enabled = true // Always clickable to show lock message
-                    )
-                }
-            }
             
             item { Spacer(modifier = Modifier.height(32.dp)) }
         }
@@ -347,58 +209,6 @@ fun MaterialFunctionalRomScreen(
                 }
             }
         )
-    }
-}
-
-@Composable
-private fun RomInfoCard(
-    romName: String,
-    androidVersion: String,
-    brand: String,
-    isShimoku: Boolean
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isShimoku) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(24.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .align(Alignment.CenterVertically),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (isShimoku) Icons.Default.Verified else Icons.Default.PhoneAndroid,
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                    tint = if (isShimoku) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            }
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column {
-                Text(
-                    text = romName,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isShimoku) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
-                )
-                Text(
-                    text = "Android $androidVersion • $brand",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = (if (isShimoku) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer).copy(alpha = 0.8f)
-                )
-            }
-        }
     }
 }
 
@@ -506,9 +316,4 @@ private fun handleDeveloperOptionsClick(context: android.content.Context) {
     } else {
         android.widget.Toast.makeText(context, "Please enable Developer Options in Settings > About Phone", android.widget.Toast.LENGTH_LONG).show()
     }
-}
-
-@Composable
-private fun getTotalSelectedApps(config: HideAccessibilityConfig): Int {
-  return config.appsToHide.size + config.detectorApps.size
 }

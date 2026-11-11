@@ -19,17 +19,7 @@ class FunctionalRomUseCase {
 
     // Native Kernel Nodes
     object KernelNodes {
-      const val BYPASS_CHARGING = "/sys/class/power_supply/battery/input_suspend"
       const val CHARGING_LIMIT = "/sys/class/power_supply/battery/charge_control_limit"
-
-      // Alternative paths for different devices
-      val BYPASS_CHARGING_PATHS =
-          listOf(
-              "/sys/class/qcom-battery/bypass_charging_enable", // XtraAether kernel (Mamad-Ibn-Solowie+)
-              "/sys/class/power_supply/battery/input_suspend",
-              "/sys/class/power_supply/battery/charging_enabled",
-              "/sys/class/power_supply/usb/device/razer_charge_limit_enable",
-          )
 
       val DT2W_PATHS =
           listOf(
@@ -112,12 +102,6 @@ class FunctionalRomUseCase {
 
   // ==================== Node Availability Detection ====================
 
-  /** Find available bypass charging node path */
-  suspend fun findBypassChargingNode(): String? =
-      withContext(Dispatchers.IO) {
-        KernelNodes.BYPASS_CHARGING_PATHS.find { RootManager.fileExists(it) }
-      }
-
   /** Find available DT2W node path */
   suspend fun findDt2wNode(): String? =
       withContext(Dispatchers.IO) {
@@ -193,24 +177,6 @@ class FunctionalRomUseCase {
       }
 
   // ==================== Native Features (Kernel Nodes) ====================
-
-  /**
-   * Set bypass charging state
-   *
-   * @param enabled true to enable bypass (suspend input), false to disable
-   * @param nodePath Path to bypass charging node
-   */
-  suspend fun setBypassCharging(enabled: Boolean, nodePath: String): Result<Unit> {
-    val value = if (enabled) "1" else "0"
-    Log.d(TAG, "Setting bypass charging: enabled=$enabled, path=$nodePath")
-    return RootManager.writeToNode(nodePath, value)
-  }
-
-  /** Get current bypass charging state */
-  suspend fun getBypassChargingState(nodePath: String): Boolean {
-    val value = RootManager.readFromNode(nodePath)
-    return value == "1"
-  }
 
   /** Set DT2W (Double Tap to Wake) state */
   suspend fun setDoubleTapToWake(enabled: Boolean, nodePath: String): Result<Unit> {
