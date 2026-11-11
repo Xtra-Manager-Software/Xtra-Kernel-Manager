@@ -6,6 +6,7 @@ import org.apache.http.entity.mime.content.FileBody
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
 import java.util.Date
+import java.util.Properties
 import java.text.SimpleDateFormat
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import java.io.ByteArrayOutputStream
@@ -560,21 +561,30 @@ val buildRustNative by tasks.registering(Exec::class) {
 
     workingDir(rustDir)
 
-    val ndkPath = project.findProperty("ndk.dir")?.toString()
-        ?: System.getenv("ANDROID_NDK_HOME")
-        ?: System.getenv("NDK_HOME")
-        ?: ""
+    val localProps = Properties().apply {
+        val f = rootProject.file("local.properties")
+        if (f.exists()) {
+            load(f.inputStream())
+        }
+    }
+    val ndkCandidates = listOfNotNull(
+        localProps.getProperty("ndk.dir"),
+        project.findProperty("ndk.dir")?.toString(),
+        System.getenv("ANDROID_NDK_HOME"),
+        System.getenv("NDK_HOME")
+    )
+    val resolvedNdk = ndkCandidates.firstOrNull { file(it).exists() } ?: ""
 
-    if (ndkPath.isNotEmpty()) {
-        environment("ANDROID_NDK_HOME", ndkPath)
-        environment("NDK_HOME", ndkPath)
+    if (resolvedNdk.isNotEmpty()) {
+        environment("ANDROID_NDK_HOME", resolvedNdk)
+        environment("NDK_HOME", resolvedNdk)
     }
 
     val isWindows = System.getProperty("os.name").contains("Windows", ignoreCase = true)
     if (isWindows) {
-        commandLine("cmd", "/c", "cargo ndk -t arm64-v8a -o ../app/src/main/jniLibs build --release")
+        commandLine("cmd", "/c", "cargo ndk -t arm64-v8a -P 26 -o ../app/src/main/jniLibs build --release --lib")
     } else {
-        commandLine("cargo", "ndk", "-t", "arm64-v8a", "-o", "../app/src/main/jniLibs", "build", "--release")
+        commandLine("cargo", "ndk", "-t", "arm64-v8a", "-P", "26", "-o", "../app/src/main/jniLibs", "build", "--release", "--lib")
     }
 }
 
