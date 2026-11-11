@@ -125,33 +125,45 @@ fun MaterialFunctionalRomScreen(
 
                 item {
                     val isDevEnabled = checkDeveloperOptionsEnabled(context)
-                    CompactNavCard(
-                        title = stringResource(R.string.developer_options),
-                        subtitle = if (isDevEnabled) stringResource(R.string.developer_options_desc_enabled)
-                                  else stringResource(R.string.developer_options_desc_disabled),
-                        icon = Icons.Default.DeveloperMode,
-                        iconTint = Color(0xFF5C6BC0), // Indigo
-                        onClick = { handleDeveloperOptionsClick(context) }
-                    )
-                }
-
-                item {
                     val isEnforcing = uiState.seLinuxMode == "Enforcing"
-                    CompactSwitchCard(
-                        title = stringResource(R.string.selinux_mode),
-                        subtitle = stringResource(R.string.selinux_mode_status, uiState.seLinuxMode),
-                        subtitleColor = if (isEnforcing) Color(0xFF4CAF50) else Color(0xFFFF9800),
-                        icon = Icons.Default.Security,
-                        iconTint = if (isEnforcing) Color(0xFF4CAF50) else Color(0xFFEF5350),
-                        checked = uiState.seLinuxMode == "Permissive",
-                        onCheckedChange = { toPermissive ->
-                            if (toPermissive) {
-                                viewModel.showSeLinuxWarningDialog()
-                            } else {
-                                viewModel.setSeLinuxMode("Enforcing")
-                            }
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            CompactNavRow(
+                                title = stringResource(R.string.developer_options),
+                                subtitle = if (isDevEnabled) stringResource(R.string.developer_options_desc_enabled)
+                                          else stringResource(R.string.developer_options_desc_disabled),
+                                icon = Icons.Default.DeveloperMode,
+                                onClick = { handleDeveloperOptionsClick(context) }
+                            )
+
+                            CompactSwitchRow(
+                                title = stringResource(R.string.selinux_mode),
+                                subtitle = stringResource(R.string.selinux_mode_status, uiState.seLinuxMode),
+                                subtitleColor = if (isEnforcing) MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.error,
+                                icon = Icons.Default.Security,
+                                checked = uiState.seLinuxMode == "Permissive",
+                                onCheckedChange = { toPermissive ->
+                                    if (toPermissive) {
+                                        viewModel.showSeLinuxWarningDialog()
+                                    } else {
+                                        viewModel.setSeLinuxMode("Enforcing")
+                                    }
+                                }
+                            )
                         }
-                    )
+                    }
                 }
 
                 // Section: Display & Refresh Rate
@@ -161,23 +173,33 @@ fun MaterialFunctionalRomScreen(
                 }
 
                 item {
-                    CompactNavCard(
-                        title = stringResource(R.string.display_size_changer),
-                        subtitle = stringResource(R.string.display_size_desc, currentSmallestWidth),
-                        icon = Icons.Default.AspectRatio,
-                        iconTint = Color(0xFF00897B), // Teal
-                        onClick = onNavigateToDisplaySize
-                    )
-                }
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            CompactNavRow(
+                                title = stringResource(R.string.display_size_changer),
+                                subtitle = stringResource(R.string.display_size_desc, currentSmallestWidth),
+                                icon = Icons.Default.AspectRatio,
+                                onClick = onNavigateToDisplaySize
+                            )
 
-                item {
-                    CompactNavCard(
-                        title = stringResource(R.string.global_refresh_rate),
-                        subtitle = stringResource(R.string.global_refresh_rate_desc),
-                        icon = Icons.Default.Refresh,
-                        iconTint = Color(0xFF1E88E5), // Blue
-                        onClick = onNavigateToGlobalRefreshRate
-                    )
+                            CompactNavRow(
+                                title = stringResource(R.string.global_refresh_rate),
+                                subtitle = stringResource(R.string.global_refresh_rate_desc),
+                                icon = Icons.Default.Refresh,
+                                onClick = onNavigateToGlobalRefreshRate
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -191,7 +213,7 @@ fun MaterialFunctionalRomScreen(
                 Icon(
                     imageVector = Icons.Default.Security,
                     contentDescription = null,
-                    tint = Color(0xFFEF5350),
+                    tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(32.dp)
                 )
             },
@@ -210,7 +232,7 @@ fun MaterialFunctionalRomScreen(
             confirmButton = {
                 Button(
                     onClick = { viewModel.setSeLinuxMode("Permissive") },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF5350))
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
                     Text(stringResource(R.string.selinux_dialog_confirm))
                 }
@@ -237,156 +259,135 @@ private fun SectionHeader(title: String) {
 }
 
 /**
- * Compact Navigation Item Card matching the modern Pixel / M3 settings style.
+ * Compact Navigation Item Row using dynamic Monet colors.
  */
 @Composable
-private fun CompactNavCard(
+private fun CompactNavRow(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    iconTint: Color,
     onClick: () -> Unit,
     enabled: Boolean = true,
 ) {
-    Card(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(enabled = enabled, onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        // Squircle icon badge with dynamic Monet palette
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .size(44.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
         ) {
-            // Squircle icon badge
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(iconTint.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconTint,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
             Icon(
-                imageVector = Icons.Default.ChevronRight,
+                imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                modifier = Modifier.size(20.dp)
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(24.dp)
             )
         }
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
 /**
- * Compact Toggle/Switch Card matching the modern Pixel / M3 settings style.
+ * Compact Toggle/Switch Row using dynamic Monet colors.
  */
 @Composable
-private fun CompactSwitchCard(
+private fun CompactSwitchRow(
     title: String,
     subtitle: String,
     subtitleColor: Color? = null,
     icon: ImageVector,
-    iconTint: Color,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     enabled: Boolean = true,
 ) {
-    Card(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
+        // Squircle icon badge with dynamic Monet palette
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .size(44.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
         ) {
-            // Squircle icon badge
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(iconTint.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconTint,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = subtitleColor ?: MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Switch(
-                checked = checked,
-                onCheckedChange = if (enabled) onCheckedChange else null,
-                enabled = enabled,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primary,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                )
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(24.dp)
             )
         }
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = subtitleColor ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Switch(
+            checked = checked,
+            onCheckedChange = if (enabled) onCheckedChange else null,
+            enabled = enabled,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+            )
+        )
     }
 }
 
