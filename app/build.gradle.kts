@@ -547,3 +547,40 @@ tasks.register("buildAndPublish") {
     notifyBuildStatusToTelegram.get().mustRunAfter(uploadReleaseApkToTelegram)
     finalizedBy(renameReleaseApk, uploadReleaseApkToTelegram, notifyBuildStatusToTelegram)
 }
+
+val buildRustNative by tasks.registering(Exec::class) {
+    group = "build"
+    description = "Compile Rust native library using cargo-ndk"
+    val rustDir = rootProject.file("rust")
+    val jniLibsDir = file("src/main/jniLibs")
+
+    inputs.dir(rustDir.resolve("src"))
+    inputs.file(rustDir.resolve("Cargo.toml"))
+    outputs.file(jniLibsDir.resolve("arm64-v8a/libxkm_native.so"))
+
+    workingDir(rustDir)
+
+    val ndkPath = project.findProperty("ndk.dir")?.toString()
+        ?: System.getenv("ANDROID_NDK_HOME")
+        ?: System.getenv("NDK_HOME")
+        ?: ""
+
+    if (ndkPath.isNotEmpty()) {
+        environment("ANDROID_NDK_HOME", ndkPath)
+        environment("NDK_HOME", ndkPath)
+    }
+
+    val isWindows = System.getProperty("os.name").contains("Windows", ignoreCase = true)
+    if (isWindows) {
+        commandLine("cmd", "/c", "cargo ndk -t arm64-v8a -o ../app/src/main/jniLibs build --release")
+    } else {
+        commandLine("cargo", "ndk", "-t", "arm64-v8a", "-o", "../app/src/main/jniLibs", "build", "--release")
+    }
+}
+
+tasks.configureEach {
+    if (name.startsWith("merge") && (name.contains("JniLib") || name.contains("NativeLib"))) {
+        dependsOn(buildRustNative)
+    }
+}
+

@@ -1,9 +1,12 @@
 use anyhow::{Context, Result};
+#[cfg(unix)]
 use libc::{mount, umount2, MNT_DETACH, MS_BIND, MS_REC};
 use parking_lot::Mutex;
+#[cfg(unix)]
 use std::ffi::CString;
 use std::fs;
 use std::path::Path;
+#[cfg(unix)]
 use std::ptr;
 use std::sync::OnceLock;
 use tracing::{debug, info, warn};
@@ -20,6 +23,7 @@ fn mounts_lock() -> &'static Mutex<Vec<ActiveMount>> {
     ACTIVE_MOUNTS.get_or_init(|| Mutex::new(Vec::new()))
 }
 
+#[cfg(unix)]
 fn do_mount_bind(src: &str, dest: &str) -> bool {
     let src_c = match CString::new(src) {
         Ok(s) => s,
@@ -43,12 +47,23 @@ fn do_mount_bind(src: &str, dest: &str) -> bool {
     }
 }
 
+#[cfg(unix)]
 fn do_unmount(path: &str) -> bool {
     let p = match CString::new(path) {
         Ok(s) => s,
         Err(_) => return false,
     };
     unsafe { umount2(p.as_ptr(), MNT_DETACH) == 0 }
+}
+
+#[cfg(not(unix))]
+fn do_mount_bind(_src: &str, _dest: &str) -> bool {
+    false
+}
+
+#[cfg(not(unix))]
+fn do_unmount(_path: &str) -> bool {
+    false
 }
 
 /// Cleanup any leftover binds from previous session
