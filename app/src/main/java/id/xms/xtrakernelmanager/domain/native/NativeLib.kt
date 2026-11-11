@@ -591,6 +591,121 @@ object NativeLib {
 
   private external fun readZramDeviceStatsNative(device: Int): String
 
+  // New Unified Native Engine APIs
+  private external fun getTelemetrySnapshotNative(): String
+  private external fun applyPresetNative(presetName: String): Boolean
+  private external fun restoreDefaultsNative(): Boolean
+  private external fun lockCpuFrequencyNative(cluster: Int, freqKhz: Long): Boolean
+  private external fun unlockCpuFrequencyNative(cluster: Int): Boolean
+  private external fun setGovernorNative(cluster: Int, governor: String): Boolean
+  private external fun setSwappinessNative(swappiness: Int): Boolean
+  private external fun getForegroundAppNative(): String
+
+  /**
+   * Fetch complete 1-pass telemetry snapshot as raw JSON
+   */
+  fun getTelemetrySnapshot(): String? {
+    if (!isLoaded) return null
+    return try {
+      getTelemetrySnapshotNative()
+    } catch (e: Exception) {
+      Log.e(TAG, "Native getTelemetrySnapshot failed: ${e.message}")
+      null
+    }
+  }
+
+  /**
+   * Apply system tuning preset ("powersave", "balance", "performance", "gaming")
+   */
+  fun applyPreset(presetName: String): Boolean {
+    if (!isLoaded) return false
+    return try {
+      applyPresetNative(presetName)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native applyPreset failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Restore system defaults and release all bind mount frequency locks
+   */
+  fun restoreDefaults(): Boolean {
+    if (!isLoaded) return false
+    return try {
+      restoreDefaultsNative()
+    } catch (e: Exception) {
+      Log.e(TAG, "Native restoreDefaults failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Lock a CPU cluster max frequency using bind mount
+   */
+  fun lockCpuFrequency(cluster: Int, freqKhz: Long): Boolean {
+    if (!isLoaded) return false
+    return try {
+      lockCpuFrequencyNative(cluster, freqKhz)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native lockCpuFrequency failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Unlock a CPU cluster frequency bind mount
+   */
+  fun unlockCpuFrequency(cluster: Int): Boolean {
+    if (!isLoaded) return false
+    return try {
+      unlockCpuFrequencyNative(cluster)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native unlockCpuFrequency failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Set CPU scaling governor for a cluster
+   */
+  fun setGovernor(cluster: Int, governor: String): Boolean {
+    if (!isLoaded) return false
+    return try {
+      setGovernorNative(cluster, governor)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native setGovernor failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Set swappiness (0-100)
+   */
+  fun setSwappiness(swappiness: Int): Boolean {
+    if (!isLoaded) return false
+    return try {
+      setSwappinessNative(swappiness)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native setSwappiness failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Get current foreground focused application package name without Accessibility permission
+   */
+  fun getForegroundApp(): String? {
+    if (!isLoaded) return null
+    return try {
+      val pkg = getForegroundAppNative()
+      if (pkg.isBlank()) null else pkg
+    } catch (e: Exception) {
+      Log.e(TAG, "Native getForegroundApp failed: ${e.message}")
+      null
+    }
+  }
+
   // Wrappers for new GPU functions
   fun getGpuAvailableFrequencies(): List<Int> {
     if (!isLoaded) return emptyList()
