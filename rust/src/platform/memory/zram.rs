@@ -15,31 +15,29 @@ pub struct ZramStats {
 
 pub fn read_zram_stats() -> ZramStats {
     let disksize = common::read_sysfs_i64("/sys/block/zram0/disksize").unwrap_or(0);
-    let mut orig_data_size = 0i64;
-    let mut compr_data_size = 0i64;
-    let mut mem_used_total = 0i64;
-
     // mm_stat: orig_data_size compr_data_size mem_used_total ...
-    if let Some(s) = common::read_sysfs_trimmed("/sys/block/zram0/mm_stat") {
-        let parts: Vec<i64> = s
-            .split_whitespace()
-            .filter_map(|p| p.parse::<i64>().ok())
-            .collect();
-        if parts.len() >= 3 {
-            orig_data_size = parts[0];
-            compr_data_size = parts[1];
-            mem_used_total = parts[2];
-        }
-    } else {
-        orig_data_size = common::read_sysfs_i64("/sys/block/zram0/orig_data_size").unwrap_or(0);
-        compr_data_size = common::read_sysfs_i64("/sys/block/zram0/compr_data_size").unwrap_or(0);
-        mem_used_total = common::read_sysfs_i64("/sys/block/zram0/mem_used_total").unwrap_or(0);
-    }
+    let (orig_data_size, compr_data_size, mem_used_total) =
+        match common::read_sysfs_trimmed("/sys/block/zram0/mm_stat") {
+            Some(s) => {
+                let parts: Vec<i64> = s
+                    .split_whitespace()
+                    .filter_map(|p| p.parse::<i64>().ok())
+                    .collect();
+                match parts.as_slice() {
+                    [orig, compr, mem, ..] => (*orig, *compr, *mem),
+                    _ => (0, 0, 0),
+                }
+            }
+            None => (
+                common::read_sysfs_i64("/sys/block/zram0/orig_data_size").unwrap_or(0),
+                common::read_sysfs_i64("/sys/block/zram0/compr_data_size").unwrap_or(0),
+                common::read_sysfs_i64("/sys/block/zram0/mem_used_total").unwrap_or(0),
+            ),
+        };
 
-    let compression_ratio = if compr_data_size > 0 && orig_data_size > 0 {
-        orig_data_size as f32 / compr_data_size as f32
-    } else {
-        0.0
+    let compression_ratio = match (compr_data_size > 0, orig_data_size > 0) {
+        (true, true) => orig_data_size as f32 / compr_data_size as f32,
+        _ => 0.0,
     };
 
     ZramStats {
@@ -52,13 +50,12 @@ pub fn read_zram_stats() -> ZramStats {
 }
 
 pub fn get_available_zram_algorithms() -> Vec<String> {
-    if let Ok(content) = fs::read_to_string("/sys/block/zram0/comp_algorithm") {
-        content
+    match fs::read_to_string("/sys/block/zram0/comp_algorithm") {
+        Ok(content) => content
             .split_whitespace()
             .map(|s| s.trim_matches(|c| c == '[' || c == ']').to_string())
-            .collect()
-    } else {
-        vec!["lz4".to_string(), "zstd".to_string()]
+            .collect(),
+        Err(_) => vec!["lz4".to_string(), "zstd".to_string()],
     }
 }
 
