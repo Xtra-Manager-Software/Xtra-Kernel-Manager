@@ -1,5 +1,5 @@
 use std::time::Instant;
-use xkm_native::platform::{battery, binder, cpu, gpu, memory, thermal, vendor};
+use xkm_native::platform::{battery, binder, cpu, fps, gpu, memory, thermal, vendor};
 use xkm_native::telemetry::collect_snapshot;
 
 fn main() {
@@ -113,8 +113,26 @@ fn main() {
     let fg_app = binder::get_foreground_app();
     println!("  * Top-App Target : {:?}", fg_app);
 
-    // 8. Bind-Mount Frequency Ceiling Lock Test
-    println!("\n[8] MOUNT CEILING FREQUENCY LOCK TEST");
+    // 8. FPS Meter (libgui.so eBPF with sysfs fallback)
+    println!("\n[8] FPS METER (LIBGUI.SO EBPF & SYSFS FALLBACK)");
+    if let Some(ref fg) = fg_app {
+        if let Some(pid) = fg.pid {
+            let attached = fps::attach_fps_pid(pid);
+            println!("  * Attached eBPF to target PID {} ({}): {}", pid, fg.package_name, attached);
+        }
+    }
+    println!("  * Detected Sysfs Node: {:?}", fps::SysfsFpsReader::detect_sysfs());
+    println!("  * Sampling FPS for 1.5s (10 samples @ 150ms)...");
+    for i in 1..=10 {
+        std::thread::sleep(std::time::Duration::from_millis(150));
+        match fps::read_fps() {
+            Some(r) => println!("    [Sample {:>2}] FPS: {:>5.1} (Source: {:?})", i, r.fps, r.source),
+            None => println!("    [Sample {:>2}] FPS: None", i),
+        }
+    }
+
+    // 9. Bind-Mount Frequency Ceiling Lock Test
+    println!("\n[9] MOUNT CEILING FREQUENCY LOCK TEST");
     if let Some(first_cluster) = clusters.first() {
         let cluster_num = first_cluster.cluster_number;
         let test_lock_freq = first_cluster.min_freq as u64;
@@ -141,14 +159,14 @@ fn main() {
         }
     }
 
-    // 9. Telemetry Snapshot Sample
-    println!("\n[9] FULL 1-PASS TELEMETRY SNAPSHOT SAMPLE");
+    // 10. Telemetry Snapshot Sample
+    println!("\n[10] FULL 1-PASS TELEMETRY SNAPSHOT SAMPLE");
     let snapshot = collect_snapshot();
     let json = serde_json::to_string_pretty(&snapshot).unwrap_or_default();
     println!("  Snapshot JSON length: {} bytes", json.len());
 
-    // 10. Real Hardware Performance Benchmark (1000 iterations)
-    println!("\n[10] REAL HARDWARE PERFORMANCE BENCHMARK (1,000 ITERATIONS)");
+    // 11. Real Hardware Performance Benchmark (1000 iterations)
+    println!("\n[11] REAL HARDWARE PERFORMANCE BENCHMARK (1,000 ITERATIONS)");
     println!("  Benchmarking collect_snapshot() on real Snapdragon 7+ Gen 2...");
 
     const ITERS: usize = 1000;
@@ -206,7 +224,7 @@ fn main() {
         max_us as f64 / 1000.0
     );
 
-    println!("\n[11] SUB-SYSTEM MICRO-BENCHMARKS (1,000 ITERATIONS)");
+    println!("\n[12] SUB-SYSTEM MICRO-BENCHMARKS (1,000 ITERATIONS)");
     let t0 = Instant::now();
     for _ in 0..ITERS {
         let _ = cpu::read_cpu_load();

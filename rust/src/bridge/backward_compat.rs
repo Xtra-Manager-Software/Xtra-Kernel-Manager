@@ -350,3 +350,47 @@ pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_rea
     let json = serde_json::to_string(&stats).unwrap_or_else(|_| "{}".to_string());
     create_jstring_safe(&env, &json)
 }
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_readFpsNative(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jfloat {
+    match crate::platform::fps::read_fps() {
+        Some(reading) => reading.fps as jfloat,
+        None => -1.0,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_readFpsInfoNative(
+    env: JNIEnv,
+    _class: JClass,
+) -> jstring {
+    let json = match crate::platform::fps::read_fps() {
+        Some(reading) => serde_json::to_string(&reading).unwrap_or_else(|_| "".to_string()),
+        None => "".to_string(),
+    };
+    create_jstring_safe(&env, &json)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_attachFpsPidNative(
+    _env: JNIEnv,
+    _class: JClass,
+    pid: jint,
+) -> jni::sys::jboolean {
+    if crate::platform::fps::attach_fps_pid(pid) {
+        jni::sys::JNI_TRUE
+    } else {
+        jni::sys::JNI_FALSE
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_clearFpsNative(
+    _env: JNIEnv,
+    _class: JClass,
+) {
+    crate::platform::fps::clear_fps();
+}

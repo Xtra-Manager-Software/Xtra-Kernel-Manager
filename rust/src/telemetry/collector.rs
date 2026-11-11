@@ -73,6 +73,9 @@ pub fn collect_snapshot() -> TelemetrySnapshot {
     // Foreground task
     let foreground = binder::get_foreground_app().map(|f| f.package_name);
 
+    // FPS reading (libgui.so eBPF uprobe with sysfs fallback)
+    let fps = crate::platform::fps::read_fps();
+
     TelemetrySnapshot {
         timestamp_ms,
         cpu: cpu_telemetry,
@@ -81,5 +84,6 @@ pub fn collect_snapshot() -> TelemetrySnapshot {
         memory: memory_telemetry,
         thermal: thermal_telemetry,
         foreground_app: foreground,
+        fps,
     }
 }

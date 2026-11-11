@@ -48,6 +48,17 @@ proptest! {
         prop_assert!(pct >= 0.0);
         prop_assert!(pct <= 100.0);
     }
+
+    /// Verify parse_sysfs_fps handles arbitrary strings without panicking and ensures strict bounds
+    #[test]
+    fn prop_test_parse_sysfs_fps_arbitrary(input in "\\PC*") {
+        if let Some(fps) = xkm_native::platform::fps::parse_sysfs_fps(&input) {
+            prop_assert!(fps >= 0.0);
+            prop_assert!(fps <= 500.0);
+            prop_assert!(!fps.is_nan());
+            prop_assert!(!fps.is_infinite());
+        }
+    }
 }
 
 // Helper duplicating the pure parsing logic of parse_online_cores for arbitrary strings
