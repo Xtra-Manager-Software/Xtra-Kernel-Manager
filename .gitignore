@@ -1,116 +1,84 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
+# Gradle & Build Artifacts
+.gradle/
+.kotlin/
+/build/
+**/build/
+/captures/
+.externalNativeBuild/
+.cxx/
 
-# Build artifacts
-/build
-/app/dist
-build_log.txt
-rust_build.log
-/build
-/captures
-.externalNativeBuild
-.cxx
+# Local properties & Gradle overrides (use templates)
 local.properties
+/local.properties
 gradle.properties
-/app/dist/
-/app/release/
+gradle/gradle-daemon-jvm.properties
 
-# Native libraries (built from Rust)
+# Build outputs (APK / AAB / APKS / Metadata)
+*.apk
+*.aab
+*.apks
+*.dm
+bundletool.jar
+app/release/
+app/dist/
+
+# Native libraries & Rust build artifacts
 app/src/main/jniLibs/
 **/jniLibs/**/*.so
-
-# Rust build artifacts
 app/src/main/rust/xkm_native/target/
 
-# Build scripts with hardcoded credentials (security)
-build-release-with-changelog.bat
-test-telegram.bat
-build-release.bat
-build-debug-rust.bat
-build-release-rust.bat
-build-debug-rust.sh
-telegram_helper.ps1
+# Ignore all custom shell/batch scripts (keep gradle wrapper)
+*.sh
+*.bat
+!/gradlew.bat
+*.ps1
 
-# ============================================
-# SECURITY - Sensitive Files (NEVER COMMIT!)
-# ============================================
-
-# Keystore files
+# SECURITY - Sensitive Files & Credentials
+# Keystores & Signing
 *.jks
 *.keystore
-release.keystore
-debug.keystore
-upload-keystore.jks
 signing-config.json
+keystore-repo/
 
-# API Keys & Credentials
+# API keys, tokens & configs
 *.credentials
 *secrets*.json
 *secrets*.properties
 *api-key*
 telegram_config.*
+.last-build-commit
 
 # Environment files
 .env
 .env.*
 *.env
 
-# Build outputs (APK/AAB)
-*.apk
-*.aab
-app/build/
-/app/build/
-**/build/outputs/
-
-# Logs
-*.log
-build_log.txt
-builderror-log.txt
-buildsuccess-log.txt
-rust_build.log
-gradle_build.log
-
-# IDE specific
-.idea
-.vscode
+# IDEs & Developer Tools
+.idea/
+*.iml
 *.ipr
 *.iws
+.vscode/
 
-# Backup files
-*.bak
-*.backup
-*~
+# AI Coding Assistants / Agent directories
+.devin/
+.kiro/
+.claude/
+.gemini/
+.antigravity/
+.cursor/
+.windsurf/
 
-# Temporary files
+# OS & Temporary Files
+.DS_Store
+Thumbs.db
+*.log
 *.tmp
 *.swp
 *.swo
 *~
-
-# Workflow artifacts
-.last-build-commit
-keystore-repo/
-build.sh
-
-# Additional folders to ignore
-.kiro/
-.vscode/
-.kotlin/
-.gradle/
+*.bak
+*.backup
+*.hprof
 backdrop_catalog
 pico.save
-aab-to-apks.bat
-gradle/gradle-daemon-jvm.properties
-bundletool.jar
-app-release.apks
-app/release/output-metadata.json
-app/release/output-metadata.json
-app/release/output-metadata.json
