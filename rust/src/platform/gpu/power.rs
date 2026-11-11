@@ -59,7 +59,10 @@ fn set_adreno_powersave() -> Result<()> {
         .unwrap_or(8);
 
     let cap_level = (num_pwr / 2).max(1);
-    let min_pwr = if num_pwr > 0 { num_pwr - 1 } else { 8 };
+    let min_pwr = match num_pwr {
+        0 => 8,
+        n => n - 1,
+    };
 
     let _ = fs::write(format!("{}/max_pwrlevel", base), cap_level.to_string());
     let _ = fs::write(format!("{}/min_pwrlevel", base), min_pwr.to_string());

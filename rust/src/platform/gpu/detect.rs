@@ -43,10 +43,14 @@ pub fn get_gpu_info() -> &'static (GpuVendor, String) {
 
         if let Some(hardware) = common::get_system_property("ro.hardware") {
             let hw = hardware.to_lowercase();
-            if hw.contains("qcom") || hw.contains("snapdragon") {
-                return (GpuVendor::Qualcomm, "Adreno".to_string());
-            } else if hw.contains("mt") || hw.contains("mediatek") {
-                return (GpuVendor::Mali, "Mali".to_string());
+            match () {
+                _ if hw.contains("qcom") || hw.contains("snapdragon") => {
+                    return (GpuVendor::Qualcomm, "Adreno".to_string());
+                }
+                _ if hw.contains("mt") || hw.contains("mediatek") => {
+                    return (GpuVendor::Mali, "Mali".to_string());
+                }
+                _ => {}
             }
         }
 
