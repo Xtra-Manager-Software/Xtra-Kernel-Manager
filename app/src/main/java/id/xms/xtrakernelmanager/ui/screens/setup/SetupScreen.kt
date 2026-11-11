@@ -23,13 +23,9 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SetupScreen(onSetupComplete: (String) -> Unit) {
-  val pagerState = rememberPagerState(pageCount = { 7 })
+  val pagerState = rememberPagerState(pageCount = { 6 })
   val scope = rememberCoroutineScope()
   val context = androidx.compose.ui.platform.LocalContext.current
-  
-  // Default to "classic" for Android 8 and 9 (API < 29), "material" for Android 10+
-  val defaultLayout = if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) "classic" else "material"
-  var selectedLayout by remember { mutableStateOf(defaultLayout) }
   
   var hasRootAccess by remember { mutableStateOf(false) }
   var hasAccessibilityPermission by remember { mutableStateOf(false) }
@@ -43,8 +39,6 @@ fun SetupScreen(onSetupComplete: (String) -> Unit) {
     hasOverlayPermission && 
     hasBatteryOptimization && 
     hasNotificationPermission
-    
-  val isAndroid10Plus = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
   Box(
     modifier = Modifier
@@ -101,13 +95,8 @@ fun SetupScreen(onSetupComplete: (String) -> Unit) {
             onBatteryClick = { hasBatteryOptimization = it },
             onNotificationClick = { hasNotificationPermission = it }
           )
-          5 -> StyleSelectionPage(
-            selectedStyle = selectedLayout,
-            isAndroid10Plus = isAndroid10Plus,
-            onStyleSelected = { selectedLayout = it }
-          )
-          6 -> CompletionPage(
-            onComplete = { onSetupComplete(selectedLayout) }
+          5 -> CompletionPage(
+            onComplete = { onSetupComplete("material") }
           )
         }
       }
@@ -140,16 +129,6 @@ fun SetupScreen(onSetupComplete: (String) -> Unit) {
             shape = RoundedCornerShape(16.dp),
             enabled = when (pagerState.currentPage) {
               4 -> allPermissionsGranted // Page 4: Permissions must be granted
-              5 -> {
-                // Page 5: Style selection - validate based on Android version
-                if (isAndroid10Plus) {
-                  // Android 10+ can choose any style
-                  true
-                } else {
-                  // Android 8-9 must choose "classic"
-                  selectedLayout == "classic"
-                }
-              }
               else -> true
             }
           ) {

@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import id.xms.xtrakernelmanager.R
-import id.xms.xtrakernelmanager.ui.components.GlassmorphicCard
 import id.xms.xtrakernelmanager.ui.components.LottieSwitchControlled
 import id.xms.xtrakernelmanager.ui.components.PillCard
 
@@ -86,9 +85,13 @@ fun PlayIntegritySettingsScreen(
       }
     }
 
-    // All toggles wrapped in a single GlassmorphicCard
+    // All toggles wrapped in a Card
     item {
-      GlassmorphicCard(modifier = Modifier.fillMaxWidth()) {
+      Card(
+          modifier = Modifier.fillMaxWidth(),
+          shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+          colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+      ) {
         Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
           // Play Integrity Fix
           SettingsToggleItem(

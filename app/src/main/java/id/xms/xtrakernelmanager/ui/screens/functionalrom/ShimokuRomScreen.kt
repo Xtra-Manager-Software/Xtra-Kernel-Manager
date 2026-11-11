@@ -24,7 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import id.xms.xtrakernelmanager.BuildConfig
 import id.xms.xtrakernelmanager.R
-import id.xms.xtrakernelmanager.ui.components.GlassmorphicCard
 import id.xms.xtrakernelmanager.ui.components.LottieSwitchControlled
 import id.xms.xtrakernelmanager.ui.components.PillCard
 import kotlinx.coroutines.Dispatchers

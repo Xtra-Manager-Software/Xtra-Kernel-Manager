@@ -290,12 +290,7 @@ class GameOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
           setViewTreeLifecycleOwner(this@GameOverlayService)
           setViewTreeSavedStateRegistryOwner(this@GameOverlayService)
           setContent { 
-            val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "frosted")
-            when (layoutStyle) {
-              "frosted" -> FrostedGameOverlayTheme { GameOverlayContent() }
-              "classic" -> ClassicGameOverlayTheme { GameOverlayContent() }
-              else -> GameOverlayTheme { GameOverlayContent() }
-            }
+            GameOverlayTheme { GameOverlayContent() }
           }
         }
     windowManager.addView(overlayView, params)
@@ -306,14 +301,10 @@ class GameOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
   private fun GameOverlayContent() {
     val context = LocalContext.current
     val isFpsEnabled by viewModel.isFpsEnabled.collectAsState()
-    val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "frosted")
-    val isFrostedUI = layoutStyle == "frosted"
-    val isClassicUI = layoutStyle == "classic"
-
     Box(modifier = Modifier.wrapContentSize(), contentAlignment = Alignment.TopStart) {
       if (isExpanded) {
-        if (isFrostedUI) {
-          FrostedGamePanelCard(
+        // Material UI - Dark Mode
+        GamePanelCard(
               viewModel = viewModel,
               isFpsEnabled = isFpsEnabled,
               onFpsToggle = { viewModel.setFpsEnabled(!isFpsEnabled) },
@@ -358,214 +349,10 @@ class GameOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                   }
               },
           )
-        } else if (isClassicUI) {
-          ClassicGamePanelCard(
-              viewModel = viewModel,
-              isFpsEnabled = isFpsEnabled,
-              onFpsToggle = { viewModel.setFpsEnabled(!isFpsEnabled) },
-              onCollapse = { isExpanded = false },
-              onMoveSide = { toggleOverlayPosition() },
-              onDrag = { dx, dy ->
-                params?.let { p ->
-                  dragAccumulatorX += dx
-                  dragAccumulatorY += dy
-                  
-                  val moveY = dragAccumulatorY.toInt()
-                  val moveX = dragAccumulatorX.toInt()
-                  
-                  if (moveY != 0) {
-                     p.y = (p.y + moveY).coerceIn(0, 2500)
-                     dragAccumulatorY -= moveY
-                  }
-
-                  if (moveX != 0) {
-                      val actualMoveX = if (isOverlayOnRight) -moveX else moveX
-                      p.x = (p.x + actualMoveX).coerceIn(0, screenWidth / 2)
-                      dragAccumulatorX -= moveX
-                  }
-                  
-                  val snapThreshold = 60
-                  isDockedToEdge = p.x < snapThreshold
-                  
-                  if (p.x > screenWidth / 3) {
-                      toggleOverlayPosition()
-                      p.x = 0
-                      isDockedToEdge = true
-                      dragAccumulatorX = 0f
-                  }
-
-                  try { windowManager.updateViewLayout(overlayView, p) } catch (e: Exception) {}
-                }
-              },
-              onDragEnd = {
-                  params?.let { p ->
-                      preferencesManager.setInt("overlay_y_pos", p.y)
-                  }
-              },
-          )
-        } else {
-          // Material UI - Dark Mode
-          GamePanelCard(
-              viewModel = viewModel,
-              isFpsEnabled = isFpsEnabled,
-              onFpsToggle = { viewModel.setFpsEnabled(!isFpsEnabled) },
-              onCollapse = { isExpanded = false },
-              onMoveSide = { toggleOverlayPosition() },
-              onDrag = { dx, dy ->
-                params?.let { p ->
-                  // Accumulate drag deltas
-                  dragAccumulatorX += dx
-                  dragAccumulatorY += dy
-                  
-                  val moveY = dragAccumulatorY.toInt()
-                  val moveX = dragAccumulatorX.toInt()
-                  
-                  if (moveY != 0) {
-                     p.y = (p.y + moveY).coerceIn(0, 2500)
-                     dragAccumulatorY -= moveY // Keep remainder
-                  }
-
-                  if (moveX != 0) {
-                      val actualMoveX = if (isOverlayOnRight) -moveX else moveX
-                      p.x = (p.x + actualMoveX).coerceIn(0, screenWidth / 2)
-                      dragAccumulatorX -= moveX // Keep remainder
-                  }
-                  
-                  val snapThreshold = 60
-                  isDockedToEdge = p.x < snapThreshold
-                  
-                  if (p.x > screenWidth / 3) {
-                      toggleOverlayPosition()
-                      p.x = 0
-                      isDockedToEdge = true
-                      dragAccumulatorX = 0f // Reset
-                  }
-
-                  try { windowManager.updateViewLayout(overlayView, p) } catch (e: Exception) {}
-                }
-              },
-              onDragEnd = {
-                  params?.let { p ->
-                      preferencesManager.setInt("overlay_y_pos", p.y)
-                  }
-              },
-          )
-        }
       } else {
         val fpsVal by viewModel.fpsValue.collectAsState()
 
-        if (isFrostedUI) {
-          FrostedGameSidebar(
-              isExpanded = isExpanded,
-              overlayOnRight = isOverlayOnRight,
-              isDockedToEdge = isDockedToEdge,
-              fps = if (isFpsEnabled) fpsVal else null,
-              onToggleExpand = { isExpanded = true },
-              onDrag = { dx, dy ->
-                params?.let { p ->
-                  // Accumulate drag deltas
-                  dragAccumulatorX += dx
-                  dragAccumulatorY += dy
-                  
-                  val moveY = dragAccumulatorY.toInt()
-                  val moveX = dragAccumulatorX.toInt()
-                  
-                  if (moveY != 0) {
-                      p.y = (p.y + moveY).coerceIn(0, 2500)
-                      dragAccumulatorY -= moveY
-                  }
-
-                  if (moveX != 0) {
-                      val actualMoveX = if (isOverlayOnRight) -moveX else moveX
-                      p.x = (p.x + actualMoveX).coerceIn(0, screenWidth / 2)
-                      dragAccumulatorX -= moveX
-                  }
-                  
-                  // Auto-snap threshold: 60px from edge
-                  val snapThreshold = 60
-                  isDockedToEdge = p.x < snapThreshold
-                  
-                  // If dragged far enough, switch sides
-                  if (p.x > screenWidth / 3) {
-                      toggleOverlayPosition()
-                      p.x = 0
-                      isDockedToEdge = true
-                      dragAccumulatorX = 0f
-                  }
-
-                  try {
-                    windowManager.updateViewLayout(overlayView, p)
-                  } catch (e: Exception) {}
-                }
-              },
-              onDragEnd = {
-                  params?.let { p ->
-                      // Auto-snap to edge if close
-                      val snapThreshold = 100
-                      if (p.x < snapThreshold) {
-                          p.x = 0
-                          isDockedToEdge = true
-                          try { windowManager.updateViewLayout(overlayView, p) } catch (e: Exception) {}
-                      }
-                      preferencesManager.setInt("overlay_y_pos", p.y)
-                  }
-              }
-          )
-        } else if (isClassicUI) {
-          ClassicGameSidebar(
-              isExpanded = isExpanded,
-              overlayOnRight = isOverlayOnRight,
-              isDockedToEdge = isDockedToEdge,
-              fps = if (isFpsEnabled) fpsVal else null,
-              onToggleExpand = { isExpanded = true },
-              onDrag = { dx, dy ->
-                params?.let { p ->
-                  dragAccumulatorX += dx
-                  dragAccumulatorY += dy
-                  
-                  val moveY = dragAccumulatorY.toInt()
-                  val moveX = dragAccumulatorX.toInt()
-                  
-                  if (moveY != 0) {
-                      p.y = (p.y + moveY).coerceIn(0, 2500)
-                      dragAccumulatorY -= moveY
-                  }
-
-                  if (moveX != 0) {
-                      val actualMoveX = if (isOverlayOnRight) -moveX else moveX
-                      p.x = (p.x + actualMoveX).coerceIn(0, screenWidth / 2)
-                      dragAccumulatorX -= moveX
-                  }
-                  
-                  val snapThreshold = 60
-                  isDockedToEdge = p.x < snapThreshold
-                  
-                  if (p.x > screenWidth / 3) {
-                      toggleOverlayPosition()
-                      p.x = 0
-                      isDockedToEdge = true
-                      dragAccumulatorX = 0f
-                  }
-
-                  try {
-                    windowManager.updateViewLayout(overlayView, p)
-                  } catch (e: Exception) {}
-                }
-              },
-              onDragEnd = {
-                  params?.let { p ->
-                      val snapThreshold = 100
-                      if (p.x < snapThreshold) {
-                          p.x = 0
-                          isDockedToEdge = true
-                          try { windowManager.updateViewLayout(overlayView, p) } catch (e: Exception) {}
-                      }
-                      preferencesManager.setInt("overlay_y_pos", p.y)
-                  }
-              }
-          )
-        } else {
-          // Material UI - Dark Mode
+        // Material UI - Dark Mode
           GameSidebar(
               isExpanded = isExpanded,
               overlayOnRight = isOverlayOnRight,
@@ -622,7 +409,6 @@ class GameOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                   }
               }
           )
-        }
       }
     }
   }

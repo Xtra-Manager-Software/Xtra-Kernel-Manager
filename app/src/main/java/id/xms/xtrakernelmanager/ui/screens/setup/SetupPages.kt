@@ -578,68 +578,6 @@ fun PermissionsPage(
 
 
 @Composable
-fun StyleSelectionPage(
-  selectedStyle: String,
-  isAndroid10Plus: Boolean,
-  onStyleSelected: (String) -> Unit
-) {
-  Column(
-    modifier = Modifier
-      .fillMaxSize()
-      .verticalScroll(rememberScrollState())
-      .padding(horizontal = 24.dp),
-    horizontalAlignment = Alignment.CenterHorizontally
-  ) {
-    Spacer(modifier = Modifier.height(40.dp))
-
-    Text(
-      text = stringResource(R.string.setup_style_title),
-      style = MaterialTheme.typography.headlineLarge,
-      color = Color.White,
-      fontWeight = FontWeight.Bold,
-      fontSize = 32.sp
-    )
-
-    Spacer(modifier = Modifier.height(16.dp))
-
-    Text(
-      text = stringResource(R.string.setup_style_subtitle),
-      style = MaterialTheme.typography.bodyLarge,
-      color = Color(0xFF94A3B8),
-      fontSize = 14.sp
-    )
-
-    Spacer(modifier = Modifier.height(48.dp))
-
-    SetupStyleCard(
-      title = stringResource(R.string.setup_style_material),
-      description = stringResource(R.string.setup_style_material_desc),
-      isSelected = selectedStyle == "material",
-      isEnabled = isAndroid10Plus,
-      onClick = { if (isAndroid10Plus) onStyleSelected("material") }
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-
-    SetupStyleCard(
-      title = stringResource(R.string.setup_style_frosted),
-      description = stringResource(R.string.setup_style_frosted_desc),
-      isSelected = selectedStyle == "frosted",
-      isEnabled = isAndroid10Plus,
-      onClick = { if (isAndroid10Plus) onStyleSelected("frosted") }
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-
-    SetupStyleCard(
-      title = stringResource(R.string.setup_style_classic),
-      description = stringResource(R.string.setup_style_classic_desc),
-      isSelected = selectedStyle == "classic",
-      isEnabled = true,
-      onClick = { onStyleSelected("classic") }
-    )
-  }
-}
-
-@Composable
 fun CompletionPage(
   onComplete: () -> Unit
 ) {

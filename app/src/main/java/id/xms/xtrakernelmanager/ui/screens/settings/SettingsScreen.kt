@@ -1,15 +1,8 @@
 package id.xms.xtrakernelmanager.ui.screens.settings
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.Composable
 import id.xms.xtrakernelmanager.data.preferences.PreferencesManager
-import id.xms.xtrakernelmanager.ui.screens.settings.components.ClassicSettingsContent
-import id.xms.xtrakernelmanager.ui.screens.settings.components.FrostedSettingsContent
 import id.xms.xtrakernelmanager.ui.screens.settings.components.MaterialSettingsContent
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -19,26 +12,10 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToDonation: () -> Unit = {}
 ) {
-    val layoutStyle by preferencesManager.getLayoutStyle().collectAsState(initial = "material")
-    
-    when (layoutStyle) {
-        "classic" -> ClassicSettingsContent(
-            preferencesManager = preferencesManager,
-            currentLayout = layoutStyle,
-            onNavigateBack = onNavigateBack,
-            onNavigateToDonation = onNavigateToDonation
-        )
-        "frosted" -> FrostedSettingsContent(
-            preferencesManager = preferencesManager,
-            currentLayout = layoutStyle,
-            onNavigateBack = onNavigateBack,
-            onNavigateToDonation = onNavigateToDonation
-        )
-        else -> MaterialSettingsContent(
-            preferencesManager = preferencesManager,
-            currentLayout = layoutStyle,
-            onNavigateBack = onNavigateBack,
-            onNavigateToDonation = onNavigateToDonation
-        )
-    }
+    MaterialSettingsContent(
+        preferencesManager = preferencesManager,
+        currentLayout = "material",
+        onNavigateBack = onNavigateBack,
+        onNavigateToDonation = onNavigateToDonation
+    )
 }

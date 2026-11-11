@@ -39,7 +39,6 @@ import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import id.xms.xtrakernelmanager.R
 import id.xms.xtrakernelmanager.service.GameMonitorService
-import id.xms.xtrakernelmanager.ui.components.GlassmorphicCard
 import id.xms.xtrakernelmanager.ui.components.LottieSwitchControlled
 import id.xms.xtrakernelmanager.ui.screens.misc.MiscViewModel
 import kotlinx.coroutines.Dispatchers
@@ -111,7 +110,7 @@ fun GameControlSection(viewModel: MiscViewModel) {
     }
   }
 
-  GlassmorphicCard(modifier = Modifier.fillMaxWidth()) {
+  Card(modifier = Modifier.fillMaxWidth()) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

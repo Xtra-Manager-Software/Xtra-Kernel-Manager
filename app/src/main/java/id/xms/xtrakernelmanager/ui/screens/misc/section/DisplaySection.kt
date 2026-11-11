@@ -17,7 +17,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import id.xms.xtrakernelmanager.R
-import id.xms.xtrakernelmanager.ui.components.GlassmorphicCard
 import id.xms.xtrakernelmanager.ui.screens.misc.MiscViewModel
 
 data class SaturationPreset(
@@ -51,7 +50,7 @@ fun DisplaySection(viewModel: MiscViewModel) {
     )
   }
 
-  GlassmorphicCard(modifier = Modifier.fillMaxWidth()) {
+  Card(modifier = Modifier.fillMaxWidth()) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

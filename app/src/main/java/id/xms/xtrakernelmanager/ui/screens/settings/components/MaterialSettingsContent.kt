@@ -198,54 +198,10 @@ fun MaterialSettingsContent(
                     MaterialThemeCard(
                         title = stringResource(R.string.settings_layout_material),
                         subtitle = stringResource(R.string.settings_layout_material_desc),
-                        isSelected = currentLayout == "material",
-                        isEnabled = isAndroid10Plus,
-                        previewContent = { MaterialPreview() },
-                        onClick = {
-                            if (isAndroid10Plus) {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                scope.launch {
-                                    preferencesManager.setLayoutStyle("material")
-                                    onNavigateBack()
-                                }
-                            }
-                        }
-                    )
-                }
-
-                AnimatedComponent(visible = isVisible, delayMillis = 300) {
-                    MaterialThemeCard(
-                        title = stringResource(R.string.settings_layout_frosted),
-                        subtitle = stringResource(R.string.settings_layout_frosted_desc),
-                        isSelected = currentLayout == "frosted",
-                        isEnabled = isAndroid10Plus,
-                        previewContent = { FrostedPreview() },
-                        onClick = {
-                            if (isAndroid10Plus) {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                scope.launch {
-                                    preferencesManager.setLayoutStyle("frosted")
-                                    onNavigateBack()
-                                }
-                            }
-                        }
-                    )
-                }
-
-                AnimatedComponent(visible = isVisible, delayMillis = 400) {
-                    MaterialThemeCard(
-                        title = stringResource(R.string.settings_layout_classic),
-                        subtitle = stringResource(R.string.settings_layout_classic_desc),
-                        isSelected = currentLayout == "classic",
+                        isSelected = true,
                         isEnabled = true,
-                        previewContent = { ClassicPreview() },
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            scope.launch {
-                                preferencesManager.setLayoutStyle("classic")
-                                onNavigateBack()
-                            }
-                        }
+                        previewContent = { MaterialPreview() },
+                        onClick = {}
                     )
                 }
             }
@@ -454,105 +410,6 @@ private fun MaterialPreview() {
                     shadowElevation = 30f
                 }
         )
-    }
-}
-
-@Composable
-private fun FrostedPreview() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(128.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-    ) {
-        // Background gradient
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF4A9B8E).copy(alpha = 0.4f),
-                            Color(0xFF8BA8D8).copy(alpha = 0.3f),
-                            Color(0xFF6BC4E8).copy(alpha = 0.35f)
-                        )
-                    )
-                )
-        )
-        
-        // Glassmorphic element
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .width(200.dp)
-                .height(48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.White.copy(alpha = 0.1f))
-                .border(
-                    width = 1.dp,
-                    color = Color.White.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(12.dp)
-                )
-        )
-    }
-}
-
-@Composable
-private fun ClassicPreview() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(128.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant,
-                shape = RoundedCornerShape(12.dp)
-            )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                )
-                Box(
-                    modifier = Modifier
-                        .width(80.dp)
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-                )
-            }
-            
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
-            )
-            
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.66f)
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
-            )
-        }
     }
 }
 

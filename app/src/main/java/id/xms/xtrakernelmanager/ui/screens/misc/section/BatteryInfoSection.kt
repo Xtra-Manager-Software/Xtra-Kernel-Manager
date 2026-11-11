@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import id.xms.xtrakernelmanager.R
-import id.xms.xtrakernelmanager.ui.components.GlassmorphicCard
 import id.xms.xtrakernelmanager.ui.components.LottieSwitchControlled
 import id.xms.xtrakernelmanager.ui.screens.misc.MiscViewModel
 import kotlinx.coroutines.launch
@@ -48,7 +47,7 @@ fun BatteryInfoSection(viewModel: MiscViewModel) {
         hasNotificationPermission = isGranted
       }
 
-  GlassmorphicCard(modifier = Modifier.fillMaxWidth()) {
+  Card(modifier = Modifier.fillMaxWidth()) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

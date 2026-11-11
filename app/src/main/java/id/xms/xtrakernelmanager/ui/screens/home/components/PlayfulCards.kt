@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.xms.xtrakernelmanager.R
 import id.xms.xtrakernelmanager.data.model.CPUInfo
-import id.xms.xtrakernelmanager.ui.components.GlassmorphicCard
 import java.util.Locale
 
 /**

@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.xms.xtrakernelmanager.R
 import id.xms.xtrakernelmanager.data.model.ThermalPolicyPresets
-import id.xms.xtrakernelmanager.ui.components.frosted.FrostedToggle
 import id.xms.xtrakernelmanager.ui.screens.tuning.TuningViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -46,8 +46,9 @@ fun PlayfulInfoCard(
                     label = "iconScale"
             )
 
-    id.xms.xtrakernelmanager.ui.components.GlassmorphicCard(
+    Card(
             modifier = modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(dimens.cornerRadiusLarge),
     ) {
         Column(
                 modifier = Modifier.padding(dimens.cardPadding),

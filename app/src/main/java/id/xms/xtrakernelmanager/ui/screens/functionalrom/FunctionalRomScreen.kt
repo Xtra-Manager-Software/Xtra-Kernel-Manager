@@ -1,7 +1,6 @@
 package id.xms.xtrakernelmanager.ui.screens.functionalrom
 
-import androidx.compose.runtime.*
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.Composable
 
 @Composable
 fun FunctionalRomScreen(
@@ -12,32 +11,12 @@ fun FunctionalRomScreen(
     onNavigateToGlobalRefreshRate: () -> Unit = {},
     viewModel: FunctionalRomViewModel,
 ) {
-    val layoutStyle by viewModel.layoutStyle.collectAsStateWithLifecycle()
-
-    when (layoutStyle) {
-        "material" -> MaterialFunctionalRomScreen(
-            onNavigateBack = onNavigateBack,
-            onNavigateToShimokuRom = onNavigateToShimokuRom,
-            onNavigateToHideAccessibility = onNavigateToHideAccessibility,
-            onNavigateToDisplaySize = onNavigateToDisplaySize,
-            onNavigateToGlobalRefreshRate = onNavigateToGlobalRefreshRate,
-            viewModel = viewModel
-        )
-        "classic" -> ClassicFunctionalRomScreen(
-            onNavigateBack = onNavigateBack,
-            onNavigateToShimokuRom = onNavigateToShimokuRom,
-            onNavigateToHideAccessibility = onNavigateToHideAccessibility,
-            onNavigateToDisplaySize = onNavigateToDisplaySize,
-            onNavigateToGlobalRefreshRate = onNavigateToGlobalRefreshRate,
-            viewModel = viewModel
-        )
-        else -> LiquidFunctionalRomScreen(
-            onNavigateBack = onNavigateBack,
-            onNavigateToShimokuRom = onNavigateToShimokuRom,
-            onNavigateToHideAccessibility = onNavigateToHideAccessibility,
-            onNavigateToDisplaySize = onNavigateToDisplaySize,
-            onNavigateToGlobalRefreshRate = onNavigateToGlobalRefreshRate,
-            viewModel = viewModel
-        )
-    }
+    MaterialFunctionalRomScreen(
+        onNavigateBack = onNavigateBack,
+        onNavigateToShimokuRom = onNavigateToShimokuRom,
+        onNavigateToHideAccessibility = onNavigateToHideAccessibility,
+        onNavigateToDisplaySize = onNavigateToDisplaySize,
+        onNavigateToGlobalRefreshRate = onNavigateToGlobalRefreshRate,
+        viewModel = viewModel
+    )
 }
