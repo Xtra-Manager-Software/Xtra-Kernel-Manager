@@ -34,8 +34,7 @@ Required permissions are used solely for stated functionality:
 - Open source code available for audit
 
 ## Third-Party Services
-- **Firebase**: Used only for app configuration (no personal data)
-- **No Analytics Services**: No Google Analytics, Facebook, or similar
+- **No Analytics or Tracking Services**: No Firebase, Google Analytics, Facebook, or any tracking SDKs
 
 ## Your Rights
 - All data is under your control

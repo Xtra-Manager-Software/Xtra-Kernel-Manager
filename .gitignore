@@ -45,6 +45,7 @@ keystore-repo/
 *secrets*.json
 *secrets*.properties
 *api-key*
+*google-services*.json
 telegram_config.*
 .last-build-commit
 

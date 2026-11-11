@@ -14,15 +14,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
-    id("com.google.gms.google-services")
     id("com.google.devtools.ksp") version "2.3.5"
-}
-
-// Disable Google Services for debug build (allows different applicationId)
-afterEvaluate {
-    tasks.matching { it.name == "processDebugGoogleServices" }.configureEach {
-        enabled = false
-    }
 }
 
 android {
@@ -200,10 +192,6 @@ dependencies {
     implementation("com.github.topjohnwu.libsu:core:6.0.0")
     implementation("com.github.topjohnwu.libsu:service:6.0.0")
     implementation("com.github.topjohnwu.libsu:nio:6.0.0")
-    
-    // Firebase 
-    implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
-    implementation("com.google.firebase:firebase-database") 
     
     // Google Play Services (for Play Protect compatibility)
     implementation("com.google.android.gms:play-services-base:18.10.0")

@@ -4,13 +4,12 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import id.xms.xtrakernelmanager.BuildConfig
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import kotlin.math.max
 
 // --- DATA CLASSES ---
@@ -95,133 +94,81 @@ fun isInternetAvailable(context: Context): Boolean {
     }
 }
 
-suspend fun fetchUpdateConfig(): UpdateConfig? = suspendCancellableCoroutine { continuation ->
-    try {
-        android.util.Log.d("OTAUpdate", "Fetching update config...")
-        
-        // Use default Firebase instance (configured via google-services.json)
-        val database = FirebaseDatabase.getInstance()
-        android.util.Log.d("OTAUpdate", "Firebase Database instance: ${database.reference.database.app.options.databaseUrl}")
-        
-        val myRef = database.getReference("update/release")
-        android.util.Log.d("OTAUpdate", "Reference path: ${myRef.path}")
-        
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                try {
-                    android.util.Log.d("OTAUpdate", "Release update data received: ${snapshot.exists()}")
-                    
-                    val versionRaw = snapshot.child("version").value
-                    val version = versionRaw?.toString() ?: ""
-                    android.util.Log.d("OTAUpdate", "Version: $version")
-                    
-                    // Parse changelog as array or fallback to single string
-                    val changelog = mutableListOf<String>()
-                    val changelogSnapshot = snapshot.child("changelog")
-                    if (changelogSnapshot.hasChildren()) {
-                        // It's an array
-                        changelogSnapshot.children.forEach { child ->
-                            child.getValue(String::class.java)?.let { changelog.add(it) }
-                        }
-                    } else {
-                        // It's a single string, split by newlines
-                        val changelogStr = changelogSnapshot.getValue(String::class.java) ?: ""
-                        if (changelogStr.isNotEmpty()) {
-                            // Handle both actual newlines and literal \n strings
-                            val lines = changelogStr
-                                .replace("\\n", "\n") // Replace literal \n with actual newline
-                                .split("\n")
-                                .map { it.trim() }
-                                .filter { it.isNotBlank() }
-                            changelog.addAll(lines)
-                        }
-                    }
-                    
-                    val url = snapshot.child("url").getValue(String::class.java) ?: ""
-                    val force = snapshot.child("force").getValue(Boolean::class.java) ?: false
-                    if (continuation.isActive)
-                        continuation.resume(UpdateConfig(version, changelog, url, force, "release"))
-                } catch (e: Exception) {
-                    android.util.Log.e("OTAUpdate", "Error parsing release update: ${e.message}", e)
-                    if (continuation.isActive) continuation.resume(null)
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                android.util.Log.e("OTAUpdate", "Release update fetch cancelled: ${error.message}")
-                if (continuation.isActive) continuation.resume(null)
-            }
-        }
-        myRef.addListenerForSingleValueEvent(listener)
-        continuation.invokeOnCancellation { myRef.removeEventListener(listener) }
-    } catch (e: Exception) {
-        android.util.Log.e("OTAUpdate", "Error in fetchUpdateConfig: ${e.message}", e)
-        if (continuation.isActive) continuation.resume(null)
-    }
+suspend fun fetchUpdateConfig(): UpdateConfig? = withContext(Dispatchers.IO) {
+    fetchFromGitHubReleases(isBeta = false)
 }
 
-suspend fun fetchBetaUpdateConfig(): UpdateConfig? = suspendCancellableCoroutine { continuation ->
-    try {
-        android.util.Log.d("OTAUpdate", "Fetching beta update config...")
-        
-        // Use default Firebase instance (configured via google-services.json)
-        val database = FirebaseDatabase.getInstance()
-        android.util.Log.d("OTAUpdate", "Firebase Database instance: ${database.reference.database.app.options.databaseUrl}")
-        
-        val myRef = database.getReference("update/beta")
-        android.util.Log.d("OTAUpdate", "Reference path: ${myRef.path}")
-        
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                try {
-                    android.util.Log.d("OTAUpdate", "Beta update data received: ${snapshot.exists()}")
-                    
-                    val versionRaw = snapshot.child("version").value
-                    val version = versionRaw?.toString() ?: ""
-                    android.util.Log.d("OTAUpdate", "Beta version: $version")
-                
-                // Parse changelog as array or fallback to single string
-                val changelog = mutableListOf<String>()
-                val changelogSnapshot = snapshot.child("changelog")
-                if (changelogSnapshot.hasChildren()) {
-                    // It's an array
-                    changelogSnapshot.children.forEach { child ->
-                        child.getValue(String::class.java)?.let { changelog.add(it) }
-                    }
-                } else {
-                    // It's a single string, split by newlines
-                    val changelogStr = changelogSnapshot.getValue(String::class.java) ?: ""
-                    if (changelogStr.isNotEmpty()) {
-                        // Handle both actual newlines and literal \n strings
-                        val lines = changelogStr
-                            .replace("\\n", "\n") // Replace literal \n with actual newline
-                            .split("\n")
-                            .map { it.trim() }
-                            .filter { it.isNotBlank() }
-                        changelog.addAll(lines)
-                    }
-                }
-                
-                val url = snapshot.child("url").getValue(String::class.java) ?: ""
-                val force = snapshot.child("force").getValue(Boolean::class.java) ?: false
-                if (continuation.isActive)
-                    continuation.resume(UpdateConfig(version, changelog, url, force, "beta"))
-            } catch (e: Exception) {
-                android.util.Log.e("OTAUpdate", "Error parsing beta update: ${e.message}", e)
-                if (continuation.isActive) continuation.resume(null)
-            }
+suspend fun fetchBetaUpdateConfig(): UpdateConfig? = withContext(Dispatchers.IO) {
+    fetchFromGitHubReleases(isBeta = true)
+}
+
+private fun fetchFromGitHubReleases(isBeta: Boolean): UpdateConfig? {
+    return try {
+        Log.d("OTAUpdate", "Fetching update config from GitHub Releases (isBeta=$isBeta)...")
+        val url = URL("https://api.github.com/repos/Xtra-Manager-Software/Xtra-Kernel-Manager/releases")
+        val conn = (url.openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 5000
+            readTimeout = 5000
+            setRequestProperty("Accept", "application/vnd.github.v3+json")
+            setRequestProperty("User-Agent", "XKM-App")
         }
 
-        override fun onCancelled(error: DatabaseError) {
-            android.util.Log.e("OTAUpdate", "Beta update fetch cancelled: ${error.message}")
-            if (continuation.isActive) continuation.resume(null)
+        if (conn.responseCode != 200) {
+            Log.e("OTAUpdate", "GitHub releases API returned HTTP ${conn.responseCode}")
+            return null
         }
-    }
-    myRef.addListenerForSingleValueEvent(listener)
-    continuation.invokeOnCancellation { myRef.removeEventListener(listener) }
+
+        val jsonString = conn.inputStream.bufferedReader().use { it.readText() }
+        val array = JSONArray(jsonString)
+
+        for (i in 0 until array.length()) {
+            val item = array.getJSONObject(i)
+            val isPrerelease = item.optBoolean("prerelease", false)
+            val tagName = item.optString("tag_name", "")
+            val isBetaRelease = isPrerelease || tagName.contains("beta", ignoreCase = true) || tagName.contains("rc", ignoreCase = true)
+
+            if (isBeta == isBetaRelease) {
+                val body = item.optString("body", "")
+                val changelog = body.replace("\r", "")
+                    .split("\n")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+
+                var downloadUrl = item.optString("html_url", "")
+                val assets = item.optJSONArray("assets")
+                if (assets != null) {
+                    for (j in 0 until assets.length()) {
+                        val asset = assets.getJSONObject(j)
+                        val name = asset.optString("name", "")
+                        if (name.endsWith(".apk", ignoreCase = true)) {
+                            downloadUrl = asset.optString("browser_download_url", downloadUrl)
+                            break
+                        }
+                    }
+                }
+
+                val version = when {
+                    tagName.startsWith("release-stable-") -> tagName.removePrefix("release-stable-") + "-Release"
+                    tagName.startsWith("release-beta1-") -> tagName.removePrefix("release-beta1-") + "-Beta1"
+                    tagName.startsWith("release-") -> tagName.removePrefix("release-")
+                    else -> tagName
+                }
+
+                Log.d("OTAUpdate", "Found update from GitHub: version=$version, url=$downloadUrl, channel=${if (isBeta) "beta" else "release"}")
+                return UpdateConfig(
+                    version = version,
+                    changelog = changelog,
+                    url = downloadUrl,
+                    force = false,
+                    channel = if (isBeta) "beta" else "release"
+                )
+            }
+        }
+        null
     } catch (e: Exception) {
-        android.util.Log.e("OTAUpdate", "Error in fetchBetaUpdateConfig: ${e.message}", e)
-        if (continuation.isActive) continuation.resume(null)
+        Log.e("OTAUpdate", "Error fetching from GitHub releases: ${e.message}", e)
+        null
     }
 }
 

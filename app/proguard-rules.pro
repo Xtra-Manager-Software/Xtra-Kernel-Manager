@@ -165,15 +165,10 @@
 
 # ===== AGGRESSIVE: Remove unused resources metadata =====
 -dontwarn com.google.android.material.**
--dontwarn com.google.firebase.**
 
 # ===== Strip debug info =====
 -renamesourcefileattribute SourceFile
 -keepattributes SourceFile,LineNumberTable
-
-# ===== Firebase optimizations =====
-# -keep class com.google.firebase.** { *; } <-- Removed for shrinking
--dontwarn com.google.firebase.**
 
 # ===== JNI Native =====
 -keepclasseswithmembernames class * {
