@@ -9,8 +9,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -28,7 +30,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import id.xms.xtrakernelmanager.R
+import kotlinx.coroutines.delay
 
 enum class ConnectedItemPosition {
     TOP, MIDDLE, BOTTOM, ALONE
@@ -213,44 +218,260 @@ fun MaterialFunctionalRomScreen(
         }
     }
 
-    // SELinux Warning Dialog
+    // SELinux Danger Warning Full-Screen Modal (MIUI/HyperOS style)
     if (uiState.showSeLinuxWarningDialog) {
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissSeLinuxWarningDialog() },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Security,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(32.dp)
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(R.string.selinux_dialog_title),
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(R.string.selinux_dialog_message),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = { viewModel.setSeLinuxMode("Permissive") },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text(stringResource(R.string.selinux_dialog_confirm))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.dismissSeLinuxWarningDialog() }) {
-                    Text(stringResource(R.string.cancel))
-                }
+        SeLinuxWarningFullScreen(
+            onDismiss = { viewModel.dismissSeLinuxWarningDialog() },
+            onConfirm = {
+                viewModel.setSeLinuxMode("Permissive")
+                viewModel.dismissSeLinuxWarningDialog()
             }
         )
+    }
+}
+
+/**
+ * Full-screen danger warning screen for SELinux Permissive switch (MIUI/HyperOS style).
+ * Features a 5-second mandatory countdown timer and user acknowledgment checkbox.
+ */
+@Composable
+private fun SeLinuxWarningFullScreen(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    var secondsRemaining by remember { mutableIntStateOf(5) }
+    var isAcknowledged by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        while (secondsRemaining > 0) {
+            delay(1000L)
+            secondsRemaining -= 1
+        }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = true,
+            dismissOnClickOutside = false
+        )
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 1.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+            ) {
+                // Scrollable content body
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Red Warning Danger Icon
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = Color(0xFFFF3B30),
+                        modifier = Modifier.size(68.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Title: Danger / Bahaya
+                    Text(
+                        text = stringResource(R.string.selinux_warning_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        letterSpacing = (-0.5).sp
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Warning Description
+                    Text(
+                        text = stringResource(R.string.selinux_warning_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 20.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Concrete Risk Items List
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(18.dp)
+                    ) {
+                        WarningRiskItem(
+                            icon = Icons.Default.Folder,
+                            title = stringResource(R.string.selinux_warning_risk_files_title),
+                            description = stringResource(R.string.selinux_warning_risk_files_desc)
+                        )
+                        WarningRiskItem(
+                            icon = Icons.Default.Android,
+                            title = stringResource(R.string.selinux_warning_risk_sandbox_title),
+                            description = stringResource(R.string.selinux_warning_risk_sandbox_desc)
+                        )
+                        WarningRiskItem(
+                            icon = Icons.Default.AdminPanelSettings,
+                            title = stringResource(R.string.selinux_warning_risk_privilege_title),
+                            description = stringResource(R.string.selinux_warning_risk_privilege_desc)
+                        )
+                        WarningRiskItem(
+                            icon = Icons.Default.Shield,
+                            title = stringResource(R.string.selinux_warning_risk_integrity_title),
+                            description = stringResource(R.string.selinux_warning_risk_integrity_desc)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Acknowledgment Checkbox Row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { isAcknowledged = !isAcknowledged }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = isAcknowledged,
+                            onCheckedChange = { isAcknowledged = it },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.primary,
+                                checkmarkColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.selinux_warning_acknowledge),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            lineHeight = 16.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // Bottom Buttons (Cancel & OK)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // Cancel Button
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp),
+                        shape = RoundedCornerShape(26.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    ) {
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                    }
+
+                    // OK Button with 5s countdown & checkbox check
+                    val canConfirm = secondsRemaining == 0 && isAcknowledged
+                    Button(
+                        onClick = {
+                            if (canConfirm) {
+                                onConfirm()
+                            }
+                        },
+                        enabled = canConfirm,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp),
+                        shape = RoundedCornerShape(26.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFD32F2F),
+                            contentColor = Color.White,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
+                            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        )
+                    ) {
+                        Text(
+                            text = if (secondsRemaining > 0) {
+                                stringResource(R.string.selinux_warning_countdown, secondsRemaining)
+                            } else {
+                                stringResource(R.string.ok)
+                            },
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WarningRiskItem(
+    icon: ImageVector,
+    title: String,
+    description: String,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
+                lineHeight = 16.sp
+            )
+        }
     }
 }
 
