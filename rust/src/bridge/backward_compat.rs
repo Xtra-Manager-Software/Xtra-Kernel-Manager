@@ -394,3 +394,57 @@ pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_cle
 ) {
     crate::platform::fps::clear_fps();
 }
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_detachFpsNative(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jni::sys::jboolean {
+    if crate::platform::fps::detach_fps_pid() {
+        jni::sys::JNI_TRUE
+    } else {
+        jni::sys::JNI_FALSE
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_setFpsTargetPackageNative(
+    mut env: JNIEnv,
+    _class: JClass,
+    pkg: jni::objects::JString,
+) {
+    let pkg_str = jstring_to_string(&mut env, &pkg).unwrap_or_default();
+    if pkg_str.trim().is_empty() {
+        crate::platform::fps::set_target_package(None);
+    } else {
+        crate::platform::fps::set_target_package(Some(pkg_str));
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_clearFpsTargetPackageNative(
+    _env: JNIEnv,
+    _class: JClass,
+) {
+    crate::platform::fps::set_target_package(None);
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_isFpsEbpfAttachedNative(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jni::sys::jboolean {
+    if crate::platform::fps::is_ebpf_attached() {
+        jni::sys::JNI_TRUE
+    } else {
+        jni::sys::JNI_FALSE
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_getFpsAttachedPidNative(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jint {
+    crate::platform::fps::get_attached_pid().unwrap_or(-1) as jint
+}
