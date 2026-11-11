@@ -33,39 +33,59 @@ static ACTIVE_SENSORS_CACHE: OnceLock<RwLock<Vec<CachedSensor>>> = OnceLock::new
 
 fn categorize_zone(name: &str) -> &'static str {
     let lower = name.to_lowercase();
-    if lower.contains("cpuss") || lower.contains("cpu") || lower.contains("tsens_tz_sensor") || lower.contains("mtkts_cpu") {
-        "cpu"
-    } else if lower.contains("gpuss") || lower.contains("gpu") || lower.contains("kgsl") || lower.contains("mali") || lower.contains("adreno") || lower.contains("g3d") {
-        "gpu"
-    } else if lower.contains("batt") || lower.contains("bms") {
-        "battery"
-    } else if lower.contains("soc") || lower.contains("skin") || lower.contains("quiet") || lower.contains("chg") {
-        "soc"
-    } else if lower.contains("pmic") || lower.contains("pa") || lower.contains("pm8") || lower.contains("pmr") || lower.contains("modem") {
-        "pmic"
-    } else {
-        "other"
+    match () {
+        _ if lower.contains("cpuss")
+            || lower.contains("cpu")
+            || lower.contains("tsens_tz_sensor")
+            || lower.contains("mtkts_cpu") =>
+        {
+            "cpu"
+        }
+        _ if lower.contains("gpuss")
+            || lower.contains("gpu")
+            || lower.contains("kgsl")
+            || lower.contains("mali")
+            || lower.contains("adreno")
+            || lower.contains("g3d") =>
+        {
+            "gpu"
+        }
+        _ if lower.contains("batt") || lower.contains("bms") => "battery",
+        _ if lower.contains("soc")
+            || lower.contains("skin")
+            || lower.contains("quiet")
+            || lower.contains("chg") =>
+        {
+            "soc"
+        }
+        _ if lower.contains("pmic")
+            || lower.contains("pa")
+            || lower.contains("pm8")
+            || lower.contains("pmr")
+            || lower.contains("modem") =>
+        {
+            "pmic"
+        }
+        _ => "other",
     }
 }
 
 fn parse_raw_temp(raw_temp: i64) -> Option<f32> {
     // Filter out sensor offline, uncalibrated, or error values (-273000, -40000, 0, etc.)
-    if raw_temp <= -40_000 || raw_temp >= 150_000 || raw_temp == 0 {
-        return None;
-    }
+    match raw_temp {
+        t if t <= -40_000 || t >= 150_000 || t == 0 => None,
+        t => {
+            let temp_c = match t.abs() {
+                a if a >= 1000 => t as f32 / 1000.0,
+                a if a >= 100 => t as f32 / 10.0,
+                _ => t as f32,
+            };
 
-    let temp_c = if raw_temp.abs() >= 1000 {
-        raw_temp as f32 / 1000.0
-    } else if raw_temp.abs() >= 100 {
-        raw_temp as f32 / 10.0
-    } else {
-        raw_temp as f32
-    };
-
-    if (0.0..=125.0).contains(&temp_c) {
-        Some(temp_c)
-    } else {
-        None
+            match temp_c {
+                c if (0.0..=125.0).contains(&c) => Some(c),
+                _ => None,
+            }
+        }
     }
 }
 
