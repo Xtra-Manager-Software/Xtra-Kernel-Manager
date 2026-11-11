@@ -24,7 +24,7 @@ material3 = "1.4.0"
 compose-icons = "1.1.1"
 
 # Haze - Glassmorphism
-haze = "1.7.2"
+haze = "1.7.3"
 
 # Hilt
 hilt = "2.59.1"
