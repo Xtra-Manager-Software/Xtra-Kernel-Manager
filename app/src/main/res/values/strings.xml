@@ -673,6 +673,22 @@
     <string name="functional_rom_title">Functional ROM</string>
     <string name="functional_rom_card_title">Functional ROM</string>
     <string name="functional_rom_card_desc">Configure additional ROM features</string>
+    <string name="category_system_security">SYSTEM &amp; SECURITY</string>
+    <string name="category_display_refresh_rate">DISPLAY &amp; REFRESH RATE</string>
+    <string name="developer_options">Developer Options</string>
+    <string name="developer_options_desc_enabled">Enabled • Tap to open system developer settings</string>
+    <string name="developer_options_desc_disabled">Disabled • Tap to open settings</string>
+    <string name="developer_options_open_error">Unable to open Developer Options</string>
+    <string name="developer_options_enable_prompt">Please enable Developer Options in Settings &gt; About Phone</string>
+    <string name="selinux_mode">SELinux Mode</string>
+    <string name="selinux_mode_status">Current status: %1$s</string>
+    <string name="selinux_dialog_title">Switch to Permissive?</string>
+    <string name="selinux_dialog_message">Switching SELinux to Permissive mode allows processes to bypass security policies without enforcement.\n\nAll risks resulting from this action — including security vulnerabilities, unauthorized access, and system instability — are entirely at your own responsibility and outside the scope of Xtra Kernel Manager.</string>
+    <string name="selinux_dialog_confirm">I Understand, Proceed</string>
+    <string name="display_size_changer">Display Size Changer</string>
+    <string name="display_size_desc">Current smallest width: %1$d dp</string>
+    <string name="global_refresh_rate">Global Refresh Rate</string>
+    <string name="global_refresh_rate_desc">System-wide screen refresh rate control</string>
 
     <!-- Display Category -->
     <string name="category_display">Display</string>

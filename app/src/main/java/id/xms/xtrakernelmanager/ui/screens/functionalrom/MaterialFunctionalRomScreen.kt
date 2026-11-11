@@ -79,7 +79,7 @@ fun MaterialFunctionalRomScreen(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.back),
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -120,15 +120,15 @@ fun MaterialFunctionalRomScreen(
             ) {
                 // Section: System & Security
                 item {
-                    SectionHeader(title = "SYSTEM & SECURITY")
+                    SectionHeader(title = stringResource(R.string.category_system_security))
                 }
 
                 item {
                     val isDevEnabled = checkDeveloperOptionsEnabled(context)
                     CompactNavCard(
-                        title = "Developer Options",
-                        subtitle = if (isDevEnabled) "Enabled • Tap to open system developer settings"
-                                  else "Disabled • Tap to open settings",
+                        title = stringResource(R.string.developer_options),
+                        subtitle = if (isDevEnabled) stringResource(R.string.developer_options_desc_enabled)
+                                  else stringResource(R.string.developer_options_desc_disabled),
                         icon = Icons.Default.DeveloperMode,
                         iconTint = Color(0xFF5C6BC0), // Indigo
                         onClick = { handleDeveloperOptionsClick(context) }
@@ -138,8 +138,8 @@ fun MaterialFunctionalRomScreen(
                 item {
                     val isEnforcing = uiState.seLinuxMode == "Enforcing"
                     CompactSwitchCard(
-                        title = "SELinux Mode",
-                        subtitle = "Current status: ${uiState.seLinuxMode}",
+                        title = stringResource(R.string.selinux_mode),
+                        subtitle = stringResource(R.string.selinux_mode_status, uiState.seLinuxMode),
                         subtitleColor = if (isEnforcing) Color(0xFF4CAF50) else Color(0xFFFF9800),
                         icon = Icons.Default.Security,
                         iconTint = if (isEnforcing) Color(0xFF4CAF50) else Color(0xFFEF5350),
@@ -157,13 +157,13 @@ fun MaterialFunctionalRomScreen(
                 // Section: Display & Refresh Rate
                 item {
                     Spacer(modifier = Modifier.height(10.dp))
-                    SectionHeader(title = "DISPLAY & REFRESH RATE")
+                    SectionHeader(title = stringResource(R.string.category_display_refresh_rate))
                 }
 
                 item {
                     CompactNavCard(
-                        title = "Display Size Changer",
-                        subtitle = "Current smallest width: $currentSmallestWidth dp",
+                        title = stringResource(R.string.display_size_changer),
+                        subtitle = stringResource(R.string.display_size_desc, currentSmallestWidth),
                         icon = Icons.Default.AspectRatio,
                         iconTint = Color(0xFF00897B), // Teal
                         onClick = onNavigateToDisplaySize
@@ -172,47 +172,12 @@ fun MaterialFunctionalRomScreen(
 
                 item {
                     CompactNavCard(
-                        title = "Global Refresh Rate",
-                        subtitle = "System-wide screen refresh rate control",
+                        title = stringResource(R.string.global_refresh_rate),
+                        subtitle = stringResource(R.string.global_refresh_rate_desc),
                         icon = Icons.Default.Refresh,
                         iconTint = Color(0xFF1E88E5), // Blue
                         onClick = onNavigateToGlobalRefreshRate
                     )
-                }
-
-                // Dynamic Hardware/Kernel Features (only if detected on device)
-                if (uiState.chargingLimitAvailable || uiState.dt2wAvailable) {
-                    item {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        SectionHeader(title = "KERNEL FEATURES")
-                    }
-
-                    if (uiState.chargingLimitAvailable) {
-                        item {
-                            CompactSwitchCard(
-                                title = "Charging Limit",
-                                subtitle = if (uiState.chargingLimitEnabled) "Active • Limit at ${uiState.chargingLimitValue}%"
-                                          else "Disabled",
-                                icon = Icons.Default.BatteryChargingFull,
-                                iconTint = Color(0xFF43A047),
-                                checked = uiState.chargingLimitEnabled,
-                                onCheckedChange = { viewModel.setChargingLimit(it) }
-                            )
-                        }
-                    }
-
-                    if (uiState.dt2wAvailable) {
-                        item {
-                            CompactSwitchCard(
-                                title = "Double Tap to Wake",
-                                subtitle = if (uiState.doubleTapWakeEnabled) "Enabled" else "Disabled",
-                                icon = Icons.Default.TouchApp,
-                                iconTint = Color(0xFFFF8F00),
-                                checked = uiState.doubleTapWakeEnabled,
-                                onCheckedChange = { viewModel.setDoubleTapToWake(it) }
-                            )
-                        }
-                    }
                 }
             }
         }
@@ -232,13 +197,13 @@ fun MaterialFunctionalRomScreen(
             },
             title = {
                 Text(
-                    text = "Switch to Permissive?",
+                    text = stringResource(R.string.selinux_dialog_title),
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
                 Text(
-                    text = "Switching SELinux to Permissive mode allows processes to bypass security policies without enforcement.\n\nAll risks resulting from this action — including security vulnerabilities, unauthorized access, and system instability — are entirely at your own responsibility and outside the scope of Xtra Kernel Manager.",
+                    text = stringResource(R.string.selinux_dialog_message),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -247,12 +212,12 @@ fun MaterialFunctionalRomScreen(
                     onClick = { viewModel.setSeLinuxMode("Permissive") },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF5350))
                 ) {
-                    Text("I Understand, Proceed")
+                    Text(stringResource(R.string.selinux_dialog_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissSeLinuxWarningDialog() }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -445,9 +410,9 @@ private fun handleDeveloperOptionsClick(context: Context) {
             val intent = Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
             context.startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(context, "Unable to open Developer Options", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.developer_options_open_error), Toast.LENGTH_SHORT).show()
         }
     } else {
-        Toast.makeText(context, "Please enable Developer Options in Settings > About Phone", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, context.getString(R.string.developer_options_enable_prompt), Toast.LENGTH_LONG).show()
     }
 }
