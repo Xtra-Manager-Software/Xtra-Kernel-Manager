@@ -115,18 +115,27 @@ fn main() {
 
     // 8. FPS Meter Lifecycle (libgui.so eBPF on-demand & safe detach like Auriya)
     println!("\n[8] FPS METER LIFECYCLE (AURIYA-STYLE TARGET PROBING & SAFE DETACH)");
-    println!("  * Detected Hardware Sysfs Node: {:?}", fps::SysfsFpsReader::detect_sysfs());
+    println!(
+        "  * Detected Hardware Sysfs Node: {:?}",
+        fps::SysfsFpsReader::detect_sysfs()
+    );
 
     // Phase A: No target set -> zero eBPF probe injected, pure passive sysfs
     println!("  --- Phase A: Passive Baseline (No Target App Set) ---");
     let init_attached = fps::is_ebpf_attached();
     let init_fps = fps::read_fps();
-    println!("  * eBPF Probe Attached : {} (Expected: false)", init_attached);
+    println!(
+        "  * eBPF Probe Attached : {} (Expected: false)",
+        init_attached
+    );
     println!("  * Baseline FPS Reading: {:?}", init_fps);
 
     // Phase B: Attach only to specific target app
     if let Some(ref fg) = fg_app {
-        println!("  --- Phase B: Target App Monitoring ({}) ---", fg.package_name);
+        println!(
+            "  --- Phase B: Target App Monitoring ({}) ---",
+            fg.package_name
+        );
         fps::set_target_package(Some(fg.package_name.clone()));
         // First read triggers dynamic attach to matching target
         let _ = fps::read_fps();
@@ -142,7 +151,15 @@ fn main() {
             match fps::read_fps() {
                 Some(r) => println!(
                     "    [Sample {:>2}] FPS: {:>5.1} | FT: {:>5.2}ms | Avg: {:>5.1} | 1% Low: {:>5.1} | Jank: {} ({:>4.1}%) | Cause: {} ({:?})",
-                    i, r.fps, r.frametime_ms, r.avg_fps, r.low_1pct_fps, r.jank_count, r.jank_percent, r.drop_cause.as_str(), r.source
+                    i,
+                    r.fps,
+                    r.frametime_ms,
+                    r.avg_fps,
+                    r.low_1pct_fps,
+                    r.jank_count,
+                    r.jank_percent,
+                    r.drop_cause.as_str(),
+                    r.source
                 ),
                 None => println!("    [Sample {:>2}] FPS: None", i),
             }
@@ -154,7 +171,10 @@ fn main() {
     let detached_ok = fps::detach_fps_pid();
     std::thread::sleep(std::time::Duration::from_millis(50));
     println!("  * detach_fps_pid() returned   : {}", detached_ok);
-    println!("  * eBPF Probe Attached After Detach: {} (Expected: false)", fps::is_ebpf_attached());
+    println!(
+        "  * eBPF Probe Attached After Detach: {} (Expected: false)",
+        fps::is_ebpf_attached()
+    );
     let fallback_fps = fps::read_fps();
     println!("  * Immediate Fallback FPS Reading  : {:?}", fallback_fps);
 
@@ -162,7 +182,10 @@ fn main() {
     println!("  --- Phase D: Out-of-Target App Isolation ---");
     fps::set_target_package(Some("com.fake.nonexistent.game".to_string()));
     let _ = fps::read_fps();
-    println!("  * Probing untargeted foreground app : is_attached = {} (Expected: false)", fps::is_ebpf_attached());
+    println!(
+        "  * Probing untargeted foreground app : is_attached = {} (Expected: false)",
+        fps::is_ebpf_attached()
+    );
     fps::clear_fps();
     println!("  * Full cleanup done via clear_fps()");
 
@@ -342,6 +365,51 @@ fn main() {
     println!(
         "  * fps::read_fps() (End-to-end pipe)  : {:.1} \u{00b5}s / call",
         fps_meter_avg
+    );
+
+    // [13] Native Binder Actuators
+    println!("\n[13] NATIVE BINDER ACTUATORS ");
+    let binder_init = binder::ensure_initialized();
+    println!("  * Native Binder Init        : {}", binder_init);
+    println!(
+        "  * Active Display Refresh Hz : {:.1} Hz",
+        binder::get_active_display_refresh_rate()
+    );
+    println!(
+        "  * Supported Refresh Rates   : {:?}",
+        binder::query_binder_supported_rates()
+    );
+    println!(
+        "  * Current Screen Brightness : {:?}",
+        binder::get_screen_brightness()
+    );
+    println!(
+        "  * Android Battery Saver     : {:?}",
+        binder::is_power_save_mode().unwrap_or(false)
+    );
+    println!(
+        "  * PowerHAL Game Mode Supp   : {}",
+        binder::is_power_mode_supported(binder::PowerMode::Game)
+    );
+    println!(
+        "  * PowerHAL Sustained Perf   : {}",
+        binder::is_power_mode_supported(binder::PowerMode::SustainedPerformance)
+    );
+    println!(
+        "  * PowerHAL Expensive Render : {}",
+        binder::is_power_mode_supported(binder::PowerMode::ExpensiveRendering)
+    );
+    println!(
+        "  * Wi-Fi Low-Latency Active  : {}",
+        binder::is_wifi_low_latency_active()
+    );
+    println!(
+        "  * Status Bar Gesture Locked : {}",
+        binder::is_statusbar_locked()
+    );
+    println!(
+        "  * Screen Rotation Frozen    : {}",
+        binder::is_display_rotation_frozen(0)
     );
 
     println!("           ON-DEVICE VERIFICATION COMPLETE              ");
