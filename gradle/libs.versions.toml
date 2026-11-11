@@ -53,7 +53,7 @@ coil = "2.7.0"
 vico = "3.1.0"
 
 # Coroutines
-coroutines = "1.10.2"
+coroutines = "1.11.0"
 
 # Serialization
 serialization-json = "1.12.0"
