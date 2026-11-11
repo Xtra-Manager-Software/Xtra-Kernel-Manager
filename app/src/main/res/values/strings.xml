@@ -752,9 +752,6 @@
 
     <!-- Charging Category -->
     <string name="category_charging">Charging</string>
-    <string name="bypass_charging">Bypass charging</string>
-    <string name="bypass_charging_desc_enabled">Bypass charging enabled</string>
-    <string name="bypass_charging_desc_disabled">Bypass charging disabled</string>
 
     <!-- Play Integrity Settings Screen -->
     <string name="play_integrity_settings_title">Play Integrity Settings</string>
@@ -1396,13 +1393,6 @@
     <string name="floating_window_service_description">Floating window service for quick app access during gaming sessions</string>
     <string name="battery_service_description">Battery monitoring and statistics tracking service for device health optimization</string>
     <string name="app_profile_service_description">Per-app profile monitoring service for automatic performance settings adjustment</string>
-
-    <!-- Banking Mode Strings -->
-    <string name="banking_mode_title">Banking Mode</string>
-    <string name="banking_mode_description">Disable accessibility service when banking apps are detected</string>
-    <string name="banking_mode_enabled_desc">Accessibility service disabled for banking security</string>
-    <string name="banking_mode_disabled_desc">Normal operation mode</string>
-    <string name="banking_mode_warning">⚠️ Game overlay and accessibility features are disabled to prevent banking app detection</string>
 
     <!-- Setup Screen -->
     <string name="setup_welcome_title">Ready to begin?</string>

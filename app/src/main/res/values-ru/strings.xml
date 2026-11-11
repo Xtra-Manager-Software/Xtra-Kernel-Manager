@@ -448,13 +448,6 @@
     <string name="settings_layout_classic">Classic</string>
     <string name="settings_layout_classic_desc">Простой и надежный</string>
 
-    <!-- Banking Mode Strings -->
-    <string name="banking_mode_title">Банковский режим</string>
-    <string name="banking_mode_description">Отключить службу доступности при обнаружении банковских приложений</string>
-    <string name="banking_mode_enabled_desc">Служба доступности отключена для безопасности банковских операций</string>
-    <string name="banking_mode_disabled_desc">Обычный режим работы</string>
-    <string name="banking_mode_warning">⚠️ Игровой оверлей и функции доступности отключены для предотвращения обнаружения банковскими приложениями</string>
-
     <!-- Setup Screen -->
     <string name="setup_welcome_title">Готовы начать?</string>
     <string name="setup_welcome_subtitle">Настройте ядро в соответствии с вашими потребностями.\nДавайте настроим ваш опыт XKM.</string>
