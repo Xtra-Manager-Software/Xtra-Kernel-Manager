@@ -9,12 +9,19 @@ compose-bom = "2026.09.00"
 
 # AndroidX
 core-ktx = "1.17.0"
+core-splashscreen = "1.2.0"
 lifecycle = "2.8.7"
 activity-compose = "1.13.0"
 navigation-compose = "2.9.7"
+work = "2.12.0"
+graphics-shapes = "1.1.0"
 
 # Material
+material = "1.13.0"
 material3 = "1.4.0"
+
+# Icons
+compose-icons = "1.1.1"
 
 # Haze - Glassmorphism
 haze = "1.7.2"
@@ -26,8 +33,30 @@ hilt-navigation-compose = "1.3.0"
 # DataStore
 datastore = "1.2.0"
 
+# LibSu - Root Access
+libsu = "6.0.0"
+
+# Google Play Services
+play-services-base = "18.10.0"
+play-services-tasks = "18.4.1"
+
+# TOML Parser
+tomlj = "1.1.1"
+
+# Accompanist
+accompanist = "0.36.0"
+
+# Coil
+coil = "2.7.0"
+
+# Vico Charts
+vico = "3.1.0"
+
 # Coroutines
 coroutines = "1.10.2"
+
+# Serialization
+serialization-json = "1.12.0"
 
 # Testing
 junit = "4.13.2"
@@ -48,7 +77,13 @@ yukihookapi = "1.3.1"
 [libraries]
 # AndroidX Core
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "graphics-shapes" }
+
+# Material
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 # Compose BOM
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
@@ -60,6 +95,7 @@ androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+compose-icons-simple = { group = "br.com.devsrsouza.compose.icons", name = "simple-icons", version.ref = "compose-icons" }
 
 # Lifecycle
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
@@ -81,9 +117,37 @@ hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-com
 # DataStore
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
+# LibSu - Root Access
+libsu-core = { group = "com.github.topjohnwu.libsu", name = "core", version.ref = "libsu" }
+libsu-service = { group = "com.github.topjohnwu.libsu", name = "service", version.ref = "libsu" }
+libsu-nio = { group = "com.github.topjohnwu.libsu", name = "nio", version.ref = "libsu" }
+
+# Google Play Services
+play-services-base = { group = "com.google.android.gms", name = "play-services-base", version.ref = "play-services-base" }
+play-services-tasks = { group = "com.google.android.gms", name = "play-services-tasks", version.ref = "play-services-tasks" }
+
+# TOML Parser
+tomlj = { group = "org.tomlj", name = "tomlj", version.ref = "tomlj" }
+
+# Accompanist
+accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }
+accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist" }
+accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist" }
+
+# Coil
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil" }
+
+# Vico Charts
+vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
+
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+
+# Serialization
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization-json" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -104,5 +168,6 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import java.io.ByteArrayOutputStream
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.plugin.compose")
-    id("org.jetbrains.kotlin.plugin.serialization")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -23,8 +23,8 @@ android {
 
     defaultConfig {
         applicationId = "id.xms.xtrakernelmanager"
-        minSdk = 26
-        targetSdk = 36
+        minSdk = 31
+        targetSdk = 37
         versionCode = 3
         versionName = "3.2-Beta1"
 
@@ -156,84 +156,80 @@ kotlin {
 
 dependencies {
     // Core Android
-    implementation("androidx.core:core-ktx:1.17.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("androidx.activity:activity-compose:1.13.0")
-    implementation("androidx.core:core-splashscreen:1.2.0")
-    implementation("com.google.android.material:material:1.13.0")
-    implementation("androidx.work:work-runtime-ktx:2.12.0")
-
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.material)
+    implementation(libs.androidx.work.runtime.ktx)
 
     // Compose BOM
-    val composeBom = platform("androidx.compose:compose-bom:2026.09.00")
+    val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3:1.4.0")
-    implementation("androidx.graphics:graphics-shapes:1.1.0")
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.graphics.shapes)
     
     // Material 3 Expressive
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.androidx.compose.material.icons.extended)
     // Simple Icons (Brands)
-    implementation("br.com.devsrsouza.compose.icons:simple-icons:1.1.1")
+    implementation(libs.compose.icons.simple)
 
     // Navigation
-    implementation("androidx.navigation:navigation-compose:2.9.7")
+    implementation(libs.androidx.navigation.compose)
 
     // ViewModel
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     // DataStore
-    implementation("androidx.datastore:datastore-preferences:1.2.0")
+    implementation(libs.androidx.datastore.preferences)
 
     // LibSu - Root Access
-    implementation("com.github.topjohnwu.libsu:core:6.0.0")
-    implementation("com.github.topjohnwu.libsu:service:6.0.0")
-    implementation("com.github.topjohnwu.libsu:nio:6.0.0")
+    implementation(libs.libsu.core)
+    implementation(libs.libsu.service)
+    implementation(libs.libsu.nio)
     
     // Google Play Services (for Play Protect compatibility)
-    implementation("com.google.android.gms:play-services-base:18.10.0")
-    implementation("com.google.android.gms:play-services-tasks:18.4.1") 
+    implementation(libs.play.services.base)
+    implementation(libs.play.services.tasks)
 
     // TOML Parser
-    implementation("org.tomlj:tomlj:1.1.1")
+    implementation(libs.tomlj)
 
     // Accompanist (for system UI controller and pager)
-    implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
-    implementation("com.google.accompanist:accompanist-pager:0.36.0")
-    implementation("com.google.accompanist:accompanist-pager-indicators:0.36.0")
+    implementation(libs.accompanist.systemuicontroller)
+    implementation(libs.accompanist.pager)
+    implementation(libs.accompanist.pager.indicators)
 
     // Coil for image loading
-    implementation("io.coil-kt:coil-compose:2.7.0") {
+    implementation(libs.coil.compose) {
         exclude(group = "androidx.appcompat")
         exclude(group = "androidx.lifecycle")
     }
-    implementation("io.coil-kt:coil-gif:2.7.0")
+    implementation(libs.coil.gif)
 
-    // Lottie for animations - REMOVED (not used anymore, replaced with Material3 Switch)
-    // implementation("com.airbnb.android:lottie-compose:6.4.0")
-
-    implementation("com.patrykandpatrick.vico:compose-m3:3.1.0")
+    implementation(libs.vico.compose.m3)
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation(libs.kotlinx.coroutines.android)
     
     // Serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
+    implementation(libs.kotlinx.serialization.json)
     
     // Testing
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(composeBom)
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     
     // Debug
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
 
@@ -355,11 +351,13 @@ abstract class SendTelegramMessageTask : DefaultTask() {
         val minSdkVersion = project.android.defaultConfig.minSdk ?: "N/A"
         val targetSdkVersionInt = project.android.defaultConfig.targetSdk
         val targetSdkVersionName = when (targetSdkVersionInt) {
+            31 -> "12 Snowcone"
             32 -> "12L Snowcone V2"
             33 -> "13 Tiramisu"
             34 -> "14 UpsideDownCake"
             35 -> "15 VanillaIceCream"
             36 -> "16 Baklava"
+            37 -> "17"
             else -> "Unknown"
         }
 
