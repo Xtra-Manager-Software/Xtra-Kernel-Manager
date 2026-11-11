@@ -1,0 +1,159 @@
+use anyhow::{Context, Result};
+use libc::{mount, umount2, MNT_DETACH, MS_BIND, MS_REC};
+use parking_lot::Mutex;
+use std::ffi::CString;
+use std::fs;
+use std::path::Path;
+use std::ptr;
+use std::sync::OnceLock;
+use tracing::{debug, info, warn};
+
+#[derive(Debug, Clone)]
+struct ActiveMount {
+    target_path: String,
+    mount_source: String,
+}
+
+static ACTIVE_MOUNTS: OnceLock<Mutex<Vec<ActiveMount>>> = OnceLock::new();
+
+fn mounts_lock() -> &'static Mutex<Vec<ActiveMount>> {
+    ACTIVE_MOUNTS.get_or_init(|| Mutex::new(Vec::new()))
+}
+
+fn do_mount_bind(src: &str, dest: &str) -> bool {
+    let src_c = match CString::new(src) {
+        Ok(s) => s,
+        Err(_) => return false,
+    };
+    let dest_c = match CString::new(dest) {
+        Ok(s) => s,
+        Err(_) => return false,
+    };
+
+    unsafe {
+        // Detach any previous bind on this node first
+        umount2(dest_c.as_ptr(), MNT_DETACH);
+        mount(
+            src_c.as_ptr(),
+            dest_c.as_ptr(),
+            ptr::null(),
+            MS_BIND | MS_REC,
+            ptr::null(),
+        ) == 0
+    }
+}
+
+fn do_unmount(path: &str) -> bool {
+    let p = match CString::new(path) {
+        Ok(s) => s,
+        Err(_) => return false,
+    };
+    unsafe { umount2(p.as_ptr(), MNT_DETACH) == 0 }
+}
+
+/// Cleanup any leftover binds from previous session
+pub fn cleanup_stale_mounts() {
+    if let Ok(mounts) = fs::read_to_string("/proc/mounts") {
+        for line in mounts.lines() {
+            let mut parts = line.split_whitespace();
+            let src = parts.next().unwrap_or("");
+            let dest = parts.next().unwrap_or("");
+
+            if src.contains(".xkm_ceiling") || (dest.contains("cpufreq") && dest.contains("scaling_max_freq") && src.starts_with("/data/local/tmp")) {
+                do_unmount(dest);
+                let _ = fs::remove_file(src);
+                info!("Cleaned stale XKM ceiling mount: {} -> {}", src, dest);
+            }
+        }
+    }
+}
+
+/// Lock a specific sysfs path (e.g. scaling_max_freq) to a target frequency value using bind mount
+pub fn lock_path_frequency(path: &str, freq_khz: u64) -> Result<()> {
+    if !Path::new(path).exists() {
+        anyhow::bail!("Target path {} does not exist", path);
+    }
+
+    let sanitized = path.replace('/', "_");
+    let mount_source = format!("/data/local/tmp/.xkm_ceiling{}", sanitized);
+    let val_str = format!("{}\n", freq_khz);
+
+    fs::write(&mount_source, &val_str)
+        .with_context(|| format!("Failed to write ceiling value to {}", mount_source))?;
+
+    // First try normal sysfs write as baseline
+    let _ = fs::write(path, &val_str);
+
+    // Apply bind-mount over the node to lock out vendor thermal daemons
+    if do_mount_bind(&mount_source, path) {
+        info!("Hard-locked {} to {} kHz via bind-mount", path, freq_khz);
+        let mut lock = mounts_lock().lock();
+        lock.retain(|m| m.target_path != path);
+        lock.push(ActiveMount {
+            target_path: path.to_string(),
+            mount_source,
+        });
+        Ok(())
+    } else {
+        let _ = fs::remove_file(&mount_source);
+        warn!("Bind mount failed for {} (possibly lacking CAP_SYS_ADMIN), fell back to sysfs write", path);
+        Ok(())
+    }
+}
+
+/// Unlock a specific sysfs path by unmounting and restoring normal sysfs node
+pub fn unlock_path_frequency(path: &str) -> Result<()> {
+    do_unmount(path);
+
+    let mut lock = mounts_lock().lock();
+    if let Some(pos) = lock.iter().position(|m| m.target_path == path) {
+        let entry = lock.remove(pos);
+        let _ = fs::remove_file(&entry.mount_source);
+    }
+    debug!("Unlocked {}", path);
+    Ok(())
+}
+
+/// Lock a CPU cluster (or policy) scaling_max_freq using bind mount
+pub fn lock_cluster_frequency(cluster: i32, max_freq_khz: u64) -> Result<()> {
+    let policy_path = format!(
+        "/sys/devices/system/cpu/cpufreq/policy{}/scaling_max_freq",
+        cluster
+    );
+    if Path::new(&policy_path).exists() {
+        return lock_path_frequency(&policy_path, max_freq_khz);
+    }
+
+    let cpu_path = format!(
+        "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_max_freq",
+        cluster
+    );
+    lock_path_frequency(&cpu_path, max_freq_khz)
+}
+
+/// Unlock a CPU cluster frequency bind mount
+pub fn unlock_cluster_frequency(cluster: i32) -> Result<()> {
+    let policy_path = format!(
+        "/sys/devices/system/cpu/cpufreq/policy{}/scaling_max_freq",
+        cluster
+    );
+    if Path::new(&policy_path).exists() {
+        return unlock_path_frequency(&policy_path);
+    }
+
+    let cpu_path = format!(
+        "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_max_freq",
+        cluster
+    );
+    unlock_path_frequency(&cpu_path)
+}
+
+/// Teardown all active bind mounts
+pub fn unlock_all() -> Result<()> {
+    let mut lock = mounts_lock().lock();
+    for entry in lock.drain(..) {
+        do_unmount(&entry.target_path);
+        let _ = fs::remove_file(&entry.mount_source);
+    }
+    Ok(())
+}
