@@ -1,8 +1,14 @@
 package id.xms.xtrakernelmanager.ui.screens.functionalrom
 
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -14,20 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
-
 import id.xms.xtrakernelmanager.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,140 +37,184 @@ fun MaterialFunctionalRomScreen(
     viewModel: FunctionalRomViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
 
     if (uiState.isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
         return
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            LargeTopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.functional_rom_title),
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        }
-    ) { paddingValues ->
-        LazyColumn(
+    val currentSmallestWidth = remember {
+        context.resources.configuration.smallestScreenWidthDp
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+    ) {
+        // Compact Top App Header (matching modern Material 3 Expressive / Pixel settings)
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Universal Features Group
-            item {
-                Text(
-                    text = "Universal Features",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+            FilledIconButton(
+                onClick = onNavigateBack,
+                shape = CircleShape,
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                modifier = Modifier.size(42.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    modifier = Modifier.size(20.dp)
                 )
-                
-                Card(
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column {
-                        MaterialSettingsItem(
-                            title = "Developer Options",
-                            subtitle = if (checkDeveloperOptionsEnabled()) "Enabled" else "Disabled",
-                            icon = Icons.Default.DeveloperMode,
-                            iconTint = Color(0xFF5C6BC0), // Indigo
-                            onClick = { 
-                                handleDeveloperOptionsClick(context)
-                            }
-                        )
-                        HorizontalDivider(modifier = Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                        
-                        DPIChangerItem(onClick = onNavigateToDisplaySize)
-                        
-                        HorizontalDivider(modifier = Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                        
-                        MaterialSettingsItem(
-                            title = "Global Refresh Rate",
-                            subtitle = "System-wide refresh rate control",
-                            icon = Icons.Default.Refresh,
-                            iconTint = Color(0xFF42A5F5), // Blue
-                            onClick = onNavigateToGlobalRefreshRate
-                        )
+            }
 
-                        HorizontalDivider(modifier = Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.width(16.dp))
 
-                        // SELinux Mode Toggle
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = Color(0xFFEF5350).copy(alpha = 0.1f),
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.Security,
-                                        contentDescription = null,
-                                        tint = Color(0xFFEF5350),
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
+            Column {
+                Text(
+                    text = stringResource(R.string.functional_rom_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    letterSpacing = (-0.5).sp
+                )
+                Text(
+                    text = stringResource(R.string.functional_rom_card_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        // Rounded Top Surface Container
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 1.dp
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(top = 16.dp, bottom = 48.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Section: System & Security
+                item {
+                    SectionHeader(title = "SYSTEM & SECURITY")
+                }
+
+                item {
+                    val isDevEnabled = checkDeveloperOptionsEnabled(context)
+                    CompactNavCard(
+                        title = "Developer Options",
+                        subtitle = if (isDevEnabled) "Enabled • Tap to open system developer settings"
+                                  else "Disabled • Tap to open settings",
+                        icon = Icons.Default.DeveloperMode,
+                        iconTint = Color(0xFF5C6BC0), // Indigo
+                        onClick = { handleDeveloperOptionsClick(context) }
+                    )
+                }
+
+                item {
+                    val isEnforcing = uiState.seLinuxMode == "Enforcing"
+                    CompactSwitchCard(
+                        title = "SELinux Mode",
+                        subtitle = "Current status: ${uiState.seLinuxMode}",
+                        subtitleColor = if (isEnforcing) Color(0xFF4CAF50) else Color(0xFFFF9800),
+                        icon = Icons.Default.Security,
+                        iconTint = if (isEnforcing) Color(0xFF4CAF50) else Color(0xFFEF5350),
+                        checked = uiState.seLinuxMode == "Permissive",
+                        onCheckedChange = { toPermissive ->
+                            if (toPermissive) {
+                                viewModel.showSeLinuxWarningDialog()
+                            } else {
+                                viewModel.setSeLinuxMode("Enforcing")
                             }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "SELinux Mode",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = uiState.seLinuxMode,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (uiState.seLinuxMode == "Enforcing")
-                                        Color(0xFF66BB6A) else Color(0xFFFF9800)
-                                )
-                            }
-                            Switch(
-                                checked = uiState.seLinuxMode == "Permissive",
-                                onCheckedChange = { toPermissive ->
-                                    if (toPermissive) viewModel.showSeLinuxWarningDialog()
-                                    else viewModel.setSeLinuxMode("Enforcing")
-                                }
+                        }
+                    )
+                }
+
+                // Section: Display & Refresh Rate
+                item {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    SectionHeader(title = "DISPLAY & REFRESH RATE")
+                }
+
+                item {
+                    CompactNavCard(
+                        title = "Display Size Changer",
+                        subtitle = "Current smallest width: $currentSmallestWidth dp",
+                        icon = Icons.Default.AspectRatio,
+                        iconTint = Color(0xFF00897B), // Teal
+                        onClick = onNavigateToDisplaySize
+                    )
+                }
+
+                item {
+                    CompactNavCard(
+                        title = "Global Refresh Rate",
+                        subtitle = "System-wide screen refresh rate control",
+                        icon = Icons.Default.Refresh,
+                        iconTint = Color(0xFF1E88E5), // Blue
+                        onClick = onNavigateToGlobalRefreshRate
+                    )
+                }
+
+                // Dynamic Hardware/Kernel Features (only if detected on device)
+                if (uiState.chargingLimitAvailable || uiState.dt2wAvailable) {
+                    item {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        SectionHeader(title = "KERNEL FEATURES")
+                    }
+
+                    if (uiState.chargingLimitAvailable) {
+                        item {
+                            CompactSwitchCard(
+                                title = "Charging Limit",
+                                subtitle = if (uiState.chargingLimitEnabled) "Active • Limit at ${uiState.chargingLimitValue}%"
+                                          else "Disabled",
+                                icon = Icons.Default.BatteryChargingFull,
+                                iconTint = Color(0xFF43A047),
+                                checked = uiState.chargingLimitEnabled,
+                                onCheckedChange = { viewModel.setChargingLimit(it) }
+                            )
+                        }
+                    }
+
+                    if (uiState.dt2wAvailable) {
+                        item {
+                            CompactSwitchCard(
+                                title = "Double Tap to Wake",
+                                subtitle = if (uiState.doubleTapWakeEnabled) "Enabled" else "Disabled",
+                                icon = Icons.Default.TouchApp,
+                                iconTint = Color(0xFFFF8F00),
+                                checked = uiState.doubleTapWakeEnabled,
+                                onCheckedChange = { viewModel.setDoubleTapToWake(it) }
                             )
                         }
                     }
                 }
             }
-            
-            item { Spacer(modifier = Modifier.height(32.dp)) }
         }
     }
 
@@ -188,10 +230,15 @@ fun MaterialFunctionalRomScreen(
                     modifier = Modifier.size(32.dp)
                 )
             },
-            title = { Text("Switch to Permissive?", fontWeight = FontWeight.Bold) },
+            title = {
+                Text(
+                    text = "Switch to Permissive?",
+                    fontWeight = FontWeight.Bold
+                )
+            },
             text = {
                 Text(
-                    text = "Switching SELinux to Permissive mode will allow all processes to bypass security policies without enforcement.\n\nAll risks resulting from this action — including security vulnerabilities, unauthorized access, and system instability — are entirely at your own responsibility and are outside the scope of Xtra Kernel Manager.",
+                    text = "Switching SELinux to Permissive mode allows processes to bypass security policies without enforcement.\n\nAll risks resulting from this action — including security vulnerabilities, unauthorized access, and system instability — are entirely at your own responsibility and outside the scope of Xtra Kernel Manager.",
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -213,27 +260,53 @@ fun MaterialFunctionalRomScreen(
 }
 
 @Composable
-private fun MaterialSettingsItem(
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+        letterSpacing = 0.5.sp,
+        modifier = Modifier.padding(start = 6.dp, top = 8.dp, bottom = 4.dp)
+    )
+}
+
+/**
+ * Compact Navigation Item Card matching the modern Pixel / M3 settings style.
+ */
+@Composable
+private fun CompactNavCard(
     title: String,
-    subtitle: String? = null,
+    subtitle: String,
     icon: ImageVector,
     iconTint: Color,
     onClick: () -> Unit,
-    enabled: Boolean = true
+    enabled: Boolean = true,
 ) {
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(enabled = enabled, onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
     ) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = iconTint.copy(alpha = 0.1f),
-            modifier = Modifier.size(40.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(contentAlignment = Alignment.Center) {
+            // Squircle icon badge
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(iconTint.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
@@ -241,79 +314,140 @@ private fun MaterialSettingsItem(
                     modifier = Modifier.size(24.dp)
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-            if (subtitle != null) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                modifier = Modifier.size(20.dp)
+            )
         }
+    }
+}
 
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+/**
+ * Compact Toggle/Switch Card matching the modern Pixel / M3 settings style.
+ */
+@Composable
+private fun CompactSwitchCard(
+    title: String,
+    subtitle: String,
+    subtitleColor: Color? = null,
+    icon: ImageVector,
+    iconTint: Color,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true,
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Squircle icon badge
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(iconTint.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = subtitleColor ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Switch(
+                checked = checked,
+                onCheckedChange = if (enabled) onCheckedChange else null,
+                enabled = enabled,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                )
+            )
+        }
     }
 }
 
-// Helpers duplicated/adapted from original file for standalone functionality within this module
-@Composable
-private fun DPIChangerItem(onClick: () -> Unit) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    
-    val currentSmallestWidth = remember {
-        context.resources.configuration.smallestScreenWidthDp
-    }
-    
-    MaterialSettingsItem(
-        title = "Display Size Changer",
-        subtitle = "Current: $currentSmallestWidth dp",
-        icon = Icons.Default.AspectRatio, // Changed icon for variety
-        iconTint = Color(0xFF26A69A), // Teal
-        onClick = onClick
-    )
-}
-
-// Reusing the DPI Dialog logic removed since we moved to a dedicated screen
-
-
-@Composable
-private fun checkDeveloperOptionsEnabled(): Boolean {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    return android.provider.Settings.Global.getInt(
+private fun checkDeveloperOptionsEnabled(context: Context): Boolean {
+    return Settings.Global.getInt(
         context.contentResolver,
-        android.provider.Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
+        Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
         0
     ) == 1
 }
 
-private fun handleDeveloperOptionsClick(context: android.content.Context) {
-    val isDeveloperEnabled = android.provider.Settings.Global.getInt(
+private fun handleDeveloperOptionsClick(context: Context) {
+    val isDeveloperEnabled = Settings.Global.getInt(
         context.contentResolver,
-        android.provider.Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
+        Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
         0
     ) == 1
 
     if (isDeveloperEnabled) {
         try {
-            val intent = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+            val intent = Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
             context.startActivity(intent)
         } catch (e: Exception) {
-            android.widget.Toast.makeText(context, "Unable to open Developer Options", android.widget.Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Unable to open Developer Options", Toast.LENGTH_SHORT).show()
         }
     } else {
-        android.widget.Toast.makeText(context, "Please enable Developer Options in Settings > About Phone", android.widget.Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "Please enable Developer Options in Settings > About Phone", Toast.LENGTH_LONG).show()
     }
 }
