@@ -97,27 +97,27 @@ pub fn parse_sysfs_fps(content: &str) -> Option<f64> {
         return (0.0..=500.0).contains(&v).then_some(v);
     }
 
-    let tokens: Vec<&str> = trimmed
+    let mut tokens = trimmed
         .split(|c: char| c.is_whitespace() || c == ',' || c == ';')
         .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .collect();
+        .filter(|s| !s.is_empty());
 
-    for (idx, &token) in tokens.iter().enumerate() {
-        let lower = token.to_ascii_lowercase();
-        if let Some(val_str) = lower.strip_prefix("fps:").or_else(|| lower.strip_prefix("fps=")) {
+    while let Some(token) = tokens.next() {
+        if let Some(val_str) = strip_case_prefix(token, "fps:")
+            .or_else(|| strip_case_prefix(token, "fps="))
+        {
             let val_clean = val_str.trim();
             if !val_clean.is_empty() {
                 if let Ok(v) = val_clean.parse::<f64>() {
                     return (0.0..=500.0).contains(&v).then_some(v);
                 }
-            } else if let Some(&next) = tokens.get(idx + 1) {
+            } else if let Some(next) = tokens.next() {
                 if let Ok(v) = next.parse::<f64>() {
                     return (0.0..=500.0).contains(&v).then_some(v);
                 }
             }
-        } else if lower == "fps" {
-            if let Some(&next) = tokens.get(idx + 1) {
+        } else if token.eq_ignore_ascii_case("fps") {
+            if let Some(next) = tokens.next() {
                 if let Ok(v) = next.parse::<f64>() {
                     return (0.0..=500.0).contains(&v).then_some(v);
                 }
@@ -125,5 +125,15 @@ pub fn parse_sysfs_fps(content: &str) -> Option<f64> {
         }
     }
 
+    None
+}
+
+#[inline]
+fn strip_case_prefix<'a>(s: &'a str, prefix: &str) -> Option<&'a str> {
+    if s.len() >= prefix.len() && s.is_char_boundary(prefix.len()) {
+        if s[..prefix.len()].eq_ignore_ascii_case(prefix) {
+            return Some(&s[prefix.len()..]);
+        }
+    }
     None
 }
