@@ -2,8 +2,9 @@ use super::sysfs::SysfsFpsReader;
 use super::types::{FpsReading, FpsSource};
 use parking_lot::Mutex;
 use std::collections::VecDeque;
+use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Receiver, Sender, channel};
+use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
@@ -29,6 +30,8 @@ pub struct FpsMeter {
     worker_running: Arc<AtomicBool>,
     _worker_handle: Option<JoinHandle<()>>,
     sysfs: SysfsFpsReader,
+    target_package: Option<String>,
+    whitelist: Vec<String>,
 }
 
 impl Default for FpsMeter {
@@ -66,9 +69,49 @@ impl FpsMeter {
             worker_running,
             _worker_handle: handle,
             sysfs: SysfsFpsReader::new(),
+            target_package: None,
+            whitelist: Vec::new(),
         }
     }
 
+    /// Set a dedicated target package to monitor.
+    /// When set, eBPF probe is ONLY attached when this app is in foreground.
+    /// When app switches or exits, probe is automatically detached/unloaded.
+    pub fn set_target_package(&mut self, pkg: Option<String>) {
+        let changed = self.target_package != pkg;
+        self.target_package = pkg;
+        if changed && self.target_package.is_none() && self.whitelist.is_empty() {
+            self.detach_current();
+        }
+    }
+
+    pub fn get_target_package(&self) -> Option<String> {
+        self.target_package.clone()
+    }
+
+    /// Set a list of target package names.
+    pub fn set_target_whitelist(&mut self, list: Vec<String>) {
+        self.whitelist = list;
+        if self.target_package.is_none() && self.whitelist.is_empty() {
+            self.detach_current();
+        }
+    }
+
+    pub fn get_target_whitelist(&self) -> Vec<String> {
+        self.whitelist.clone()
+    }
+
+    /// Check if eBPF uprobe is currently attached to a live process.
+    pub fn is_ebpf_attached(&self) -> bool {
+        self.shared.lock().attached_pid.is_some()
+    }
+
+    /// Get current attached PID if any.
+    pub fn get_attached_pid(&self) -> Option<i32> {
+        self.shared.lock().attached_pid
+    }
+
+    /// Manually attach to a specific PID.
     pub fn attach_pid(&mut self, pid: i32) -> bool {
         if pid <= 0 {
             return false;
@@ -89,7 +132,13 @@ impl FpsMeter {
         }
     }
 
+    /// Detach current probe and completely unload eBPF uprobe from kernel.
     pub fn detach_current(&mut self) -> bool {
+        {
+            let mut guard = self.shared.lock();
+            guard.attached_pid = None;
+            guard.frametimes.clear();
+        }
         if let Some(ref tx) = self.cmd_tx {
             let _ = tx.send(WorkerCmd::Detach);
             true
@@ -99,27 +148,46 @@ impl FpsMeter {
     }
 
     pub fn clear(&mut self) {
-        {
-            let mut guard = self.shared.lock();
-            guard.frametimes.clear();
-            guard.attached_pid = None;
-            guard.last_frame_instant = Instant::now()
-                .checked_sub(EBPF_TIMEOUT)
-                .unwrap_or_else(Instant::now);
-        }
-        if let Some(ref tx) = self.cmd_tx {
-            let _ = tx.send(WorkerCmd::Detach);
-        }
+        self.target_package = None;
+        self.whitelist.clear();
+        self.detach_current();
         self.sysfs.clear();
     }
 
     pub fn read(&mut self) -> Option<FpsReading> {
-        // Auto-detect and attach to foreground app PID if changed
-        if let Some(fg) = crate::platform::binder::get_foreground_app() {
-            if let Some(pid) = fg.pid {
-                let current_attached = self.shared.lock().attached_pid;
-                if current_attached != Some(pid) {
-                    self.attach_pid(pid);
+        let has_target_rule = self.target_package.is_some() || !self.whitelist.is_empty();
+
+        if has_target_rule {
+            if let Some(fg) = crate::platform::binder::get_foreground_app() {
+                let matches_target = match (&self.target_package, &self.whitelist) {
+                    (Some(target), _) if fg.package_name == *target => true,
+                    (_, list) if !list.is_empty() => list.iter().any(|p| p == &fg.package_name),
+                    _ => false,
+                };
+
+                if matches_target {
+                    if let Some(pid) = fg.pid {
+                        let current_attached = self.shared.lock().attached_pid;
+                        if current_attached != Some(pid) {
+                            self.attach_pid(pid);
+                        }
+                    }
+                } else {
+                    // Switched away from target app (e.g. went home or switched app):
+                    // Detach immediately to unload uprobe and protect app & system!
+                    if self.shared.lock().attached_pid.is_some() {
+                        self.detach_current();
+                    }
+                }
+            } else if self.shared.lock().attached_pid.is_some() {
+                self.detach_current();
+            }
+        } else {
+            // No target rule active: verify if manual attached PID is still alive
+            let attached = self.shared.lock().attached_pid;
+            if let Some(pid) = attached {
+                if !Path::new(&format!("/proc/{}", pid)).exists() {
+                    self.detach_current();
                 }
             }
         }
@@ -171,11 +239,12 @@ fn run_ebpf_worker(
     shared: Arc<Mutex<SharedFrames>>,
     running: Arc<AtomicBool>,
 ) {
-    let mut probe: Option<kala_ebpf::FrameProbe> = kala_ebpf::FrameProbe::new().ok();
+    let mut probe: Option<kala_ebpf::FrameProbe> = None;
     let mut attached_pid: Option<i32> = None;
+    let mut last_health_check = Instant::now();
 
     while running.load(Ordering::Acquire) {
-        // When not attached, block on command
+        // When not attached, block on command — 0% CPU consumption
         if attached_pid.is_none() {
             match cmd_rx.recv() {
                 Ok(WorkerCmd::Attach(pid)) => {
@@ -184,12 +253,15 @@ fn run_ebpf_worker(
                 Ok(WorkerCmd::Detach) => {
                     handle_detach(&mut probe, &mut attached_pid, &shared);
                 }
-                Ok(WorkerCmd::Stop) | Err(_) => return,
+                Ok(WorkerCmd::Stop) | Err(_) => {
+                    handle_detach(&mut probe, &mut attached_pid, &shared);
+                    return;
+                }
             }
             continue;
         }
 
-        // When attached, drain commands first
+        // When attached, drain all pending commands first
         while let Ok(cmd) = cmd_rx.try_recv() {
             match cmd {
                 WorkerCmd::Attach(pid) => {
@@ -198,7 +270,25 @@ fn run_ebpf_worker(
                 WorkerCmd::Detach => {
                     handle_detach(&mut probe, &mut attached_pid, &shared);
                 }
-                WorkerCmd::Stop => return,
+                WorkerCmd::Stop => {
+                    handle_detach(&mut probe, &mut attached_pid, &shared);
+                    return;
+                }
+            }
+        }
+
+        if attached_pid.is_none() {
+            continue;
+        }
+
+        // Check if attached process died
+        if let Some(pid) = attached_pid {
+            if last_health_check.elapsed() >= Duration::from_millis(500) {
+                last_health_check = Instant::now();
+                if !Path::new(&format!("/proc/{}", pid)).exists() {
+                    handle_detach(&mut probe, &mut attached_pid, &shared);
+                    continue;
+                }
             }
         }
 
@@ -216,10 +306,12 @@ fn run_ebpf_worker(
                 }
             }
         } else {
-            // No probe available, sleep to avoid busy-spinning
-            thread::sleep(Duration::from_millis(100));
+            handle_detach(&mut probe, &mut attached_pid, &shared);
         }
     }
+
+    // Clean up probe on exit
+    handle_detach(&mut probe, &mut attached_pid, &shared);
 }
 
 fn handle_attach(
@@ -228,26 +320,34 @@ fn handle_attach(
     attached_pid: &mut Option<i32>,
     shared: &Arc<Mutex<SharedFrames>>,
 ) {
-    if *attached_pid == Some(pid) {
+    if *attached_pid == Some(pid) && probe.is_some() {
         return;
     }
 
-    if probe.is_none() {
-        *probe = kala_ebpf::FrameProbe::new().ok();
+    // Detach and drop old probe if present
+    if let (Some(mut p), Some(old_pid)) = (probe.take(), attached_pid.take()) {
+        let _ = p.detach(old_pid);
     }
 
-    if let Some(p) = probe.as_mut() {
-        if let Some(old_pid) = attached_pid.take() {
-            let _ = p.detach(old_pid);
-        }
-
-        if p.attach(pid).is_ok() {
-            *attached_pid = Some(pid);
+    let mut new_probe = match kala_ebpf::FrameProbe::new() {
+        Ok(p) => p,
+        Err(_) => {
             let mut guard = shared.lock();
-            guard.attached_pid = Some(pid);
-            guard.frametimes.clear();
-            guard.last_frame_instant = Instant::now();
+            guard.attached_pid = None;
+            return;
         }
+    };
+
+    if new_probe.attach(pid).is_ok() {
+        *attached_pid = Some(pid);
+        *probe = Some(new_probe);
+        let mut guard = shared.lock();
+        guard.attached_pid = Some(pid);
+        guard.frametimes.clear();
+        guard.last_frame_instant = Instant::now();
+    } else {
+        let mut guard = shared.lock();
+        guard.attached_pid = None;
     }
 }
 
@@ -256,8 +356,12 @@ fn handle_detach(
     attached_pid: &mut Option<i32>,
     shared: &Arc<Mutex<SharedFrames>>,
 ) {
-    if let (Some(p), Some(pid)) = (probe.as_mut(), attached_pid.take()) {
+    if let (Some(mut p), Some(pid)) = (probe.take(), attached_pid.take()) {
         let _ = p.detach(pid);
+        // p is dropped here, which triggers program.unload() and removes the uprobe!
+    } else {
+        *probe = None;
+        *attached_pid = None;
     }
     let mut guard = shared.lock();
     guard.attached_pid = None;
