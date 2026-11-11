@@ -48,7 +48,7 @@ pub fn collect_snapshot() -> TelemetrySnapshot {
 
     let total_mb = mem_info.total_kb / 1024;
     let avail_mb = mem_info.available_kb / 1024;
-    let used_mb = total_mb.saturating_sub(avail_mb);
+    let used_mb = total_mb.saturating_sub(avail_mb).max(0);
     let zram_used_mb = zram_stats.mem_used_total / (1024 * 1024);
     let zram_total_mb = zram_stats.disksize / (1024 * 1024);
 
