@@ -127,10 +127,11 @@ fn main() {
                 println!("    -> Lock SUCCESS: bind-mount applied over scaling_max_freq");
                 let mounts = std::fs::read_to_string("/proc/mounts").unwrap_or_default();
                 let has_mount = mounts.contains(&format!("policy{}/scaling_max_freq", cluster_num));
-                println!(
-                    "    -> Verification in /proc/mounts: {}",
-                    if has_mount { "VERIFIED" } else { "NOT FOUND" }
-                );
+                let status_str = match has_mount {
+                    true => "VERIFIED",
+                    false => "NOT FOUND",
+                };
+                println!("    -> Verification in /proc/mounts: {}", status_str);
                 match cpu::unlock_cluster_frequency(cluster_num) {
                     Ok(_) => println!("    -> Unlock SUCCESS: bind-mount detached cleanly"),
                     Err(e) => println!("    -> Unlock FAILED: {}", e),
