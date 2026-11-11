@@ -98,6 +98,8 @@ This project includes optimizations to reduce Play Protect detection:
 ## Credits
 - [YukiHookAPI](https://github.com/HighCapable/YukiHookAPI)
 - [KavaRef](https://github.com/Kava-Ref)
+- [Auriya](https://github.com/pavelc4/auriya) – Reference API and Native Binder IPC architecture
+- [kala](https://github.com/pavelc4/kala) – eBPF uprobe engine for FPS metering via `libgui.so`
 
 ---
 
