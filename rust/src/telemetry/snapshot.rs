@@ -49,4 +49,6 @@ pub struct TelemetrySnapshot {
     pub memory: MemoryTelemetry,
     pub thermal: ThermalTelemetry,
     pub foreground_app: Option<String>,
+    #[serde(default)]
+    pub fps: Option<crate::platform::fps::FpsReading>,
 }
