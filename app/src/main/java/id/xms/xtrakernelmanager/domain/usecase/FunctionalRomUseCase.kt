@@ -14,9 +14,6 @@ class FunctionalRomUseCase {
   companion object {
     private const val TAG = "FunctionalRomUseCase"
 
-    // VIP Community Property
-    const val VIP_COMMUNITY_PROP = "persist.sys.oosexgang.vip.community"
-
     // Native Kernel Nodes
     object KernelNodes {
       const val CHARGING_LIMIT = "/sys/class/power_supply/battery/charge_control_limit"
@@ -63,18 +60,8 @@ class FunctionalRomUseCase {
       const val BRIGHTNESS_500_NITS = 2047
     }
 
-    // Property-based Features (Shimoku's area)
+    // Property-based Features
     object Properties {
-      const val TOUCH_BOOST = "persist.sys.oosexgang.tch.boost"
-      // Play Integrity and Xiaomi-touch properties
-      const val PLAY_INTEGRITY_FIX = "persist.sys.oosexgang.pi.fix"
-      const val SPOOF_BOOTLOADER = "persist.sys.oosexgang.pi.bootloader"
-      const val GAME_PROPS = "persist.sys.oosexgang.pi.gameprops"
-      const val UNLIMITED_PHOTOS = "persist.sys.oosexgang.pi.photos"
-      const val NETFLIX_SPOOF = "persist.sys.oosexgang.pi.netflix"
-      // Xiaomi Touch
-      const val TOUCH_GAME_MODE = "persist.sys.oosexgang.touch.gamemode"
-      const val TOUCH_ACTIVE_MODE = "persist.sys.oosexgang.touch.active"
       // Fix DT2W Props
       const val FIX_DT2W_VENDOR = "ro.vendor.touchgesture.double_tap"
       const val FIX_DT2W_INPUT = "ro.input.gesture_settings"
@@ -88,17 +75,6 @@ class FunctionalRomUseCase {
       const val FIX_DT2W_ASSET = "fix_dt2w.zip"
     }
   }
-
-  // ==================== Security Gate ====================
-
-  /** Check if device is registered in VIP community */
-  suspend fun checkVipCommunity(): Boolean =
-      withContext(Dispatchers.IO) {
-        val prop = RootManager.getProp(VIP_COMMUNITY_PROP)
-        val isVip = prop.equals("true", ignoreCase = true) || prop == "1"
-        Log.d(TAG, "VIP Community check: prop='$prop', isVip=$isVip")
-        isVip
-      }
 
   // ==================== Node Availability Detection ====================
 
@@ -235,83 +211,6 @@ class FunctionalRomUseCase {
         RootManager.executeCommand("settings delete system min_refresh_rate")
         Result.success(Unit)
       }
-
-  // ==================== Property-based Features (Shimoku's Area) ====================
-
-  /** Set touch boost state */
-  suspend fun setTouchBoost(enabled: Boolean): Result<Unit> {
-    Log.d(TAG, "Setting touch boost: $enabled")
-    return RootManager.setProp(Properties.TOUCH_BOOST, if (enabled) "true" else "false")
-  }
-
-  /** Get touch boost state */
-  suspend fun getTouchBoostState(): Boolean {
-    val prop = RootManager.getProp(Properties.TOUCH_BOOST)
-    return prop.equals("true", ignoreCase = true)
-  }
-
-  /** Set Play Integrity Fix state */
-  suspend fun setPlayIntegrityFix(enabled: Boolean): Result<Unit> {
-    return RootManager.setProp(Properties.PLAY_INTEGRITY_FIX, if (enabled) "true" else "false")
-  }
-
-  suspend fun getPlayIntegrityFixState(): Boolean {
-    return RootManager.getProp(Properties.PLAY_INTEGRITY_FIX).equals("true", ignoreCase = true)
-  }
-
-  /** Set Spoof Bootloader state */
-  suspend fun setSpoofBootloader(enabled: Boolean): Result<Unit> {
-    return RootManager.setProp(Properties.SPOOF_BOOTLOADER, if (enabled) "true" else "false")
-  }
-
-  suspend fun getSpoofBootloaderState(): Boolean {
-    return RootManager.getProp(Properties.SPOOF_BOOTLOADER).equals("true", ignoreCase = true)
-  }
-
-  /** Set Game Props state */
-  suspend fun setGameProps(enabled: Boolean): Result<Unit> {
-    return RootManager.setProp(Properties.GAME_PROPS, if (enabled) "true" else "false")
-  }
-
-  suspend fun getGamePropsState(): Boolean {
-    return RootManager.getProp(Properties.GAME_PROPS).equals("true", ignoreCase = true)
-  }
-
-  /** Set Unlimited Google Photos Backup state */
-  suspend fun setUnlimitedPhotos(enabled: Boolean): Result<Unit> {
-    return RootManager.setProp(Properties.UNLIMITED_PHOTOS, if (enabled) "true" else "false")
-  }
-
-  suspend fun getUnlimitedPhotosState(): Boolean {
-    return RootManager.getProp(Properties.UNLIMITED_PHOTOS).equals("true", ignoreCase = true)
-  }
-
-  /** Set Netflix Spoof state */
-  suspend fun setNetflixSpoof(enabled: Boolean): Result<Unit> {
-    return RootManager.setProp(Properties.NETFLIX_SPOOF, if (enabled) "true" else "false")
-  }
-
-  suspend fun getNetflixSpoofState(): Boolean {
-    return RootManager.getProp(Properties.NETFLIX_SPOOF).equals("true", ignoreCase = true)
-  }
-
-  /** Set Touch Game Mode state (Xiaomi Touch) */
-  suspend fun setTouchGameMode(enabled: Boolean): Result<Unit> {
-    return RootManager.setProp(Properties.TOUCH_GAME_MODE, if (enabled) "true" else "false")
-  }
-
-  suspend fun getTouchGameModeState(): Boolean {
-    return RootManager.getProp(Properties.TOUCH_GAME_MODE).equals("true", ignoreCase = true)
-  }
-
-  /** Set Touch Active Mode state (Xiaomi Touch) */
-  suspend fun setTouchActiveMode(enabled: Boolean): Result<Unit> {
-    return RootManager.setProp(Properties.TOUCH_ACTIVE_MODE, if (enabled) "true" else "false")
-  }
-
-  suspend fun getTouchActiveModeState(): Boolean {
-    return RootManager.getProp(Properties.TOUCH_ACTIVE_MODE).equals("true", ignoreCase = true)
-  }
 
   /** Set Fix DT2W state - sets both vendor and input gesture props */
   suspend fun setFixDt2w(enabled: Boolean): Result<Unit> {

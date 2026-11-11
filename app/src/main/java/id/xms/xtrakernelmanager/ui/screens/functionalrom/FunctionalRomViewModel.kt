@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 /** UI State for Functional ROM Screen */
 data class FunctionalRomUiState(
     val isLoading: Boolean = true,
-    val isVipCommunity: Boolean = false,
 
     // Feature availability (dynamically detected kernel nodes)
     val chargingLimitAvailable: Boolean = false,
@@ -35,20 +34,6 @@ data class FunctionalRomUiState(
     val forceRefreshRateEnabled: Boolean = false,
     val forceRefreshRateValue: Int = 60,
     val doubleTapWakeEnabled: Boolean = false,
-
-    // Property-based Feature States (Shimoku's area)
-    val touchBoostEnabled: Boolean = false,
-
-    // Play Integrity States
-    val playIntegrityFixEnabled: Boolean = false,
-    val spoofBootloaderEnabled: Boolean = false,
-    val gamePropsEnabled: Boolean = false,
-    val unlimitedPhotosEnabled: Boolean = false,
-    val netflixSpoofEnabled: Boolean = false,
-
-    // Xiaomi Touch States
-    val touchGameModeEnabled: Boolean = false,
-    val touchActiveModeEnabled: Boolean = false,
 
     // Display Features
     val unlockNitsEnabled: Boolean = false,
@@ -129,18 +114,6 @@ class FunctionalRomViewModel(
         val chargingLimitValue = chargingLimitNode?.let { useCase.getChargingLimitValue(it) } ?: 0
 
         val currentRefreshRate = useCase.getCurrentRefreshRate()
-        val touchBoostState = useCase.getTouchBoostState()
-
-        // Play Integrity states
-        val playIntegrityFixState = useCase.getPlayIntegrityFixState()
-        val spoofBootloaderState = useCase.getSpoofBootloaderState()
-        val gamePropsState = useCase.getGamePropsState()
-        val unlimitedPhotosState = useCase.getUnlimitedPhotosState()
-        val netflixSpoofState = useCase.getNetflixSpoofState()
-
-        // Xiaomi Touch states
-        val touchGameModeState = useCase.getTouchGameModeState()
-        val touchActiveModeState = useCase.getTouchActiveModeState()
 
         // Load UI-only toggle states from preferences
         val savedUnlockNitsState = preferencesManager.getFunctionalRomUnlockNits().first()
@@ -195,15 +168,6 @@ class FunctionalRomViewModel(
               forceRefreshRateValue =
                   if (forceRefreshValue > 0) forceRefreshValue else currentRefreshRate,
               forceRefreshRateEnabled = forceRefreshState,
-              // Property-based states
-              touchBoostEnabled = touchBoostState,
-              playIntegrityFixEnabled = playIntegrityFixState,
-              spoofBootloaderEnabled = spoofBootloaderState,
-              gamePropsEnabled = gamePropsState,
-              unlimitedPhotosEnabled = unlimitedPhotosState,
-              netflixSpoofEnabled = netflixSpoofState,
-              touchGameModeEnabled = touchGameModeState,
-              touchActiveModeEnabled = touchActiveModeState,
               // UI-only states from preferences
               unlockNitsEnabled = unlockNitsState,
               dynamicRefreshRateEnabled = dynamicRefreshState,
@@ -284,81 +248,6 @@ class FunctionalRomViewModel(
       preferencesManager.setFunctionalRomForceRefreshValue(hz)
       if (_uiState.value.forceRefreshRateEnabled) {
         useCase.setForceRefreshRate(hz)
-      }
-    }
-  }
-
-  // ==================== Property-based Feature Actions ====================
-
-  fun setTouchBoost(enabled: Boolean) {
-    viewModelScope.launch {
-      val result = useCase.setTouchBoost(enabled)
-      if (result.isSuccess) {
-        _uiState.update { it.copy(touchBoostEnabled = enabled) }
-        Log.d(TAG, "Touch boost set to: $enabled")
-      }
-    }
-  }
-
-  fun setPlayIntegrityFix(enabled: Boolean) {
-    viewModelScope.launch {
-      val result = useCase.setPlayIntegrityFix(enabled)
-      if (result.isSuccess) {
-        _uiState.update { it.copy(playIntegrityFixEnabled = enabled) }
-      }
-    }
-  }
-
-  fun setSpoofBootloader(enabled: Boolean) {
-    viewModelScope.launch {
-      val result = useCase.setSpoofBootloader(enabled)
-      if (result.isSuccess) {
-        _uiState.update { it.copy(spoofBootloaderEnabled = enabled) }
-      }
-    }
-  }
-
-  fun setGameProps(enabled: Boolean) {
-    viewModelScope.launch {
-      val result = useCase.setGameProps(enabled)
-      if (result.isSuccess) {
-        _uiState.update { it.copy(gamePropsEnabled = enabled) }
-      }
-    }
-  }
-
-  fun setUnlimitedPhotos(enabled: Boolean) {
-    viewModelScope.launch {
-      val result = useCase.setUnlimitedPhotos(enabled)
-      if (result.isSuccess) {
-        _uiState.update { it.copy(unlimitedPhotosEnabled = enabled) }
-      }
-    }
-  }
-
-  fun setNetflixSpoof(enabled: Boolean) {
-    viewModelScope.launch {
-      val result = useCase.setNetflixSpoof(enabled)
-      if (result.isSuccess) {
-        _uiState.update { it.copy(netflixSpoofEnabled = enabled) }
-      }
-    }
-  }
-
-  fun setTouchGameMode(enabled: Boolean) {
-    viewModelScope.launch {
-      val result = useCase.setTouchGameMode(enabled)
-      if (result.isSuccess) {
-        _uiState.update { it.copy(touchGameModeEnabled = enabled) }
-      }
-    }
-  }
-
-  fun setTouchActiveMode(enabled: Boolean) {
-    viewModelScope.launch {
-      val result = useCase.setTouchActiveMode(enabled)
-      if (result.isSuccess) {
-        _uiState.update { it.copy(touchActiveModeEnabled = enabled) }
       }
     }
   }
