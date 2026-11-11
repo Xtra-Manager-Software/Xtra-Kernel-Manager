@@ -412,5 +412,46 @@ fn main() {
         binder::is_display_rotation_frozen(0)
     );
 
+    // [14] Native Binder App Monitor, Touch, Thermal & Charging
+    println!("\n[14] NATIVE BINDER APP MONITOR, TOUCH, THERMAL & CHARGING");
+    let proc_list = binder::get_running_process_list().unwrap_or_default();
+    println!("  * Total Running Processes   : {}", proc_list.len());
+    println!("  * Top 5 Memory Consumers    :");
+    for p in proc_list.iter().take(5) {
+        println!(
+            "    - PID {:<5} [{}] RSS: {:>6} MB | State: {} | Cgroup: {}",
+            p.pid,
+            p.package_name,
+            p.rss_kb / 1024,
+            p.state,
+            p.cgroup
+        );
+    }
+
+    let mlbb_bucket = binder::get_app_standby_bucket("com.mobile.legends", None);
+    println!("  * MLBB Standby Bucket       : {:?}", mlbb_bucket);
+
+    let thermal_status = binder::get_thermal_status();
+    println!("  * IThermalService Status    : {:?}", thermal_status);
+    let thermal_headroom = binder::get_thermal_headroom(0);
+    println!("  * Thermal Headroom (0s)     : {:?}", thermal_headroom);
+
+    let touch_supported = binder::is_high_touch_polling_rate_supported();
+    let touch_enabled = binder::get_high_touch_polling_rate_enabled();
+    println!("  * High Touch Polling Supp   : {}", touch_supported);
+    println!("  * High Touch Polling State  : {:?}", touch_enabled);
+    let touch_toggle_on = binder::set_high_touch_polling_rate_enabled(true);
+    println!("  * High Touch Rate (Set ON)  : {:?}", touch_toggle_on);
+    let touch_state_on = binder::get_high_touch_polling_rate_enabled();
+    println!("  * High Touch State After ON : {:?}", touch_state_on);
+    let _ = binder::set_high_touch_polling_rate_enabled(false);
+    let touch_state_off = binder::get_high_touch_polling_rate_enabled();
+    println!("  * High Touch (Restore OFF)  : {:?}", touch_state_off);
+
+    let charging_supported = binder::is_charging_control_supported();
+    let charging_enabled = binder::get_charging_enabled();
+    println!("  * Charging Control Supp     : {}", charging_supported);
+    println!("  * Charging Enabled (AC)     : {:?}", charging_enabled);
+
     println!("           ON-DEVICE VERIFICATION COMPLETE              ");
 }
