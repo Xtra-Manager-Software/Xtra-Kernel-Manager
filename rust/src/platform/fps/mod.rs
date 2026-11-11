@@ -2,16 +2,16 @@ pub mod meter;
 pub mod sysfs;
 pub mod types;
 
-pub use meter::FpsMeter;
+pub use meter::{diagnose_drop_cause, FpsMeter};
 pub use sysfs::{FPS_SYSFS_PATHS, SysfsFpsReader, parse_sysfs_fps};
-pub use types::{FpsReading, FpsSource};
+pub use types::{FpsReading, FpsSource, FrameDropCause};
 
 use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 
 static GLOBAL_FPS_METER: Lazy<Mutex<FpsMeter>> = Lazy::new(|| Mutex::new(FpsMeter::new()));
 
-/// Read current FPS from eBPF uprobe on /system/lib64/libgui.so with sysfs fallback.
+/// Read current FPS and rich frame pacing telemetry.
 pub fn read_fps() -> Option<FpsReading> {
     GLOBAL_FPS_METER.lock().read()
 }
@@ -29,6 +29,16 @@ pub fn detach_fps_pid() -> bool {
 /// Clear FPS buffer and reset caches.
 pub fn clear_fps() {
     GLOBAL_FPS_METER.lock().clear();
+}
+
+/// Set target FPS (e.g. 60.0, 90.0, 120.0).
+pub fn set_target_fps(target: Option<f64>) {
+    GLOBAL_FPS_METER.lock().set_target_fps(target);
+}
+
+/// Get current target FPS.
+pub fn get_target_fps() -> Option<f64> {
+    GLOBAL_FPS_METER.lock().get_target_fps()
 }
 
 /// Set a single target package to monitor.

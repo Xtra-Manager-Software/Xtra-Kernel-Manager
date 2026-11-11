@@ -68,10 +68,7 @@ impl SysfsFpsReader {
                     None => self.cached?.fps,
                 };
 
-                let reading = FpsReading {
-                    fps,
-                    source: FpsSource::Sysfs,
-                };
+                let reading = FpsReading::new(fps, FpsSource::Sysfs);
                 self.cached = Some(reading);
                 Some(reading)
             }

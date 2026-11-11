@@ -1,5 +1,5 @@
 use super::sysfs::SysfsFpsReader;
-use super::types::{FpsReading, FpsSource};
+use super::types::{FpsReading, FpsSource, FrameDropCause};
 use parking_lot::Mutex;
 use std::collections::VecDeque;
 use std::path::Path;
@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-const SHORT_WINDOW: usize = 30;
+const WINDOW_SIZE: usize = 60;
 const EBPF_TIMEOUT: Duration = Duration::from_millis(1500);
 
 enum WorkerCmd {
@@ -22,6 +22,7 @@ struct SharedFrames {
     frametimes: VecDeque<Duration>,
     last_frame_instant: Instant,
     attached_pid: Option<i32>,
+    target_fps: Option<f64>,
 }
 
 pub struct FpsMeter {
@@ -43,11 +44,12 @@ impl Default for FpsMeter {
 impl FpsMeter {
     pub fn new() -> Self {
         let shared = Arc::new(Mutex::new(SharedFrames {
-            frametimes: VecDeque::with_capacity(SHORT_WINDOW),
+            frametimes: VecDeque::with_capacity(WINDOW_SIZE),
             last_frame_instant: Instant::now()
                 .checked_sub(EBPF_TIMEOUT)
                 .unwrap_or_else(Instant::now),
             attached_pid: None,
+            target_fps: None,
         }));
 
         let worker_running = Arc::new(AtomicBool::new(true));
@@ -74,9 +76,16 @@ impl FpsMeter {
         }
     }
 
+    /// Set target FPS (e.g. 60.0, 90.0, 120.0).
+    pub fn set_target_fps(&mut self, target: Option<f64>) {
+        self.shared.lock().target_fps = target;
+    }
+
+    pub fn get_target_fps(&self) -> Option<f64> {
+        self.shared.lock().target_fps
+    }
+
     /// Set a dedicated target package to monitor.
-    /// When set, eBPF probe is ONLY attached when this app is in foreground.
-    /// When app switches or exits, probe is automatically detached/unloaded.
     pub fn set_target_package(&mut self, pkg: Option<String>) {
         let changed = self.target_package != pkg;
         self.target_package = pkg;
@@ -172,18 +181,13 @@ impl FpsMeter {
                             self.attach_pid(pid);
                         }
                     }
-                } else {
-                    // Switched away from target app (e.g. went home or switched app):
-                    // Detach immediately to unload uprobe and protect app & system!
-                    if self.shared.lock().attached_pid.is_some() {
-                        self.detach_current();
-                    }
+                } else if self.shared.lock().attached_pid.is_some() {
+                    self.detach_current();
                 }
             } else if self.shared.lock().attached_pid.is_some() {
                 self.detach_current();
             }
         } else {
-            // No target rule active: verify if manual attached PID is still alive
             let attached = self.shared.lock().attached_pid;
             if let Some(pid) = attached {
                 if !Path::new(&format!("/proc/{}", pid)).exists() {
@@ -192,37 +196,164 @@ impl FpsMeter {
             }
         }
 
-        // 1. Try reading calculated FPS from eBPF ring buffer
-        if let Some(fps) = self.calculate_ebpf_fps() {
-            return Some(FpsReading {
-                fps,
-                source: FpsSource::Ebpf,
-            });
+        // 1. Try reading calculated FPS and telemetry from eBPF ring buffer
+        if let Some(reading) = self.calculate_ebpf_stats() {
+            return Some(reading);
         }
 
         // 2. Fall back to sysfs reader (DRM CRTC / framebuffer / Mali)
-        self.sysfs.read()
+        if let Some(mut r) = self.sysfs.read() {
+            if r.fps > 0.0 && r.fps < 45.0 {
+                r.drop_cause = diagnose_drop_cause();
+            }
+            return Some(r);
+        }
+
+        None
     }
 
-    fn calculate_ebpf_fps(&self) -> Option<f64> {
+    fn calculate_ebpf_stats(&self) -> Option<FpsReading> {
         let guard = self.shared.lock();
-        match (!guard.frametimes.is_empty(), guard.last_frame_instant.elapsed()) {
-            (true, elapsed) if elapsed < EBPF_TIMEOUT => {
-                let total: Duration = guard.frametimes.iter().sum();
-                let avg_secs = total.as_secs_f64() / guard.frametimes.len() as f64;
-                if avg_secs <= 0.0 {
-                    return None;
-                }
-                let raw_fps = 1.0 / avg_secs;
-                if (0.1..=500.0).contains(&raw_fps) {
-                    Some((raw_fps * 10.0).round() / 10.0)
-                } else {
-                    None
-                }
-            }
-            _ => None,
+        if guard.frametimes.is_empty() || guard.last_frame_instant.elapsed() >= EBPF_TIMEOUT {
+            return None;
         }
+
+        let mut ms_list: Vec<f64> = guard
+            .frametimes
+            .iter()
+            .map(|d| d.as_secs_f64() * 1000.0)
+            .filter(|&ms| ms > 1.0 && ms < 1000.0)
+            .collect();
+
+        if ms_list.is_empty() {
+            return None;
+        }
+
+        let valid_count = ms_list.len();
+        let current_frametime_ms = (ms_list[0] * 100.0).round() / 100.0;
+        let current_fps = if current_frametime_ms > 0.0 {
+            let f = 1000.0 / current_frametime_ms;
+            (f * 10.0).round() / 10.0
+        } else {
+            0.0
+        };
+
+        let sum_ms: f64 = ms_list.iter().sum();
+        let avg_ms = sum_ms / valid_count as f64;
+        let avg_fps = if avg_ms > 0.0 {
+            let f = 1000.0 / avg_ms;
+            (f * 10.0).round() / 10.0
+        } else {
+            0.0
+        };
+
+        // Standard Deviation and Coefficient of Variation (cv)
+        let variance = ms_list
+            .iter()
+            .map(|&ms| {
+                let diff = ms - avg_ms;
+                diff * diff
+            })
+            .sum::<f64>()
+            / valid_count as f64;
+        let std_dev_ms = (variance.sqrt() * 100.0).round() / 100.0;
+        let cv = if avg_ms > 0.0 {
+            let raw_cv = std_dev_ms / avg_ms;
+            (raw_cv * 1000.0).round() / 1000.0
+        } else {
+            0.0
+        };
+
+        // Determine target FPS: user configured or auto-detected (60, 90, 120, 144)
+        let target_fps = if let Some(t) = guard.target_fps {
+            t
+        } else if avg_fps > 105.0 {
+            120.0
+        } else if avg_fps > 75.0 {
+            90.0
+        } else {
+            60.0
+        };
+
+        // Jank threshold: frame took > 1.35x expected deadline
+        let deadline_ms = 1000.0 / target_fps;
+        let jank_threshold = deadline_ms * 1.35;
+        let jank_count = ms_list.iter().filter(|&&ms| ms >= jank_threshold).count() as u32;
+        let jank_percent =
+            ((jank_count as f64 / valid_count as f64) * 100.0 * 10.0).round() / 10.0;
+
+        // 1% Low and 0.1% Low calculation
+        // Sort ms_list ascending: index near end = slowest frames (lowest FPS)
+        ms_list.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        let p99_idx = (((valid_count - 1) as f64 * 0.99).floor() as usize).min(valid_count - 1);
+        let p99_ms = ms_list[p99_idx];
+        let low_1pct_fps = if p99_ms > 0.0 {
+            (1000.0 / p99_ms * 10.0).round() / 10.0
+        } else {
+            0.0
+        };
+
+        let p999_idx = (((valid_count - 1) as f64 * 0.999).floor() as usize).min(valid_count - 1);
+        let p999_ms = ms_list[p999_idx];
+        let low_01pct_fps = if p999_ms > 0.0 {
+            (1000.0 / p999_ms * 10.0).round() / 10.0
+        } else {
+            0.0
+        };
+
+        // Drop cause diagnosis if jank detected or high CV
+        let drop_cause = if jank_count > 0 || cv >= 0.10 {
+            diagnose_drop_cause()
+        } else {
+            FrameDropCause::Smooth
+        };
+
+        drop(guard);
+
+        Some(FpsReading {
+            fps: current_fps,
+            source: FpsSource::Ebpf,
+            frametime_ms: current_frametime_ms,
+            avg_fps,
+            low_1pct_fps,
+            low_01pct_fps,
+            std_dev_ms,
+            cv,
+            jank_count,
+            jank_percent,
+            drop_cause,
+        })
     }
+}
+
+/// Diagnoses root cause of a frame drop / jank by examining real-time SoC telemetry.
+pub fn diagnose_drop_cause() -> FrameDropCause {
+    // 1. Thermal throttling check
+    let cpu_temp = crate::platform::thermal::read_cpu_temperature();
+    if cpu_temp >= 75.0 {
+        return FrameDropCause::ThermalThrottling;
+    }
+
+    // 2. GPU bottleneck check
+    let gpu_load = crate::platform::gpu::read_gpu_busy_pct();
+    if gpu_load >= 85 {
+        return FrameDropCause::GpuBound;
+    }
+
+    // 3. CPU bottleneck check
+    let cpu_load = crate::platform::cpu::read_cpu_load();
+    if cpu_load >= 85.0 {
+        return FrameDropCause::CpuBound;
+    }
+
+    // 4. Memory pressure check (Available RAM < 350 MB)
+    let (mem, _) = crate::platform::memory::read_memory_and_swap();
+    if mem.available_kb > 0 && mem.available_kb < 350 * 1024 {
+        return FrameDropCause::MemoryPressure;
+    }
+
+    // 5. Hardware has headroom, but frame stuttered -> App/Render stall
+    FrameDropCause::AppStall
 }
 
 impl Drop for FpsMeter {
@@ -300,7 +431,7 @@ fn run_ebpf_worker(
                     let mut guard = shared.lock();
                     guard.frametimes.push_front(dt);
                     guard.last_frame_instant = Instant::now();
-                    while guard.frametimes.len() > SHORT_WINDOW {
+                    while guard.frametimes.len() > WINDOW_SIZE {
                         guard.frametimes.pop_back();
                     }
                 }
@@ -324,7 +455,6 @@ fn handle_attach(
         return;
     }
 
-    // Detach and drop old probe if present
     if let (Some(mut p), Some(old_pid)) = (probe.take(), attached_pid.take()) {
         let _ = p.detach(old_pid);
     }
@@ -358,7 +488,6 @@ fn handle_detach(
 ) {
     if let (Some(mut p), Some(pid)) = (probe.take(), attached_pid.take()) {
         let _ = p.detach(pid);
-        // p is dropped here, which triggers program.unload() and removes the uprobe!
     } else {
         *probe = None;
         *attached_pid = None;
