@@ -182,37 +182,3 @@ object ThermalPolicyPresets {
                policy.behavior.maxRetriesPerHour > 0
     }
 }
-
-/**
- * Thermal state helper
- */
-data class ThermalState(
-    val currentTemperature: Float,
-    val policy: ThermalPolicy,
-    val isOverrideActive: Boolean = false,
-    val lastEvent: ThermalEvent? = null
-) {
-    val severity: ThermalSeverity
-        get() = when {
-            currentTemperature >= policy.criticalThreshold -> ThermalSeverity.CRITICAL
-            currentTemperature >= policy.emergencyThreshold -> ThermalSeverity.EMERGENCY
-            currentTemperature >= policy.warningThreshold -> ThermalSeverity.WARNING
-            else -> ThermalSeverity.NORMAL
-        }
-
-    val needsAction: Boolean
-        get() = severity != ThermalSeverity.NORMAL
-
-    val canRestore: Boolean
-        get() = currentTemperature <= policy.restoreThreshold && !isOverrideActive
-}
-
-/**
- * Thermal severity levels
- */
-enum class ThermalSeverity {
-    NORMAL,      // Below warning threshold
-    WARNING,     // Above warning threshold
-    EMERGENCY,   // Above emergency threshold
-    CRITICAL     // Above critical threshold
-}

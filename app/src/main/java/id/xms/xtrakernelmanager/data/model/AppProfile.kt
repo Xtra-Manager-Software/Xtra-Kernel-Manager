@@ -12,6 +12,3 @@ data class AppProfile(
     val refreshRate: Int = 0, // 0 = Not Set, 60 = 60Hz, 90 = 90Hz, 120 = 120Hz
     val enabled: Boolean = true,
 )
-
-/** Container for all app profiles */
-@Serializable data class AppProfilesContainer(val profiles: List<AppProfile> = emptyList())

@@ -113,21 +113,3 @@ sealed class SmartLockResult {
     data class PartialSuccess(val successClusters: List<Int>, val failedClusters: List<Int>) : SmartLockResult()
     data class RetryExceeded(val retryCount: Int, val nextRetryTime: Long) : SmartLockResult()
 }
-
-/**
- * Frequency range helper
- */
-data class FrequencyRange(
-    val min: Int,
-    val max: Int
-) {
-    val isValid: Boolean
-        get() = min > 0 && max > 0 && max >= min
-    
-    val size: Int
-        get() = max - min
-    
-    fun contains(freq: Int): Boolean = freq in min..max
-    
-    override fun toString(): String = "${min}MHz - ${max}MHz"
-}
