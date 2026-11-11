@@ -266,5 +266,48 @@ fn main() {
         json_avg
     );
 
+    // FPS Micro-benchmarks (Best-case, Vendor, and Worst-case)
+    let t0 = Instant::now();
+    for _ in 0..10_000 {
+        let _ = fps::parse_sysfs_fps("60.0");
+    }
+    let fps_best_ns = (t0.elapsed().as_nanos() as f64) / 10_000.0;
+    println!(
+        "  * parse_sysfs_fps (Best: '60.0')     : {:.1} ns / call",
+        fps_best_ns
+    );
+
+    let sde_sample = "fps: 119.8 duration:1000000 frame_count:120 vsync_rate: 120";
+    let t0 = Instant::now();
+    for _ in 0..10_000 {
+        let _ = fps::parse_sysfs_fps(sde_sample);
+    }
+    let fps_vendor_ns = (t0.elapsed().as_nanos() as f64) / 10_000.0;
+    println!(
+        "  * parse_sysfs_fps (Vendor SDE CRTC)   : {:.1} ns / call",
+        fps_vendor_ns
+    );
+
+    let garbage = "unknown vendor parameter metric value counter ".repeat(50);
+    let t0 = Instant::now();
+    for _ in 0..1_000 {
+        let _ = fps::parse_sysfs_fps(&garbage);
+    }
+    let fps_worst_ns = (t0.elapsed().as_nanos() as f64) / 1_000.0;
+    println!(
+        "  * parse_sysfs_fps (Worst: 2KB garbage): {:.1} ns / call",
+        fps_worst_ns
+    );
+
+    let t0 = Instant::now();
+    for _ in 0..1_000 {
+        let _ = fps::read_fps();
+    }
+    let fps_meter_avg = t0.elapsed().as_micros() as f64 / 1_000.0;
+    println!(
+        "  * fps::read_fps() (End-to-end pipe)  : {:.1} \u{00b5}s / call",
+        fps_meter_avg
+    );
+
     println!("           ON-DEVICE VERIFICATION COMPLETE              ");
 }

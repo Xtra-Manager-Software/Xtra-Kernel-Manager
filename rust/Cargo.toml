@@ -10,6 +10,12 @@ description = "Native library for Xtra Kernel Manager"
 name = "xkm_native"
 crate-type = ["cdylib", "rlib"]
 
+[[bin]]
+name = "device_runner"
+path = "src/bin/device_runner.rs"
+bench = false
+test = false
+
 [dependencies]
 jni = "0.21"
 serde = { version = "1.0", features = ["derive"] }
@@ -39,6 +45,10 @@ loom = "0.7"
 name = "telemetry_bench"
 harness = false
 
+[[bench]]
+name = "fps_bench"
+harness = false
+
 [features]
 default = []
 advanced = ["procfs", "walkdir"]
@@ -54,3 +64,7 @@ overflow-checks = false
 [profile.release.package."*"]
 opt-level = "z"
 strip = "symbols"
+
+[profile.bench]
+opt-level = 3
+
