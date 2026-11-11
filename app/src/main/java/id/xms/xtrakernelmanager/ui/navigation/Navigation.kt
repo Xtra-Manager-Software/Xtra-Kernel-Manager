@@ -177,32 +177,28 @@ fun Navigation(
           BottomNavItem(route = "info", icon = Icons.Default.Info, label = R.string.nav_info),
       )
 
-  // Collect Setup State
-  val isSetupCompleteState by preferencesManager.isSetupComplete.collectAsState(initial = null)
+  // Collect Setup State (immediately resolved from fast prefs cache)
+  val isSetupCompleteState by preferencesManager.isSetupComplete.collectAsState(initial = preferencesManager.isSetupCompleteFast)
   
   // Check root access
   var hasRootAccess by remember { mutableStateOf<Boolean?>(null) }
   
   LaunchedEffect(isSetupCompleteState) {
-    if (isSetupCompleteState == true) {
+    if (isSetupCompleteState) {
       hasRootAccess = checkRootAccess()
     }
   }
 
-  // Show nothing while checking setup state to confirm start destination
-  if (isSetupCompleteState == null) return
-  
   // Determine start destination based on setup and root status
   val startDest = when {
-    isSetupCompleteState == false -> "setup"
-    hasRootAccess == null -> "home"
+    !isSetupCompleteState -> "setup"
     hasRootAccess == false -> "root_access"
     else -> "home"
   }
 
   // Redirect to Home if setup is completed while on setup screen
   LaunchedEffect(isSetupCompleteState, currentRoute) {
-    if (isSetupCompleteState == true && currentRoute == "setup") {
+    if (isSetupCompleteState && currentRoute == "setup") {
       val rootCheck = checkRootAccess()
       if (rootCheck) {
         navController.navigate("home") { popUpTo("setup") { inclusive = true } }
@@ -219,14 +215,11 @@ fun Navigation(
   val backgroundColor = MaterialTheme.colorScheme.background
 
   Box(modifier = Modifier.fillMaxSize().background(backgroundColor)) {
-    Scaffold(
-        containerColor = backgroundColor
-    ) { paddingValues ->
-      NavHost(
-          navController = navController,
-          startDestination = startDest,
-          modifier = Modifier.padding(paddingValues),
-      ) {
+    NavHost(
+        navController = navController,
+        startDestination = startDest,
+        modifier = Modifier.fillMaxSize(),
+    ) {
         composable("setup") {
           SetupScreen(
               onSetupComplete = { layoutStyle ->
@@ -469,7 +462,6 @@ fun Navigation(
           )
         }
       }
-    }
 
     // Floating Bottom Dock
     if (currentRoute != "setup" && currentRoute != "root_access") {

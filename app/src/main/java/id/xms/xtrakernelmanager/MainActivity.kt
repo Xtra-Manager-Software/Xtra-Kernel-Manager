@@ -69,8 +69,7 @@ class MainActivity : ComponentActivity() {
     }
     
     enableEdgeToEdge()
-    
-    androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true)
+    androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
     
     window.navigationBarColor = android.graphics.Color.TRANSPARENT
 

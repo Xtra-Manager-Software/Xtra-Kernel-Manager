@@ -1,145 +1,86 @@
 package id.xms.xtrakernelmanager.ui.screens.setup
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import id.xms.xtrakernelmanager.R
-import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
+import id.xms.xtrakernelmanager.ui.screens.setup.components.SetupBottomBar
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SetupScreen(onSetupComplete: (String) -> Unit) {
-  val pagerState = rememberPagerState(pageCount = { 6 })
-  val scope = rememberCoroutineScope()
-  val context = androidx.compose.ui.platform.LocalContext.current
-  
-  var hasRootAccess by remember { mutableStateOf(false) }
-  var hasAccessibilityPermission by remember { mutableStateOf(false) }
-  var hasUsagePermission by remember { mutableStateOf(false) }
-  var hasOverlayPermission by remember { mutableStateOf(false) }
-  var hasBatteryOptimization by remember { mutableStateOf(false) }
-  var hasNotificationPermission by remember { mutableStateOf(false) }
-  
-  val allPermissionsGranted = hasRootAccess && 
-    hasUsagePermission && 
-    hasOverlayPermission && 
-    hasBatteryOptimization && 
-    hasNotificationPermission
+fun SetupScreen(
+    viewModel: SetupViewModel = viewModel(),
+    onSetupComplete: (String) -> Unit,
+) {
+    var step by remember { mutableIntStateOf(0) }
+    val hasRoot by viewModel.hasRoot.collectAsState()
 
-  Box(
-    modifier = Modifier
-      .fillMaxSize()
-      .background(Color(0xFF0F1419))
-  ) {
-    Column(
-      modifier = Modifier
-        .fillMaxSize()
-        .windowInsetsPadding(WindowInsets.systemBars)
-    ) {
-      Row(
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(24.dp),
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        Image(
-          painter = painterResource(id = R.drawable.logo_a),
-          contentDescription = "XKM Logo",
-          modifier = Modifier.size(32.dp)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-          text = stringResource(R.string.app_name_short),
-          style = MaterialTheme.typography.titleLarge,
-          color = Color.White,
-          fontWeight = FontWeight.Bold,
-          letterSpacing = 2.sp
-        )
-      }
-
-      HorizontalPager(
-        state = pagerState,
-        modifier = Modifier.weight(1f),
-        userScrollEnabled = false
-      ) { page ->
-        when (page) {
-          0 -> WelcomePage()
-          1 -> PerformancePage()
-          2 -> BatteryPage()
-          3 -> GamingPage()
-          4 -> PermissionsPage(
-            hasRootAccess = hasRootAccess,
-            hasAccessibilityPermission = hasAccessibilityPermission,
-            hasUsagePermission = hasUsagePermission,
-            hasOverlayPermission = hasOverlayPermission,
-            hasBatteryOptimization = hasBatteryOptimization,
-            hasNotificationPermission = hasNotificationPermission,
-            onRootCheck = { hasRootAccess = it },
-            onAccessibilityClick = { hasAccessibilityPermission = it },
-            onUsageClick = { hasUsagePermission = it },
-            onOverlayClick = { hasOverlayPermission = it },
-            onBatteryClick = { hasBatteryOptimization = it },
-            onNotificationClick = { hasNotificationPermission = it }
-          )
-          5 -> CompletionPage(
-            onComplete = { onSetupComplete("material") }
-          )
-        }
-      }
-
-      Column(
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-      ) {
-        if (pagerState.currentPage < pagerState.pageCount - 1) {
-          SetupPageIndicator(
-            currentPage = pagerState.currentPage,
-            pageCount = pagerState.pageCount,
-            modifier = Modifier.padding(bottom = 24.dp)
-          )
-
-          Button(
-            onClick = {
-              scope.launch {
-                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-              }
-            },
-            modifier = Modifier
-              .fillMaxWidth()
-              .height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-              containerColor = Color(0xFF38BDF8)
-            ),
-            shape = RoundedCornerShape(16.dp),
-            enabled = when (pagerState.currentPage) {
-              4 -> allPermissionsGranted // Page 4: Permissions must be granted
-              else -> true
-            }
-          ) {
-            Text(
-              text = stringResource(R.string.setup_continue),
-              fontSize = 16.sp,
-              fontWeight = FontWeight.SemiBold
-            )
-          }
-        }
-      }
+    BackHandler(enabled = step > 0) {
+        step -= 1
     }
-  }
+
+    val pageCount = 4
+    val isNextButtonEnabled =
+        when (step) {
+            1 -> hasRoot
+            else -> true
+        }
+
+    Scaffold(
+        bottomBar = {
+            SetupBottomBar(
+                currentPage = step,
+                pageCount = pageCount,
+                onNextClicked = {
+                    if (step < pageCount - 1) {
+                        step += 1
+                    }
+                },
+                onFinishClicked = { onSetupComplete("material") },
+                isNextButtonEnabled = isNextButtonEnabled,
+                isFinishButtonEnabled = true,
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+    ) { paddingValues ->
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(bottom = paddingValues.calculateBottomPadding()),
+        ) {
+            AnimatedContent(
+                targetState = step,
+                transitionSpec = {
+                    if (targetState > initialState) {
+                        (slideInHorizontally { width -> width } + fadeIn(animationSpec = tween(400)))
+                            .togetherWith(slideOutHorizontally { width -> -width } + fadeOut(animationSpec = tween(400)))
+                    } else {
+                        (slideInHorizontally { width -> -width } + fadeIn(animationSpec = tween(400)))
+                            .togetherWith(slideOutHorizontally { width -> width } + fadeOut(animationSpec = tween(400)))
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+                label = "SetupStepTransition",
+            ) { s ->
+                when (s) {
+                    0 -> WelcomeContent()
+                    1 -> RootCheckContent(viewModel = viewModel, hasRoot = hasRoot)
+                    2 -> OverlayContent()
+                    3 -> DoneContent()
+                }
+            }
+        }
+    }
 }

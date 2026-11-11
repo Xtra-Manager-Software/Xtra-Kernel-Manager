@@ -1526,4 +1526,18 @@
     <string name="donation_kofi">Ko-Fi</string>
     <string name="donation_kofi_desc">Support us on Ko-Fi</string>
     <string name="donation_thank_you">Thank you for your support! 💙</string>
+
+    <!-- Setup Screen (XKM) -->
+    <string name="setup_xkm_welcome_title">Welcome to\nXtra Kernel Manager</string>
+    <string name="setup_xkm_welcome_subtitle">A focused kernel management and performance tuning system for rooted Android devices.</string>
+    <string name="setup_xkm_root_title">Root Access Required</string>
+    <string name="setup_xkm_root_subtitle">XKM needs superuser permissions to adjust kernel frequencies, configure governor profiles, and apply hardware optimizations.</string>
+    <string name="setup_xkm_root_btn_grant">Grant Root Permission</string>
+    <string name="setup_xkm_root_granted">Root Access Granted</string>
+    <string name="setup_xkm_overlay_title">Floating Overlay Permission</string>
+    <string name="setup_xkm_overlay_subtitle">Display real-time CPU, GPU, temperature, and performance telemetry on-screen while gaming or benchmarking.</string>
+    <string name="setup_xkm_overlay_btn_grant">Grant Overlay Permission</string>
+    <string name="setup_xkm_overlay_granted">Overlay Permission Granted</string>
+    <string name="setup_xkm_done_title">You\'re All Set!</string>
+    <string name="setup_xkm_done_subtitle">Xtra Kernel Manager is configured and ready to unleash the full power of your device.</string>
 </resources>

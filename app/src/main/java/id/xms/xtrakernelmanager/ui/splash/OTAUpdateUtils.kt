@@ -58,29 +58,9 @@ object UpdatePrefs {
 // --- HELPER FUNCTIONS ---
 
 /**
- * Check if the device has root access using libsu
+ * Check if the device has root access using RootManager (libsu)
  */
-suspend fun checkRootAccess(): Boolean =
-    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        try {
-            // Check debug bypass first
-            val model = android.os.Build.MODEL
-            val isDebugBuild = BuildConfig.DEBUG
-            if (isDebugBuild && model == "I2219") {
-                Log.d("RootCheck", "Debug bypass active for Vivo I2219")
-                return@withContext true
-            }
-
-            // Use libsu Shell which properly handles Magisk 28+ root requests
-            val shell = com.topjohnwu.superuser.Shell.getShell()
-            val isRoot = shell.isRoot
-            Log.d("RootCheck", "Root check via libsu: $isRoot")
-            isRoot
-        } catch (e: Exception) {
-            Log.e("RootCheck", "Root check failed: ${e.message}")
-            false
-        }
-    }
+suspend fun checkRootAccess(): Boolean = id.xms.xtrakernelmanager.domain.root.RootManager.isRootAvailable()
 
 fun isInternetAvailable(context: Context): Boolean {
     val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager

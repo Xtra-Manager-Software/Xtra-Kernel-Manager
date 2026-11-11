@@ -89,11 +89,20 @@ class PreferencesManager(private val context: Context) {
 
   // Game Control preferences
   private val IS_SETUP_COMPLETE = booleanPreferencesKey("is_setup_complete")
+  private val fastPrefs = context.getSharedPreferences("xkm_fast_prefs", Context.MODE_PRIVATE)
+
+  val isSetupCompleteFast: Boolean
+    get() = fastPrefs.getBoolean("is_setup_complete", false)
 
   val isSetupComplete: Flow<Boolean> =
-      context.dataStore.data.map { preferences -> preferences[IS_SETUP_COMPLETE] ?: false }
+      context.dataStore.data.map { preferences ->
+        val complete = preferences[IS_SETUP_COMPLETE] ?: fastPrefs.getBoolean("is_setup_complete", false)
+        fastPrefs.edit().putBoolean("is_setup_complete", complete).apply()
+        complete
+      }
 
   suspend fun setSetupComplete(complete: Boolean) {
+    fastPrefs.edit().putBoolean("is_setup_complete", complete).apply()
     context.dataStore.edit { preferences -> preferences[IS_SETUP_COMPLETE] = complete }
   }
 

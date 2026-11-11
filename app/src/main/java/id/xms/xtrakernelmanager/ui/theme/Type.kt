@@ -1,9 +1,66 @@
 package id.xms.xtrakernelmanager.ui.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import id.xms.xtrakernelmanager.R
+
+private const val GoogleSansFlexRond = 100f
+
+@OptIn(ExperimentalTextApi::class)
+val GoogleSansRounded =
+    FontFamily(
+        Font(
+            resId = R.font.gflex_variable,
+            weight = FontWeight.Light,
+            variationSettings =
+                FontVariation.Settings(
+                    FontVariation.weight(FontWeight.Light.weight),
+                    FontVariation.Setting("ROND", GoogleSansFlexRond),
+                ),
+        ),
+        Font(
+            resId = R.font.gflex_variable,
+            weight = FontWeight.Normal,
+            variationSettings =
+                FontVariation.Settings(
+                    FontVariation.weight(FontWeight.Normal.weight),
+                    FontVariation.Setting("ROND", GoogleSansFlexRond),
+                ),
+        ),
+        Font(
+            resId = R.font.gflex_variable,
+            weight = FontWeight.Medium,
+            variationSettings =
+                FontVariation.Settings(
+                    FontVariation.weight(FontWeight.Medium.weight),
+                    FontVariation.Setting("ROND", GoogleSansFlexRond),
+                ),
+        ),
+        Font(
+            resId = R.font.gflex_variable,
+            weight = FontWeight.SemiBold,
+            variationSettings =
+                FontVariation.Settings(
+                    FontVariation.weight(FontWeight.SemiBold.weight),
+                    FontVariation.Setting("ROND", GoogleSansFlexRond),
+                ),
+        ),
+        Font(
+            resId = R.font.gflex_variable,
+            weight = FontWeight.Bold,
+            variationSettings =
+                FontVariation.Settings(
+                    FontVariation.weight(FontWeight.Bold.weight),
+                    FontVariation.Setting("ROND", GoogleSansFlexRond),
+                ),
+        ),
+    )
 
 val Typography =
     Typography(

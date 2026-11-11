@@ -1387,4 +1387,18 @@
     <string name="donation_kofi">Ko-Fi</string>
     <string name="donation_kofi_desc">Dukung kami di Ko-Fi</string>
     <string name="donation_thank_you">Terima kasih atas dukungan Anda! 💙</string>
+
+    <!-- Setup Screen (XKM) -->
+    <string name="setup_xkm_welcome_title">Selamat Datang di\nXtra Kernel Manager</string>
+    <string name="setup_xkm_welcome_subtitle">Sistem manajemen kernel dan penyesuaian performa canggih untuk perangkat Android ber-root.</string>
+    <string name="setup_xkm_root_title">Akses Root Diperlukan</string>
+    <string name="setup_xkm_root_subtitle">XKM membutuhkan izin superuser untuk mengatur frekuensi kernel, mengonfigurasi profil governor, dan menerapkan optimasi hardware.</string>
+    <string name="setup_xkm_root_btn_grant">Berikan Izin Root</string>
+    <string name="setup_xkm_root_granted">Akses Root Diberikan</string>
+    <string name="setup_xkm_overlay_title">Izin Jendela Mengambang</string>
+    <string name="setup_xkm_overlay_subtitle">Tampilkan telemetri real-time CPU, GPU, suhu, dan FPS di atas layar saat bermain game atau benchmarking.</string>
+    <string name="setup_xkm_overlay_btn_grant">Berikan Izin Overlay</string>
+    <string name="setup_xkm_overlay_granted">Izin Overlay Diberikan</string>
+    <string name="setup_xkm_done_title">Semua Sudah Siap!</string>
+    <string name="setup_xkm_done_subtitle">Xtra Kernel Manager telah siap memaksimalkan performa penuh perangkat Anda.</string>
 </resources>

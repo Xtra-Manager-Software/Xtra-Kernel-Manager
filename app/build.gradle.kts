@@ -210,6 +210,7 @@ dependencies {
         exclude(group = "androidx.appcompat")
         exclude(group = "androidx.lifecycle")
     }
+    implementation("io.coil-kt:coil-gif:2.7.0")
 
     // Lottie for animations - REMOVED (not used anymore, replaced with Material3 Switch)
     // implementation("com.airbnb.android:lottie-compose:6.4.0")

@@ -26,10 +26,35 @@ object RootManager {
           Log.d(TAG, "Debug bypass active for device: ${android.os.Build.MODEL}")
           return@withContext true
         }
-        val isRoot = Shell.getShell().isRoot
-        Log.d(TAG, "Root available: $isRoot")
-        isRoot
+        val cached = Shell.getCachedShell()
+        Log.d(TAG, "isRootAvailable() called | cached=$cached | cachedIsRoot=${cached?.isRoot}")
+        // If there's a cached shell that isn't root, close it so libsu builds a fresh one.
+        if (cached != null && !cached.isRoot) {
+          Log.d(TAG, "isRootAvailable() closing non-root cached shell")
+          try {
+            cached.close()
+          } catch (e: Throwable) {
+            Log.e(TAG, "Error closing cached shell: ${e.message}")
+          }
+        }
+        return@withContext try {
+          val shell = Shell.getShell()
+          val result = shell.isRoot
+          Log.d(TAG, "isRootAvailable() Shell.getShell() returned isRoot=$result")
+          result
+        } catch (e: Throwable) {
+          Log.e(TAG, "isRootAvailable() exception: ${e.javaClass.simpleName}: ${e.message}")
+          false
+        }
       }
+
+  /** Passive check — only reads the already-open cached shell, never prompts. */
+  fun hasCachedRoot(): Boolean {
+    val cached = Shell.getCachedShell()
+    val result = cached?.isRoot ?: false
+    Log.d(TAG, "hasCachedRoot() cached=$cached isRoot=$result")
+    return result
+  }
 
   suspend fun executeCommand(command: String): Result<String> =
       withContext(Dispatchers.IO) {
