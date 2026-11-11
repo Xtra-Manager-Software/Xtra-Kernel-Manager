@@ -1,5 +1,3 @@
-# XKM Native Core (`xkm_native`)
-
 <p align="center">
   <img src="https://img.shields.io/badge/Rust-2024_Edition-000000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust 2024">
   <img src="https://img.shields.io/badge/Architecture-AArch64_%28ARM64--v8a%29-FF5722?style=for-the-badge&logo=arm&logoColor=white" alt="ARM64">
@@ -9,11 +7,11 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-white?style=for-the-badge&logo=gnu&logoColor=white&labelColor=222" alt="License"></a>
 </p>
 
-## About `xkm_native`
+## About XKM Native
 
-**`xkm_native`** is the high-performance, zero-allocation native engine powering **Xtra Kernel Manager (XKM)**. Built in modern Rust (Edition 2024), it operates directly inside the application process (`libxkm_native.so`) via JNI and provides low-level system observability, eBPF frame metering, and native Android Binder IPC control.
+**XKM Native** is the native library powering **Xtra Kernel Manager (XKM)**. Written in Rust (Edition 2024), it runs in-process via JNI (`libxkm_native.so`) to handle system metrics collection, eBPF frame timing, and Android Binder IPC.
 
-By interfacing directly with `/dev/binder`, `/proc`, `/sys`, and kernel tracepoints, `xkm_native` completely eliminates the need for shelling out (`su -c "am ..."` or `toybox`), reducing execution latency from **~50–100 ms down to sub-millisecond (< 0.2 ms)** scale without companion APKs.
+It reads `/proc`, `/sys`, and `/dev/binder` directly instead of spawning shell commands (`su -c`), keeping telemetry and actuators within the app process.
 
 ---
 
@@ -34,7 +32,7 @@ flowchart TD
     end
 
     subgraph OS["Android Framework & Linux Kernel"]
-        BINDER <-->|"/dev/binder (Zero Subprocess)"| SF["SurfaceFlinger & ActivityManager"]
+        BINDER <-->|"/dev/binder"| SF["SurfaceFlinger & ActivityManager"]
         BINDER <-->|"/dev/binder"| HAL["Qualcomm PowerHAL & Vendor AIDL"]
         EBPF <-->|"Uprobe RingBuffer"| LG["libgui.so (Surface::hook_queueBuffer)"]
         SYSFS <-->|Direct I/O| KRN["/proc & /sys (CPU, GPU, Thermal, Battery)"]
@@ -45,44 +43,44 @@ flowchart TD
 
 ## Key Subsystems & Capabilities
 
-### 1. eBPF FPS Meter & Frame Analysis Engine
-A zero-overhead frame timing and jank diagnostic pipeline inspired by [Auriya](https://github.com/pavelc4/auriya) and [kala](https://github.com/pavelc4/kala):
-- **On-Demand eBPF Uprobe Hook**: Attaches directly to `libgui.so` `Surface::hook_queueBuffer` for the focused target application (e.g. `com.mobile.legends`).
-- **Lifecycle Probe Management**: Probe attaches when the target game opens and safely unloads from the kernel upon exit or switch to prevent system churn.
-- **Advanced Frame Metrics**:
-  - Rolling 60-frame window with 1.35x deadline jank classification.
-  - **1% Low** and **0.1% Low** percentile calculations.
-  - Frametime variance and Coefficient of Variation (`cv`).
-- **SoC Root Cause Diagnosis**: Correlates frame drops against real-time telemetry to report root causes:
+### 1. eBPF Frame Timing & FPS Meter
+Frame timing pipeline based on [kala](https://github.com/pavelc4/kala) and patterns from [Auriya](https://github.com/pavelc4/auriya):
+- **Uprobe Attachment**: Attaches to `libgui.so` `Surface::hook_queueBuffer` for the focused application process.
+- **Lifecycle Control**: Attaches when target app is focused, detaches on switch or exit to avoid idle overhead.
+- **Metrics Calculation**:
+  - Rolling window with 1.35x deadline jank classification.
+  - 1% Low and 0.1% Low frametime percentiles.
+  - Variance and Coefficient of Variation (`cv`).
+- **Bottleneck Classification**: Categorizes potential causes based on live telemetry:
   - `Smooth` — Rendering on time.
   - `CpuBound` — CPU load $\ge 90\%$.
   - `GpuBound` — GPU load $\ge 85\%$.
   - `ThermalThrottling` — Thermal zones exceeding severe thresholds.
   - `MemoryPressure` — Available RAM $< 350\text{ MB}$.
-  - `AppStall` — Main UI thread or rendering engine blocked internally.
-- **Zero-Allocation Sysfs Fallback**: Automatic fallback to 8 vendor display CRTC nodes (`/sys/class/drm/sde-crtc-*/measured_fps`, etc.) with safe UTF-8 character boundary scanning.
+  - `AppStall` — UI thread or rendering stall.
+- **Sysfs Fallback**: Reads vendor display CRTC nodes (`/sys/class/drm/sde-crtc-*/measured_fps`, etc.) when eBPF is unavailable.
 
-### 2. Native Android Binder Actuators (Zero-Subprocess IPC)
-Interacts directly with Android's `servicemanager` via `rsbinder` without spawning subshells or JVM companion apps:
+### 2. Android Binder Actuators
+Interacts directly with Android system services via `rsbinder`:
 
 | Domain | Interface / Service | Functionality |
 |---|---|---|
 | **Display** | `SurfaceFlinger` (Codes 45/47)<br>`DisplayManager` (Code 48) | • Active refresh rate query and dynamic mode switching (60Hz, 90Hz, 120Hz).<br>• Direct backlight brightness query and setting. |
 | **PowerHAL** | `android.hardware.power.IPower/default` | • Qualcomm vendor AIDL integration.<br>• Toggles `PowerMode::Game`, `SustainedPerformance`, and `ExpensiveRendering`. |
 | **Gaming Locks** | `IWifiManager` (Codes 62/64)<br>`IStatusBarService` (Codes 2/4)<br>`IWindowManager` (Codes 59/60)<br>`IVibrator` (Code 2) | • **Wi-Fi Low-Latency Lock** (`WIFI_MODE_FULL_LOW_LATENCY = 4`) with token retention.<br>• **Status Bar / Gesture Lock** (disables notification shade pull-down & back gestures).<br>• **Screen Rotation Lock** (freeze orientation).<br>• **Haptic Silencing** (mute vibrator motor during gameplay). |
-| **Touch Boost** | `vendor.lineage.touch.IHighTouchPollingRate`<br>Vendor Sysfs Nodes | • Hybrid high touch sampling rate toggle (240Hz / 480Hz).<br>• Writes LineageOS Touch AIDL and multi-vendor sysfs nodes (`bump_sample_rate`, `game_switch_enable`).<br>• Caches state to overcome write-only OEM kernel drivers. |
-| **Task Manager** | `android.app.IActivityManager`<br>`android.app.usage.IUsageStatsManager` | • Native `/proc` process enumerator ranked by RSS memory descending with cgroup tags (`top-app`, `restricted`, `background`).<br>• **App Standby Buckets**: Move background apps to `RESTRICTED` or `RARE` while gaming.<br>• **Memory Trim**: Send `TRIM_MEMORY_RUNNING_CRITICAL` without killing apps.<br>• **Zero-Fork App Termination**: Instant kill background and force stop packages. |
-| **Battery & Charging** | `vendor.lineage.health.IChargingControl` | • **Bypass Charging / Idle Mode**: Route power directly to motherboard/SoC during gaming, avoiding battery heating and degradation.<br>• Fast charge toggle and charging limits. |
+| **Touch Boost** | `vendor.lineage.touch.IHighTouchPollingRate`<br>Vendor Sysfs Nodes | • High touch sampling rate toggle (240Hz / 480Hz).<br>• Interacts with LineageOS Touch AIDL and vendor sysfs nodes (`bump_sample_rate`, `game_switch_enable`).<br>• Caches state to overcome write-only OEM kernel drivers. |
+| **Task Manager** | `android.app.IActivityManager`<br>`android.app.usage.IUsageStatsManager` | • `/proc` process enumerator sorted by RSS memory with cgroup tags (`top-app`, `restricted`, `background`).<br>• **App Standby Buckets**: Move background apps to `RESTRICTED` or `RARE` while gaming.<br>• **Memory Trim**: Send `TRIM_MEMORY_RUNNING_CRITICAL` without killing apps.<br>• **Process Termination**: Kill background processes or force stop packages. |
+| **Battery & Charging** | `vendor.lineage.health.IChargingControl` | • **Bypass Charging / Idle Mode**: Pause battery charging while maintaining device power during gaming.<br>• Fast charge toggle and charging limits. |
 | **Thermal Telemetry** | `android.os.IThermalService` | • Global thermal state (`NONE`, `LIGHT`, `MODERATE`, `SEVERE`, `CRITICAL`).<br>• Thermal headroom forecasting before throttling occurs. |
 
 ---
 
 ## On-Device Diagnostic Runner (`device_runner`)
 
-`device_runner` is an on-device console utility compiled for ARM64 that executes full telemetry checks, eBPF probe lifecycles, and micro-benchmarks on physical hardware:
+`device_runner` is an on-device console utility compiled for ARM64 that executes telemetry checks, eBPF probe lifecycles, and micro-benchmarks on physical hardware:
 
 ```bash
-# 1. Cross-compile for ARM64 (API 26)
+# 1. Cross-compile for ARM64 
 cargo ndk -t arm64-v8a -P 26 build --release --bin device_runner
 
 # 2. Push to device
@@ -103,7 +101,7 @@ adb shell su -c "chmod 755 /data/local/tmp/device_runner && /data/local/tmp/devi
   * Clusters       : 3 (Policy 0: 300-1804MHz | Policy 4: 633-2496MHz | Policy 7: 787-2918MHz)
   * Active Gov     : walt
 
-[8] FPS METER LIFECYCLE (AURIYA-STYLE TARGET PROBING & SAFE DETACH)
+[8] FPS METER LIFECYCLE
   * Target App     : com.mobile.legends (Unity NDK)
   * eBPF Probe     : Attached to PID 27377 (libgui.so Surface::hook_queueBuffer)
   * Frame Metrics  : 119.5 FPS | FT: 8.37ms | 1% Low: 75.0 FPS | Drop Cause: Smooth
@@ -148,8 +146,11 @@ Output artifact: `app/src/main/jniLibs/arm64-v8a/libxkm_native.so` (size-optimiz
 ## Credits & References
 
 Special thanks to the following open-source projects:
+
+> *Huge gratitude to these incredible projects — honestly, this native library exists thanks to their groundbreaking work. I'm certainly not an idealist who insists on reinventing the wheel from scratch lol.*
+
 - **[Auriya](https://github.com/pavelc4/auriya)** by [@pavelc4](https://github.com/pavelc4) — Reference architecture for Native Android Binder IPC (`rsbinder`), touchpanel boost game mode, system actuators, and zero-companion app designs.
-- **[kala](https://github.com/pavelc4/kala)** by [@pavelc4](https://github.com/pavelc4) — eBPF uprobe engine and frame timing hooks on `libgui.so` (`Surface::hook_queueBuffer`) for zero-overhead FPS metering and jank diagnosis.
+- **[kala](https://github.com/pavelc4/kala)** by [@pavelc4](https://github.com/pavelc4) — eBPF uprobe engine and frame timing hooks on `libgui.so` (`Surface::hook_queueBuffer`) for FPS metering and jank diagnosis.
 - **[rsbinder](https://github.com/jinserk/rsbinder)** — Pure Rust implementation of Android Binder IPC.
 - **[Aya](https://github.com/aya-rs/aya)** — Pure Rust eBPF library for Linux.
 
@@ -157,4 +158,4 @@ Special thanks to the following open-source projects:
 
 ## License
 
-`xkm_native` is open-source software licensed under the **[GNU General Public License v3.0](LICENSE)** (GPL-3.0) to comply with Linux kernel eBPF ecosystem requirements and downstream copyleft obligations.
+**XKM Native** is open-source software licensed under the **[GNU General Public License v3.0](LICENSE)**.
