@@ -33,16 +33,33 @@ pub fn detect_soc_vendor() -> SocVendor {
 
         let combined = format!("{} {} {}", hardware, platform, soc_model);
 
-        if combined.contains("qcom") || combined.contains("snapdragon") || combined.contains("sm8") || combined.contains("sm7") || combined.contains("lahaina") || combined.contains("taro") || combined.contains("kalama") || combined.contains("cliffs") {
-            SocVendor::Snapdragon
-        } else if combined.contains("mt") || combined.contains("mediatek") || combined.contains("dimensity") {
-            SocVendor::MediaTek
-        } else if combined.contains("tensor") || combined.contains("gs101") || combined.contains("gs201") || combined.contains("zuma") {
-            SocVendor::Tensor
-        } else if combined.contains("exynos") || combined.contains("s5e") {
-            SocVendor::Exynos
-        } else {
-            SocVendor::Generic
+        match () {
+            _ if combined.contains("qcom")
+                || combined.contains("snapdragon")
+                || combined.contains("sm8")
+                || combined.contains("sm7")
+                || combined.contains("lahaina")
+                || combined.contains("taro")
+                || combined.contains("kalama")
+                || combined.contains("cliffs") =>
+            {
+                SocVendor::Snapdragon
+            }
+            _ if combined.contains("mt")
+                || combined.contains("mediatek")
+                || combined.contains("dimensity") =>
+            {
+                SocVendor::MediaTek
+            }
+            _ if combined.contains("tensor")
+                || combined.contains("gs101")
+                || combined.contains("gs201")
+                || combined.contains("zuma") =>
+            {
+                SocVendor::Tensor
+            }
+            _ if combined.contains("exynos") || combined.contains("s5e") => SocVendor::Exynos,
+            _ => SocVendor::Generic,
         }
     })
 }
