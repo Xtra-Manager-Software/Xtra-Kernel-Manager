@@ -15,7 +15,6 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
-    id("com.google.devtools.ksp") version "2.3.5"
 }
 
 android {
@@ -224,11 +223,6 @@ dependencies {
     // Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
     
-    // YukiHookAPI - Xposed Module for Banking Hide Mode
-    compileOnly("de.robv.android.xposed:api:82")
-    implementation("com.highcapable.yukihookapi:api:1.3.1")
-    ksp("com.highcapable.yukihookapi:ksp-xposed:1.3.1")
-
     // Testing
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
