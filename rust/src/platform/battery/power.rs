@@ -20,28 +20,23 @@ pub fn read_battery_snapshot() -> BatterySnapshot {
     let level_pct = common::read_sysfs_i64(&format!("{}/capacity", base)).unwrap_or(0) as i32;
 
     let raw_temp = common::read_sysfs_i64(&format!("{}/temp", base)).unwrap_or(0);
-    let temp_c = if raw_temp > 1000 {
-        raw_temp as f32 / 10.0 // sysfs temp is often in tenths of degree (e.g. 345 = 34.5°C) or milli-°C
-    } else if raw_temp > 100 {
-        raw_temp as f32 / 10.0
-    } else {
-        raw_temp as f32
+    let temp_c = match raw_temp {
+        t if t > 1000 => t as f32 / 10.0,
+        t if t > 100 => t as f32 / 10.0,
+        t => t as f32,
     };
 
     let raw_current = common::read_sysfs_i64(&format!("{}/current_now", base)).unwrap_or(0);
-    let current_ma = if raw_current.abs() > 10_000 {
-        (raw_current / 1000) as i32 // microamps to milliamps
-    } else {
-        raw_current as i32
+    let current_ma = match raw_current.abs() {
+        c if c > 10_000 => (raw_current / 1000) as i32,
+        _ => raw_current as i32,
     };
 
     let raw_voltage = common::read_sysfs_i64(&format!("{}/voltage_now", base)).unwrap_or(0);
-    let voltage_v = if raw_voltage > 1_000_000 {
-        raw_voltage as f32 / 1_000_000.0 // microvolts to volts
-    } else if raw_voltage > 1000 {
-        raw_voltage as f32 / 1000.0 // millivolts to volts
-    } else {
-        raw_voltage as f32
+    let voltage_v = match raw_voltage {
+        v if v > 1_000_000 => v as f32 / 1_000_000.0,
+        v if v > 1000 => v as f32 / 1000.0,
+        v => v as f32,
     };
 
     let status = common::read_sysfs_trimmed(&format!("{}/status", base))
@@ -49,10 +44,9 @@ pub fn read_battery_snapshot() -> BatterySnapshot {
     let is_charging = status.eq_ignore_ascii_case("charging");
 
     // Standardize charging current convention (positive while charging)
-    let current_ma = if is_charging && current_ma < 0 {
-        current_ma.abs()
-    } else {
-        current_ma
+    let current_ma = match (is_charging, current_ma < 0) {
+        (true, true) => current_ma.abs(),
+        _ => current_ma,
     };
 
     let health = common::read_sysfs_trimmed(&format!("{}/health", base))
