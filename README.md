@@ -87,7 +87,11 @@ This project includes optimizations to reduce Play Protect detection:
 
 ---
 
-## Resources
+## Documentation & Resources
+- [How to Grant Root Access](docs/HOW_TO_ROOT.md)
+- [Changelogs](docs/CHANGELOGS.md)
+- [Privacy Policy](docs/PRIVACY.md)
+- [Terms of Service](docs/TERMS.md)
 - [Releases](https://github.com/Xtra-Manager-Software/Xtra-Kernel-Manager/releases)
 - [Issues](https://github.com/Xtra-Manager-Software/Xtra-Kernel-Manager/issues)
 
@@ -108,13 +112,6 @@ This project includes optimizations to reduce Play Protect detection:
     </a>
 </p>
 
----
-
-## Stargazers over time
-
-[![Stargazers over time](https://starchart.cc/Gustyx-Power/Xtra-Kernel-Manager.svg?variant=adaptive)](https://starchart.cc/Gustyx-Power/Xtra-Kernel-Manager)
-
----
 
 ## License
 

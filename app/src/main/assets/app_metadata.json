@@ -23,8 +23,8 @@
     "accessibility_service": "game detection only"
   },
   "compliance": {
-    "privacy_policy": "https://github.com/Xtra-Manager-Software/Xtra-Kernel-Manager/blob/main/PRIVACY.md",
-    "terms_of_service": "https://github.com/Xtra-Manager-Software/Xtra-Kernel-Manager/blob/main/TERMS.md",
+    "privacy_policy": "https://github.com/Xtra-Manager-Software/Xtra-Kernel-Manager/blob/main/docs/PRIVACY.md",
+    "terms_of_service": "https://github.com/Xtra-Manager-Software/Xtra-Kernel-Manager/blob/main/docs/TERMS.md",
     "open_source_license": "GPL-3.0",
     "data_collection": "minimal"
   }
