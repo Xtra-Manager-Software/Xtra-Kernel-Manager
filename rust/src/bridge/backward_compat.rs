@@ -1,6 +1,6 @@
+use jni::JNIEnv;
 use jni::objects::{JClass, JString};
 use jni::sys::{jfloat, jint, jlong, jstring};
-use jni::JNIEnv;
 
 use super::{create_jstring_safe, jstring_to_string};
 use crate::platform::{battery, common, cpu, gpu, memory, thermal};
@@ -481,4 +481,211 @@ pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_get
         None => "None",
     };
     create_jstring_safe(&env, cause_str)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_killBackgroundProcessesNative(
+    mut env: JNIEnv,
+    _class: JClass,
+    pkg: JString,
+) -> jni::sys::jboolean {
+    let pkg_str = jstring_to_string(&mut env, &pkg).unwrap_or_default();
+    if pkg_str.is_empty() {
+        return jni::sys::JNI_FALSE;
+    }
+    match crate::platform::binder::kill_background_processes(&pkg_str, None) {
+        Ok(_) => jni::sys::JNI_TRUE,
+        Err(_) => jni::sys::JNI_FALSE,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_killAllBackgroundProcessesNative(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jni::sys::jboolean {
+    match crate::platform::binder::kill_all_background_processes() {
+        Ok(_) => jni::sys::JNI_TRUE,
+        Err(_) => jni::sys::JNI_FALSE,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_forceStopPackageNative(
+    mut env: JNIEnv,
+    _class: JClass,
+    pkg: JString,
+) -> jni::sys::jboolean {
+    let pkg_str = jstring_to_string(&mut env, &pkg).unwrap_or_default();
+    if pkg_str.is_empty() {
+        return jni::sys::JNI_FALSE;
+    }
+    match crate::platform::binder::force_stop_package(&pkg_str, None) {
+        Ok(_) => jni::sys::JNI_TRUE,
+        Err(_) => jni::sys::JNI_FALSE,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_trimProcessMemoryNative(
+    mut env: JNIEnv,
+    _class: JClass,
+    process: JString,
+    uid: jint,
+    level: jint,
+) -> jni::sys::jboolean {
+    let proc_str = jstring_to_string(&mut env, &process).unwrap_or_default();
+    if proc_str.is_empty() {
+        return jni::sys::JNI_FALSE;
+    }
+    let trim_lvl = match level {
+        5 => crate::platform::binder::MemoryTrimLevel::RunningModerate,
+        10 => crate::platform::binder::MemoryTrimLevel::RunningLow,
+        15 => crate::platform::binder::MemoryTrimLevel::RunningCritical,
+        40 => crate::platform::binder::MemoryTrimLevel::Background,
+        60 => crate::platform::binder::MemoryTrimLevel::Moderate,
+        80 => crate::platform::binder::MemoryTrimLevel::Complete,
+        _ => crate::platform::binder::MemoryTrimLevel::RunningCritical,
+    };
+    match crate::platform::binder::set_process_memory_trim_level(&proc_str, uid as i32, trim_lvl) {
+        Ok(success) if success => jni::sys::JNI_TRUE,
+        _ => jni::sys::JNI_FALSE,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_setAppStandbyBucketNative(
+    mut env: JNIEnv,
+    _class: JClass,
+    pkg: JString,
+    bucket: jint,
+) -> jni::sys::jboolean {
+    let pkg_str = jstring_to_string(&mut env, &pkg).unwrap_or_default();
+    if pkg_str.is_empty() {
+        return jni::sys::JNI_FALSE;
+    }
+    let b = crate::platform::binder::StandbyBucket::from_i32(bucket as i32);
+    match crate::platform::binder::set_app_standby_bucket(&pkg_str, b, None) {
+        Ok(_) => jni::sys::JNI_TRUE,
+        Err(_) => jni::sys::JNI_FALSE,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_getAppStandbyBucketNative(
+    mut env: JNIEnv,
+    _class: JClass,
+    pkg: JString,
+) -> jint {
+    let pkg_str = jstring_to_string(&mut env, &pkg).unwrap_or_default();
+    if pkg_str.is_empty() {
+        return 10;
+    }
+    crate::platform::binder::get_app_standby_bucket(&pkg_str, None)
+        .map(|b| b as i32 as jint)
+        .unwrap_or(10)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_getRunningProcessesNative(
+    env: JNIEnv,
+    _class: JClass,
+) -> jstring {
+    let list = crate::platform::binder::get_running_process_list().unwrap_or_default();
+    let json = serde_json::to_string(&list).unwrap_or_else(|_| "[]".to_string());
+    create_jstring_safe(&env, &json)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_isHighTouchPollingRateSupportedNative(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jni::sys::jboolean {
+    if crate::platform::binder::is_high_touch_polling_rate_supported() {
+        jni::sys::JNI_TRUE
+    } else {
+        jni::sys::JNI_FALSE
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_getHighTouchPollingRateEnabledNative(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jni::sys::jboolean {
+    if crate::platform::binder::get_high_touch_polling_rate_enabled().unwrap_or(false) {
+        jni::sys::JNI_TRUE
+    } else {
+        jni::sys::JNI_FALSE
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_setHighTouchPollingRateEnabledNative(
+    _env: JNIEnv,
+    _class: JClass,
+    enabled: jni::sys::jboolean,
+) -> jni::sys::jboolean {
+    let val = enabled != jni::sys::JNI_FALSE;
+    match crate::platform::binder::set_high_touch_polling_rate_enabled(val) {
+        Ok(s) if s => jni::sys::JNI_TRUE,
+        _ => jni::sys::JNI_FALSE,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_getThermalStatusNative(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jint {
+    crate::platform::binder::get_thermal_status()
+        .map(|s| s as i32 as jint)
+        .unwrap_or(0)
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_getThermalHeadroomNative(
+    _env: JNIEnv,
+    _class: JClass,
+    forecast_seconds: jint,
+) -> jfloat {
+    crate::platform::binder::get_thermal_headroom(forecast_seconds as i32).unwrap_or(f32::NAN)
+        as jfloat
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_isChargingControlSupportedNative(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jni::sys::jboolean {
+    if crate::platform::binder::is_charging_control_supported() {
+        jni::sys::JNI_TRUE
+    } else {
+        jni::sys::JNI_FALSE
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_getChargingEnabledNative(
+    _env: JNIEnv,
+    _class: JClass,
+) -> jni::sys::jboolean {
+    if crate::platform::binder::get_charging_enabled().unwrap_or(true) {
+        jni::sys::JNI_TRUE
+    } else {
+        jni::sys::JNI_FALSE
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_setChargingEnabledNative(
+    _env: JNIEnv,
+    _class: JClass,
+    enabled: jni::sys::jboolean,
+) -> jni::sys::jboolean {
+    let val = enabled != jni::sys::JNI_FALSE;
+    match crate::platform::binder::set_charging_enabled(val) {
+        Ok(_) => jni::sys::JNI_TRUE,
+        Err(_) => jni::sys::JNI_FALSE,
+    }
 }
