@@ -91,17 +91,19 @@ pub fn parse_online_cores() -> Vec<i32> {
 
     let mut cores = Vec::new();
     for part in content.trim().split(',') {
-        if part.contains('-') {
-            let bounds: Vec<&str> = part.split('-').collect();
-            if bounds.len() == 2 {
-                if let (Ok(start), Ok(end)) = (bounds[0].parse::<i32>(), bounds[1].parse::<i32>()) {
+        match part.split_once('-') {
+            Some((start_str, end_str)) => {
+                if let (Ok(start), Ok(end)) = (start_str.parse::<i32>(), end_str.parse::<i32>()) {
                     for c in start..=end {
                         cores.push(c);
                     }
                 }
             }
-        } else if let Ok(c) = part.parse::<i32>() {
-            cores.push(c);
+            None => {
+                if let Ok(c) = part.parse::<i32>() {
+                    cores.push(c);
+                }
+            }
         }
     }
     cores

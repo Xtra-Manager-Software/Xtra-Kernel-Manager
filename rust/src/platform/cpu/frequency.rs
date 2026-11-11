@@ -22,19 +22,17 @@ pub fn read_core_data() -> Vec<CoreInfo> {
             break;
         }
 
-        let online = if cpu == 0 {
-            true // cpu0 is usually always online or has no online node
-        } else {
-            common::read_sysfs_i64(&format!("{}/online", cpu_dir)).unwrap_or(1) == 1
+        let online = match cpu {
+            0 => true, // cpu0 is usually always online or has no online node
+            _ => common::read_sysfs_i64(&format!("{}/online", cpu_dir)).unwrap_or(1) == 1,
         };
 
         let freq_dir = format!("{}/cpufreq", cpu_dir);
-        let cur_freq = if online {
-            common::read_sysfs_i64(&format!("{}/scaling_cur_freq", freq_dir))
+        let cur_freq = match online {
+            true => common::read_sysfs_i64(&format!("{}/scaling_cur_freq", freq_dir))
                 .or_else(|| common::read_sysfs_i64(&format!("{}/cpuinfo_cur_freq", freq_dir)))
-                .unwrap_or(0) as i32
-        } else {
-            0
+                .unwrap_or(0) as i32,
+            false => 0,
         };
 
         let min_freq = common::read_sysfs_i64(&format!("{}/scaling_min_freq", freq_dir))

@@ -81,14 +81,12 @@ pub fn set_governor_for_cluster(cluster_or_policy: i32, governor: &str) -> Resul
 pub fn set_all_governors(governor: &str) -> Result<()> {
     let paths = GOVERNOR_PATHS.get_or_init(scan_governor_paths);
 
-    if !paths.policy_governors.is_empty() {
-        for path in &paths.policy_governors {
-            let _ = fs::write(path, governor);
-        }
-    } else {
-        for path in &paths.cpu_governors {
-            let _ = fs::write(path, governor);
-        }
+    let targets = match paths.policy_governors.is_empty() {
+        false => &paths.policy_governors,
+        true => &paths.cpu_governors,
+    };
+    for path in targets {
+        let _ = fs::write(path, governor);
     }
     Ok(())
 }

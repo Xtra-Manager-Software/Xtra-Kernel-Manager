@@ -100,19 +100,22 @@ pub fn lock_path_frequency(path: &str, freq_khz: u64) -> Result<()> {
     let _ = fs::write(path, &val_str);
 
     // Apply bind-mount over the node to lock out vendor thermal daemons
-    if do_mount_bind(&mount_source, path) {
-        info!("Hard-locked {} to {} kHz via bind-mount", path, freq_khz);
-        let mut lock = mounts_lock().lock();
-        lock.retain(|m| m.target_path != path);
-        lock.push(ActiveMount {
-            target_path: path.to_string(),
-            mount_source,
-        });
-        Ok(())
-    } else {
-        let _ = fs::remove_file(&mount_source);
-        warn!("Bind mount failed for {} (possibly lacking CAP_SYS_ADMIN), fell back to sysfs write", path);
-        Ok(())
+    match do_mount_bind(&mount_source, path) {
+        true => {
+            info!("Hard-locked {} to {} kHz via bind-mount", path, freq_khz);
+            let mut lock = mounts_lock().lock();
+            lock.retain(|m| m.target_path != path);
+            lock.push(ActiveMount {
+                target_path: path.to_string(),
+                mount_source,
+            });
+            Ok(())
+        }
+        false => {
+            let _ = fs::remove_file(&mount_source);
+            warn!("Bind mount failed for {} (possibly lacking CAP_SYS_ADMIN), fell back to sysfs write", path);
+            Ok(())
+        }
     }
 }
 
