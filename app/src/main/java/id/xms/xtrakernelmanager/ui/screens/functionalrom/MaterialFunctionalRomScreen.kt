@@ -24,9 +24,37 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import id.xms.xtrakernelmanager.R
+
+enum class ConnectedItemPosition {
+    TOP, MIDDLE, BOTTOM, ALONE
+}
+
+private fun getConnectedItemShape(
+    position: ConnectedItemPosition,
+    cornerRadius: Dp = 24.dp,
+    innerRadius: Dp = 4.dp,
+): RoundedCornerShape {
+    return when (position) {
+        ConnectedItemPosition.TOP -> RoundedCornerShape(
+            topStart = cornerRadius,
+            topEnd = cornerRadius,
+            bottomStart = innerRadius,
+            bottomEnd = innerRadius
+        )
+        ConnectedItemPosition.MIDDLE -> RoundedCornerShape(innerRadius)
+        ConnectedItemPosition.BOTTOM -> RoundedCornerShape(
+            topStart = innerRadius,
+            topEnd = innerRadius,
+            bottomStart = cornerRadius,
+            bottomEnd = cornerRadius
+        )
+        ConnectedItemPosition.ALONE -> RoundedCornerShape(cornerRadius)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,7 +144,7 @@ fun MaterialFunctionalRomScreen(
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
                 contentPadding = PaddingValues(top = 16.dp, bottom = 48.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 // Section: System & Security
                 item {
@@ -125,81 +153,60 @@ fun MaterialFunctionalRomScreen(
 
                 item {
                     val isDevEnabled = checkDeveloperOptionsEnabled(context)
+                    ConnectedNavCard(
+                        title = stringResource(R.string.developer_options),
+                        subtitle = if (isDevEnabled) stringResource(R.string.developer_options_desc_enabled)
+                                  else stringResource(R.string.developer_options_desc_disabled),
+                        icon = Icons.Default.DeveloperMode,
+                        position = ConnectedItemPosition.TOP,
+                        onClick = { handleDeveloperOptionsClick(context) }
+                    )
+                }
+
+                item {
                     val isEnforcing = uiState.seLinuxMode == "Enforcing"
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                        ) {
-                            CompactNavRow(
-                                title = stringResource(R.string.developer_options),
-                                subtitle = if (isDevEnabled) stringResource(R.string.developer_options_desc_enabled)
-                                          else stringResource(R.string.developer_options_desc_disabled),
-                                icon = Icons.Default.DeveloperMode,
-                                onClick = { handleDeveloperOptionsClick(context) }
-                            )
-
-                            CompactSwitchRow(
-                                title = stringResource(R.string.selinux_mode),
-                                subtitle = stringResource(R.string.selinux_mode_status, uiState.seLinuxMode),
-                                subtitleColor = if (isEnforcing) MaterialTheme.colorScheme.primary
-                                                else MaterialTheme.colorScheme.error,
-                                icon = Icons.Default.Security,
-                                checked = uiState.seLinuxMode == "Permissive",
-                                onCheckedChange = { toPermissive ->
-                                    if (toPermissive) {
-                                        viewModel.showSeLinuxWarningDialog()
-                                    } else {
-                                        viewModel.setSeLinuxMode("Enforcing")
-                                    }
-                                }
-                            )
+                    ConnectedSwitchCard(
+                        title = stringResource(R.string.selinux_mode),
+                        subtitle = stringResource(R.string.selinux_mode_status, uiState.seLinuxMode),
+                        subtitleColor = if (isEnforcing) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.error,
+                        icon = Icons.Default.Security,
+                        position = ConnectedItemPosition.BOTTOM,
+                        checked = uiState.seLinuxMode == "Permissive",
+                        onCheckedChange = { toPermissive ->
+                            if (toPermissive) {
+                                viewModel.showSeLinuxWarningDialog()
+                            } else {
+                                viewModel.setSeLinuxMode("Enforcing")
+                            }
                         }
-                    }
+                    )
                 }
 
                 // Section: Display & Refresh Rate
                 item {
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     SectionHeader(title = stringResource(R.string.category_display_refresh_rate))
                 }
 
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                        ) {
-                            CompactNavRow(
-                                title = stringResource(R.string.display_size_changer),
-                                subtitle = stringResource(R.string.display_size_desc, currentSmallestWidth),
-                                icon = Icons.Default.AspectRatio,
-                                onClick = onNavigateToDisplaySize
-                            )
+                    ConnectedNavCard(
+                        title = stringResource(R.string.display_size_changer),
+                        subtitle = stringResource(R.string.display_size_desc, currentSmallestWidth),
+                        icon = Icons.Default.AspectRatio,
+                        position = ConnectedItemPosition.TOP,
+                        onClick = onNavigateToDisplaySize
+                    )
+                }
 
-                            CompactNavRow(
-                                title = stringResource(R.string.global_refresh_rate),
-                                subtitle = stringResource(R.string.global_refresh_rate_desc),
-                                icon = Icons.Default.Refresh,
-                                onClick = onNavigateToGlobalRefreshRate
-                            )
-                        }
-                    }
+                item {
+                    ConnectedNavCard(
+                        title = stringResource(R.string.global_refresh_rate),
+                        subtitle = stringResource(R.string.global_refresh_rate_desc),
+                        icon = Icons.Default.Refresh,
+                        position = ConnectedItemPosition.BOTTOM,
+                        onClick = onNavigateToGlobalRefreshRate
+                    )
                 }
             }
         }
@@ -259,135 +266,164 @@ private fun SectionHeader(title: String) {
 }
 
 /**
- * Compact Navigation Item Row using dynamic Monet colors.
+ * Modern Connected Card Item (Navigation) matching Material 3 Expressive grouped layout.
  */
 @Composable
-private fun CompactNavRow(
+private fun ConnectedNavCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
+    position: ConnectedItemPosition = ConnectedItemPosition.ALONE,
     onClick: () -> Unit,
     enabled: Boolean = true,
 ) {
-    Row(
+    val shape = getConnectedItemShape(position)
+
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clip(shape)
+            .clickable(enabled = enabled, onClick = onClick),
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 1.dp
     ) {
-        // Squircle icon badge with dynamic Monet palette
-        Box(
+        Row(
             modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // Squircle icon badge with dynamic Monet palette
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 16.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
             Icon(
-                imageVector = icon,
+                imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(24.dp)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(20.dp)
             )
         }
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-            modifier = Modifier.size(20.dp)
-        )
     }
 }
 
 /**
- * Compact Toggle/Switch Row using dynamic Monet colors.
+ * Modern Connected Card Item (Toggle Switch) matching Material 3 Expressive grouped layout.
  */
 @Composable
-private fun CompactSwitchRow(
+private fun ConnectedSwitchCard(
     title: String,
     subtitle: String,
     subtitleColor: Color? = null,
     icon: ImageVector,
+    position: ConnectedItemPosition = ConnectedItemPosition.ALONE,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     enabled: Boolean = true,
 ) {
-    Row(
+    val shape = getConnectedItemShape(position)
+
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clip(shape),
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 1.dp
     ) {
-        // Squircle icon badge with dynamic Monet palette
-        Box(
+        Row(
             modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(24.dp)
+            // Squircle icon badge with dynamic Monet palette
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = subtitleColor ?: MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 16.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Switch(
+                checked = checked,
+                onCheckedChange = if (enabled) onCheckedChange else null,
+                enabled = enabled,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                )
             )
         }
-
-        Spacer(modifier = Modifier.width(14.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = subtitleColor ?: MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        Switch(
-            checked = checked,
-            onCheckedChange = if (enabled) onCheckedChange else null,
-            enabled = enabled,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                checkedTrackColor = MaterialTheme.colorScheme.primary,
-                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-            )
-        )
     }
 }
 
