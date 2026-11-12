@@ -1,6 +1,6 @@
-use xkm_native::platform::cpu::topology::{parse_online_cores, detect_cpu_clusters, get_cpu_model};
 use xkm_native::platform::cpu::frequency::{read_core_data, read_cpu_load};
 use xkm_native::platform::cpu::governor::get_available_governors;
+use xkm_native::platform::cpu::topology::{detect_cpu_clusters, get_cpu_model, parse_online_cores};
 
 #[test]
 fn test_parse_online_cores() {
@@ -12,7 +12,10 @@ fn test_parse_online_cores() {
 #[test]
 fn test_get_cpu_model() {
     let model = get_cpu_model();
-    assert!(!model.is_empty(), "CPU model should return a non-empty string");
+    assert!(
+        !model.is_empty(),
+        "CPU model should return a non-empty string"
+    );
 }
 
 #[test]
@@ -22,8 +25,14 @@ fn test_detect_cpu_clusters() {
     println!("Detected {} CPU clusters", clusters.len());
     for cluster in &clusters {
         assert!(cluster.cluster_number >= 0);
-        println!("Cluster {}: cores {:?}, min={}, max={}, gov={}",
-            cluster.cluster_number, cluster.cores, cluster.min_freq, cluster.max_freq, cluster.governor);
+        println!(
+            "Cluster {}: cores {:?}, min={}, max={}, gov={}",
+            cluster.cluster_number,
+            cluster.cores,
+            cluster.min_freq,
+            cluster.max_freq,
+            cluster.governor
+        );
     }
 }
 
@@ -41,7 +50,11 @@ fn test_read_core_data() {
 #[test]
 fn test_read_cpu_load() {
     let load = read_cpu_load();
-    assert!((0.0..=100.0).contains(&load), "CPU load should be between 0.0 and 100.0, got {}", load);
+    assert!(
+        (0.0..=100.0).contains(&load),
+        "CPU load should be between 0.0 and 100.0, got {}",
+        load
+    );
 }
 
 #[test]

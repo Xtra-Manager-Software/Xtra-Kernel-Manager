@@ -34,53 +34,46 @@ pub struct CoreInfo {
 
 static CPU_MODEL: OnceLock<String> = OnceLock::new();
 
-pub fn get_cpu_model() -> String {
+pub fn get_cpu_model() -> &'static str {
     CPU_MODEL
         .get_or_init(|| {
-            // 1. Try ro.soc.model first (e.g. SM7475)
-            if let Some(soc) = common::get_system_property("ro.soc.model") {
-                let trimmed = soc.trim();
-                if !trimmed.is_empty() {
-                    return trimmed.to_uppercase();
+            // 1. Try soc/chip properties first
+            for prop in ["ro.soc.model", "ro.chipname"] {
+                if let Some(val) = common::get_system_property(prop) {
+                    let trimmed = val.trim();
+                    if !trimmed.is_empty() {
+                        return trimmed.to_uppercase();
+                    }
                 }
             }
-            // 2. Try ro.chipname
-            if let Some(chipname) = common::get_system_property("ro.chipname") {
-                let trimmed = chipname.trim();
-                if !trimmed.is_empty() {
-                    return trimmed.to_uppercase();
-                }
-            }
-            // 3. Try /proc/cpuinfo Hardware line
+
+            // 2. Try /proc/cpuinfo Hardware line
             if let Ok(content) = fs::read_to_string("/proc/cpuinfo") {
                 for line in content.lines() {
-                    if line.starts_with("Hardware") || line.starts_with("model name") {
-                        if let Some((_, val)) = line.split_once(':') {
-                            let trimmed = val.trim();
-                            if !trimmed.is_empty() && trimmed.to_lowercase() != "qcom" {
-                                return trimmed.to_string();
-                            }
+                    if (line.starts_with("Hardware") || line.starts_with("model name"))
+                        && let Some((_, val)) = line.split_once(':')
+                    {
+                        let trimmed = val.trim();
+                        if !trimmed.is_empty() && !trimmed.eq_ignore_ascii_case("qcom") {
+                            return trimmed.to_string();
                         }
                     }
                 }
             }
-            // 4. Try ro.board.platform (e.g. taro, lahaina)
-            if let Some(platform) = common::get_system_property("ro.board.platform") {
-                let trimmed = platform.trim();
-                if !trimmed.is_empty() {
-                    return trimmed.to_string();
+
+            // 3. Fallback properties
+            for prop in ["ro.board.platform", "ro.hardware"] {
+                if let Some(val) = common::get_system_property(prop) {
+                    let trimmed = val.trim();
+                    if !trimmed.is_empty() {
+                        return trimmed.to_string();
+                    }
                 }
             }
-            // 5. Fallback to ro.hardware
-            if let Some(hardware) = common::get_system_property("ro.hardware") {
-                let trimmed = hardware.trim();
-                if !trimmed.is_empty() {
-                    return trimmed.to_string();
-                }
-            }
+
             "Unknown".to_string()
         })
-        .clone()
+        .as_str()
 }
 
 pub fn parse_online_cores() -> Vec<i32> {
@@ -94,9 +87,7 @@ pub fn parse_online_cores() -> Vec<i32> {
         match part.split_once('-') {
             Some((start_str, end_str)) => {
                 if let (Ok(start), Ok(end)) = (start_str.parse::<i32>(), end_str.parse::<i32>()) {
-                    for c in start..=end {
-                        cores.push(c);
-                    }
+                    cores.extend(start..=end);
                 }
             }
             None => {
@@ -129,10 +120,10 @@ pub fn detect_cpu_clusters() -> Vec<CpuCluster> {
             .filter_map(|s| s.parse::<i32>().ok())
             .collect();
 
-        let min_freq = common::read_sysfs_i64(&format!("{}/cpuinfo_min_freq", policy_dir))
-            .unwrap_or(0) as i32;
-        let max_freq = common::read_sysfs_i64(&format!("{}/cpuinfo_max_freq", policy_dir))
-            .unwrap_or(0) as i32;
+        let min_freq =
+            common::read_sysfs_i64(&format!("{}/cpuinfo_min_freq", policy_dir)).unwrap_or(0) as i32;
+        let max_freq =
+            common::read_sysfs_i64(&format!("{}/cpuinfo_max_freq", policy_dir)).unwrap_or(0) as i32;
         let cur_min = common::read_sysfs_i64(&format!("{}/scaling_min_freq", policy_dir))
             .unwrap_or(min_freq as i64) as i32;
         let cur_max = common::read_sysfs_i64(&format!("{}/scaling_max_freq", policy_dir))
@@ -140,12 +131,16 @@ pub fn detect_cpu_clusters() -> Vec<CpuCluster> {
         let governor = common::read_sysfs_trimmed(&format!("{}/scaling_governor", policy_dir))
             .unwrap_or_else(|| "unknown".to_string());
 
-        let available_governors = common::read_sysfs_trimmed(&format!(
-            "{}/scaling_available_governors",
-            policy_dir
-        ))
-        .map(|s| s.split_whitespace().map(|g| g.to_string()).collect())
-        .unwrap_or_else(|| vec!["schedutil".to_string(), "performance".to_string(), "powersave".to_string()]);
+        let available_governors =
+            common::read_sysfs_trimmed(&format!("{}/scaling_available_governors", policy_dir))
+                .map(|s| s.split_whitespace().map(|g| g.to_string()).collect())
+                .unwrap_or_else(|| {
+                    vec![
+                        "schedutil".to_string(),
+                        "performance".to_string(),
+                        "powersave".to_string(),
+                    ]
+                });
 
         policy_clusters.push(CpuCluster {
             cluster_number: i,
@@ -172,8 +167,10 @@ pub fn detect_cpu_clusters() -> Vec<CpuCluster> {
             break;
         }
 
-        let min_f = common::read_sysfs_i64(&format!("{}/cpuinfo_min_freq", cpu_dir)).unwrap_or(0) as i32;
-        let max_f = common::read_sysfs_i64(&format!("{}/cpuinfo_max_freq", cpu_dir)).unwrap_or(0) as i32;
+        let min_f =
+            common::read_sysfs_i64(&format!("{}/cpuinfo_min_freq", cpu_dir)).unwrap_or(0) as i32;
+        let max_f =
+            common::read_sysfs_i64(&format!("{}/cpuinfo_max_freq", cpu_dir)).unwrap_or(0) as i32;
 
         if min_f > 0 && max_f > 0 {
             groups.entry((min_f, max_f)).or_default().push(cpu);
@@ -186,13 +183,16 @@ pub fn detect_cpu_clusters() -> Vec<CpuCluster> {
         .map(|(idx, ((min, max), cores))| {
             let first = cores.first().copied().unwrap_or(0);
             let dir = format!("/sys/devices/system/cpu/cpu{}/cpufreq", first);
-            let cur_min = common::read_sysfs_i64(&format!("{}/scaling_min_freq", dir)).unwrap_or(min as i64) as i32;
-            let cur_max = common::read_sysfs_i64(&format!("{}/scaling_max_freq", dir)).unwrap_or(max as i64) as i32;
+            let cur_min = common::read_sysfs_i64(&format!("{}/scaling_min_freq", dir))
+                .unwrap_or(min as i64) as i32;
+            let cur_max = common::read_sysfs_i64(&format!("{}/scaling_max_freq", dir))
+                .unwrap_or(max as i64) as i32;
             let governor = common::read_sysfs_trimmed(&format!("{}/scaling_governor", dir))
                 .unwrap_or_else(|| "unknown".to_string());
-            let available_governors = common::read_sysfs_trimmed(&format!("{}/scaling_available_governors", dir))
-                .map(|s| s.split_whitespace().map(|g| g.to_string()).collect())
-                .unwrap_or_else(|| vec!["schedutil".to_string(), "performance".to_string()]);
+            let available_governors =
+                common::read_sysfs_trimmed(&format!("{}/scaling_available_governors", dir))
+                    .map(|s| s.split_whitespace().map(|g| g.to_string()).collect())
+                    .unwrap_or_else(|| vec!["schedutil".to_string(), "performance".to_string()]);
 
             CpuCluster {
                 cluster_number: idx as i32,

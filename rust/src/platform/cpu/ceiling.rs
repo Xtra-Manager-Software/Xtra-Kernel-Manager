@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 #[cfg(unix)]
-use libc::{mount, umount2, MNT_DETACH, MS_BIND, MS_REC};
+use libc::{MNT_DETACH, MS_BIND, MS_REC, mount, umount2};
 use parking_lot::Mutex;
 #[cfg(unix)]
 use std::ffi::CString;
@@ -25,17 +25,17 @@ fn mounts_lock() -> &'static Mutex<Vec<ActiveMount>> {
 
 #[cfg(unix)]
 fn do_mount_bind(src: &str, dest: &str) -> bool {
-    let src_c = match CString::new(src) {
-        Ok(s) => s,
-        Err(_) => return false,
-    };
-    let dest_c = match CString::new(dest) {
-        Ok(s) => s,
-        Err(_) => return false,
+    let (src_c, dest_c) = match (CString::new(src), CString::new(dest)) {
+        (Ok(s), Ok(d)) => (s, d),
+        _ => return false,
     };
 
+    // SAFETY:
+    // 1. `src_c` and `dest_c` are valid null-terminated CStrings verified by CString::new without interior NULs.
+    // 2. Both allocations live across the entire unsafe block and their pointers are valid for read.
+    // 3. `umount2(..., MNT_DETACH)` performs a lazy detach so any existing bind on `dest` is cleaned up without blocking.
+    // 4. `mount(..., MS_BIND | MS_REC, ...)` creates a private bind mount; target and data pointers are null as required.
     unsafe {
-        // Detach any previous bind on this node first
         umount2(dest_c.as_ptr(), MNT_DETACH);
         mount(
             src_c.as_ptr(),
@@ -53,6 +53,10 @@ fn do_unmount(path: &str) -> bool {
         Ok(s) => s,
         Err(_) => return false,
     };
+    // SAFETY:
+    // 1. `p` is a valid null-terminated CString with no interior NUL bytes.
+    // 2. `MNT_DETACH` performs a lazy unmount, safely detaching the mount point immediately
+    //    and unmounting when it is no longer busy, avoiding kernel deadlock.
     unsafe { umount2(p.as_ptr(), MNT_DETACH) == 0 }
 }
 
@@ -74,7 +78,11 @@ pub fn cleanup_stale_mounts() {
             let src = parts.next().unwrap_or("");
             let dest = parts.next().unwrap_or("");
 
-            if src.contains(".xkm_ceiling") || (dest.contains("cpufreq") && dest.contains("scaling_max_freq") && src.starts_with("/data/local/tmp")) {
+            if src.contains(".xkm_ceiling")
+                || (dest.contains("cpufreq")
+                    && dest.contains("scaling_max_freq")
+                    && src.starts_with("/data/local/tmp"))
+            {
                 do_unmount(dest);
                 let _ = fs::remove_file(src);
                 info!("Cleaned stale XKM ceiling mount: {} -> {}", src, dest);
@@ -113,7 +121,10 @@ pub fn lock_path_frequency(path: &str, freq_khz: u64) -> Result<()> {
         }
         false => {
             let _ = fs::remove_file(&mount_source);
-            warn!("Bind mount failed for {} (possibly lacking CAP_SYS_ADMIN), fell back to sysfs write", path);
+            warn!(
+                "Bind mount failed for {} (possibly lacking CAP_SYS_ADMIN), fell back to sysfs write",
+                path
+            );
             Ok(())
         }
     }

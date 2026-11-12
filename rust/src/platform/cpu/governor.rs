@@ -16,7 +16,10 @@ static AVAILABLE_GOVERNORS: OnceLock<Vec<String>> = OnceLock::new();
 fn scan_governor_paths() -> CpuGovernorPaths {
     let mut policy_governors = Vec::with_capacity(8);
     for i in 0..8 {
-        let p = PathBuf::from(format!("/sys/devices/system/cpu/cpufreq/policy{}/scaling_governor", i));
+        let p = PathBuf::from(format!(
+            "/sys/devices/system/cpu/cpufreq/policy{}/scaling_governor",
+            i
+        ));
         if p.exists() {
             policy_governors.push(p);
         }
@@ -24,7 +27,10 @@ fn scan_governor_paths() -> CpuGovernorPaths {
 
     let mut cpu_governors = Vec::with_capacity(16);
     for i in 0..16 {
-        let p = PathBuf::from(format!("/sys/devices/system/cpu/cpu{}/cpufreq/scaling_governor", i));
+        let p = PathBuf::from(format!(
+            "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_governor",
+            i
+        ));
         if p.exists() {
             cpu_governors.push(p);
         }
