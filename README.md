@@ -94,8 +94,6 @@ This project includes optimizations to reduce Play Protect detection:
 - [Issues](https://github.com/Xtra-Manager-Software/Xtra-Kernel-Manager/issues)
 
 ## Credits
-- [YukiHookAPI](https://github.com/HighCapable/YukiHookAPI)
-- [KavaRef](https://github.com/Kava-Ref)
 - [Auriya](https://github.com/pavelc4/auriya) – Reference API and Native Binder architecture
 - [kala](https://github.com/pavelc4/kala) –  engine for FPS metering 
 
