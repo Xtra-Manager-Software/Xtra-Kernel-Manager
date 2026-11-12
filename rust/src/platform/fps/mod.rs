@@ -1,8 +1,12 @@
+pub mod diagnose;
 pub mod meter;
+pub mod stats;
 pub mod sysfs;
 pub mod types;
+pub mod worker;
 
-pub use meter::{FpsMeter, diagnose_drop_cause};
+pub use diagnose::diagnose_drop_cause;
+pub use meter::FpsMeter;
 pub use sysfs::{FPS_SYSFS_PATHS, SysfsFpsReader, parse_sysfs_fps};
 pub use types::{FpsReading, FpsSource, FrameDropCause};
 
