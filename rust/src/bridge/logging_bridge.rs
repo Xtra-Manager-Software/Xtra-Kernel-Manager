@@ -1,4 +1,4 @@
-use jni::JNIEnv;
+use jni::EnvUnowned;
 use jni::objects::JClass;
 use jni::sys::{jint, jstring};
 
@@ -7,7 +7,7 @@ use crate::logging::{self, LevelFilter};
 
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_getNativeLogsNative(
-    env: JNIEnv,
+    mut env: EnvUnowned,
     _class: JClass,
     max_count: jint,
 ) -> jstring {
@@ -17,12 +17,12 @@ pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_get
         max_count as usize
     };
     let json = logging::get_recent_logs_json(count);
-    create_jstring_safe(&env, &json)
+    create_jstring_safe(&mut env, &json)
 }
 
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_id_xms_xtrakernelmanager_domain_native_NativeLib_setNativeLogLevelNative(
-    _env: JNIEnv,
+    _env: EnvUnowned,
     _class: JClass,
     level: jint,
 ) {
