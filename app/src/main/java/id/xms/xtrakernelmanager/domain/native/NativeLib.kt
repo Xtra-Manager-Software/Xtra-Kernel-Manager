@@ -603,6 +603,29 @@ object NativeLib {
   private external fun getNativeLogsNative(maxCount: Int): String
   private external fun setNativeLogLevelNative(level: Int)
 
+  // Kernel Module & Driver Engine
+  private external fun listLoadedModulesNative(): String
+  private external fun loadKernelModuleNative(path: String, params: String): Boolean
+  private external fun unloadKernelModuleNative(name: String): Boolean
+  private external fun getModuleParametersNative(name: String): String
+  private external fun setModuleParameterNative(module: String, param: String, value: String): Boolean
+  private external fun listKernelDriversNative(): String
+
+  // Extended Universal Binder Actuators
+  private external fun runFstrimNative(): Boolean
+  private external fun getStorageLifeTimeNative(): String
+  private external fun checkRecentKernelCrashesNative(): String
+  private external fun rebootSystemNative(target: String): Boolean
+  private external fun isPowerSaveModeNative(): Boolean
+  private external fun setPowerSaveModeNative(enabled: Boolean): Boolean
+  private external fun setPowerModeNative(mode: Int, enabled: Boolean): Boolean
+  private external fun isPowerModeSupportedNative(mode: Int): Boolean
+  private external fun setPowerBoostNative(boost: Int, durationMs: Int): Boolean
+  private external fun isWifiLowLatencyActiveNative(): Boolean
+  private external fun setWifiLowLatencyLockNative(enabled: Boolean): Boolean
+  private external fun getActiveDisplayRefreshRateNative(): Float
+  private external fun applyRefreshRateNative(rate: Float): Boolean
+
   /**
    * Retrieve recent native diagnostics and operational logs from memory ring-buffer
    */
@@ -613,6 +636,253 @@ object NativeLib {
     } catch (e: Exception) {
       Log.e(TAG, "Native getNativeLogs failed: ${e.message}")
       "[]"
+    }
+  }
+
+  /**
+   * List all currently loaded kernel modules (.ko)
+   */
+  fun listLoadedModules(): String {
+    if (!isLoaded) return "[]"
+    return try {
+      listLoadedModulesNative()
+    } catch (e: Exception) {
+      Log.e(TAG, "Native listLoadedModules failed: ${e.message}")
+      "[]"
+    }
+  }
+
+  /**
+   * Load an external .ko kernel module from disk
+   */
+  fun loadKernelModule(path: String, params: String = ""): Boolean {
+    if (!isLoaded) return false
+    return try {
+      loadKernelModuleNative(path, params)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native loadKernelModule failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Safely unload a loaded kernel module
+   */
+  fun unloadKernelModule(name: String): Boolean {
+    if (!isLoaded) return false
+    return try {
+      unloadKernelModuleNative(name)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native unloadKernelModule failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Read all runtime tunable parameters for a given kernel module
+   */
+  fun getModuleParameters(name: String): String {
+    if (!isLoaded) return "{}"
+    return try {
+      getModuleParametersNative(name)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native getModuleParameters failed: ${e.message}")
+      "{}"
+    }
+  }
+
+  /**
+   * Write new parameter value to a kernel module
+   */
+  fun setModuleParameter(module: String, param: String, value: String): Boolean {
+    if (!isLoaded) return false
+    return try {
+      setModuleParameterNative(module, param, value)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native setModuleParameter failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Scan and list all active hardware drivers on platform, I2C, SPI, PCI, USB buses
+   */
+  fun listKernelDrivers(): String {
+    if (!isLoaded) return "[]"
+    return try {
+      listKernelDriversNative()
+    } catch (e: Exception) {
+      Log.e(TAG, "Native listKernelDrivers failed: ${e.message}")
+      "[]"
+    }
+  }
+
+  /**
+   * Run filesystem TRIM on all partitions via Vold Binder
+   */
+  fun runFstrim(): Boolean {
+    if (!isLoaded) return false
+    return try {
+      runFstrimNative()
+    } catch (e: Exception) {
+      Log.e(TAG, "Native runFstrim failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Get flash storage health (UFS / eMMC lifetime wear percentage)
+   */
+  fun getStorageLifeTime(): String {
+    if (!isLoaded) return "{}"
+    return try {
+      getStorageLifeTimeNative()
+    } catch (e: Exception) {
+      Log.e(TAG, "Native getStorageLifeTime failed: ${e.message}")
+      "{}"
+    }
+  }
+
+  /**
+   * Check for recent kernel panics or unexpected crash markers
+   */
+  fun checkRecentKernelCrashes(): String {
+    if (!isLoaded) return "[]"
+    return try {
+      checkRecentKernelCrashesNative()
+    } catch (e: Exception) {
+      Log.e(TAG, "Native checkRecentKernelCrashes failed: ${e.message}")
+      "[]"
+    }
+  }
+
+  /**
+   * Gracefully reboot system ("recovery", "bootloader", "userspace", or normal)
+   */
+  fun rebootSystem(target: String = ""): Boolean {
+    if (!isLoaded) return false
+    return try {
+      rebootSystemNative(target)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native rebootSystem failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Check if Android battery saver mode is active
+   */
+  fun isPowerSaveMode(): Boolean {
+    if (!isLoaded) return false
+    return try {
+      isPowerSaveModeNative()
+    } catch (e: Exception) {
+      Log.e(TAG, "Native isPowerSaveMode failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Toggle Android battery saver mode
+   */
+  fun setPowerSaveMode(enabled: Boolean): Boolean {
+    if (!isLoaded) return false
+    return try {
+      setPowerSaveModeNative(enabled)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native setPowerSaveMode failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Set PowerHAL mode (e.g. 9 = Game, 2 = SustainedPerformance)
+   */
+  fun setPowerMode(mode: Int, enabled: Boolean): Boolean {
+    if (!isLoaded) return false
+    return try {
+      setPowerModeNative(mode, enabled)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native setPowerMode failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Check if PowerHAL mode is supported
+   */
+  fun isPowerModeSupported(mode: Int): Boolean {
+    if (!isLoaded) return false
+    return try {
+      isPowerModeSupportedNative(mode)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native isPowerModeSupported failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Trigger PowerHAL interaction boost
+   */
+  fun setPowerBoost(boost: Int, durationMs: Int): Boolean {
+    if (!isLoaded) return false
+    return try {
+      setPowerBoostNative(boost, durationMs)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native setPowerBoost failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Check if Wi-Fi low latency mode is active
+   */
+  fun isWifiLowLatencyActive(): Boolean {
+    if (!isLoaded) return false
+    return try {
+      isWifiLowLatencyActiveNative()
+    } catch (e: Exception) {
+      Log.e(TAG, "Native isWifiLowLatencyActive failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Acquire or release Wi-Fi low latency lock
+   */
+  fun setWifiLowLatencyLock(enabled: Boolean): Boolean {
+    if (!isLoaded) return false
+    return try {
+      setWifiLowLatencyLockNative(enabled)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native setWifiLowLatencyLock failed: ${e.message}")
+      false
+    }
+  }
+
+  /**
+   * Get active display refresh rate from Binder SurfaceFlinger
+   */
+  fun getActiveDisplayRefreshRate(): Float {
+    if (!isLoaded) return 0f
+    return try {
+      getActiveDisplayRefreshRateNative()
+    } catch (e: Exception) {
+      Log.e(TAG, "Native getActiveDisplayRefreshRate failed: ${e.message}")
+      0f
+    }
+  }
+
+  /**
+   * Apply display refresh rate override via Binder
+   */
+  fun applyRefreshRate(rate: Float): Boolean {
+    if (!isLoaded) return false
+    return try {
+      applyRefreshRateNative(rate)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native applyRefreshRate failed: ${e.message}")
+      false
     }
   }
 

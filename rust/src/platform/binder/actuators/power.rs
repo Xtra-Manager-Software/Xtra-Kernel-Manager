@@ -61,3 +61,39 @@ pub fn set_power_save_mode_enabled(enable: bool) -> Result<bool> {
         Ok(enable)
     }
 }
+
+/// Gracefully reboot device via IPowerManager Binder (target: "recovery", "bootloader", "userspace", or "")
+pub fn reboot_system(target: &str) -> Result<()> {
+    #[cfg(target_os = "android")]
+    {
+        if crate::platform::binder::ensure_initialized() {
+            if let Some(svc) = rsbinder::hub::check_service(POWER_SERVICE) {
+                if let Some(proxy) = svc.as_proxy() {
+                    if let Ok(mut data) = proxy.prepare_transact(true) {
+                        let _ = data.write(&false); // confirm
+                        let _ = data.write(&target.to_string()); // reason
+                        let _ = data.write(&false); // wait
+                        let _ = proxy.submit_transact(22, &data, 0);
+                        return Ok(());
+                    }
+                }
+            }
+        }
+
+        let target_arg = target.trim();
+        if target_arg.is_empty() {
+            let _ = std::process::Command::new("reboot").status();
+        } else {
+            let _ = std::process::Command::new("reboot")
+                .arg(target_arg)
+                .status();
+        }
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        let _ = target;
+        Ok(())
+    }
+}

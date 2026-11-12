@@ -1,9 +1,11 @@
 pub mod charging;
+pub mod crash;
 pub mod display;
 pub mod dnd;
 pub mod power;
 pub mod power_hal;
 pub mod statusbar;
+pub mod storage;
 pub mod task_manager;
 pub mod thermal;
 pub mod touch;
@@ -12,16 +14,18 @@ pub mod wifi;
 pub mod window;
 
 pub use charging::{get_charging_enabled, is_charging_control_supported, set_charging_enabled};
+pub use crash::{KernelCrashEntry, check_recent_kernel_crashes};
 pub use display::{
     apply_refresh_rate, get_active_display_refresh_rate, get_screen_brightness,
     query_binder_supported_rates, set_screen_brightness,
 };
 pub use dnd::{DndMode, apply_dnd};
-pub use power::{is_power_save_mode, set_power_save_mode_enabled};
+pub use power::{is_power_save_mode, reboot_system, set_power_save_mode_enabled};
 pub use power_hal::{
     PowerBoost, PowerMode, is_power_mode_supported, set_power_boost, set_power_mode,
 };
 pub use statusbar::{collapse_panels, is_statusbar_locked, set_statusbar_lock};
+pub use storage::{StorageHealth, get_storage_life_time, run_fstrim};
 pub use task_manager::{
     MemoryTrimLevel, ProcessItem, StandbyBucket, force_stop_package, get_app_standby_bucket,
     get_running_process_list, is_process_frozen, kill_all_background_processes,
