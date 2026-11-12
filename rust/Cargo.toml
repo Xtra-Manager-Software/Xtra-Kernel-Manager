@@ -10,10 +10,10 @@ description = "Native library for Xtra Kernel Manager"
 name = "xkm_native"
 crate-type = ["cdylib", "rlib"]
 
-[[test]]
+[[bin]]
 name = "device_runner"
 path = "tests/device_runner/main.rs"
-harness = false
+test = false
 
 [dependencies]
 jni = "0.22"
