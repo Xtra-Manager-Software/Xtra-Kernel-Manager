@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 use tracing::debug;
 
-use super::detect::{get_gpu_info, GpuVendor};
+use super::detect::{GpuVendor, get_gpu_info};
 
 pub fn set_gpu_performance_mode() -> Result<()> {
     let (vendor, _) = get_gpu_info();

@@ -1,7 +1,6 @@
 use std::fs;
-use std::path::Path;
 
-use super::detect::{get_gpu_info, GpuVendor};
+use super::detect::{GpuVendor, get_gpu_info};
 use crate::platform::common;
 
 #[inline]
@@ -13,40 +12,36 @@ fn normalize_freq_mhz(raw_hz: i64) -> i32 {
     }
 }
 
+fn find_first_positive_freq(paths: &[&str]) -> Option<i32> {
+    for &path in paths {
+        match common::read_sysfs_i64(path) {
+            Some(val) if val > 0 => return Some(normalize_freq_mhz(val)),
+            _ => continue,
+        }
+    }
+    None
+}
+
 pub fn read_gpu_freq_mhz() -> i32 {
     let (vendor, _) = get_gpu_info();
 
-    match vendor {
-        GpuVendor::Qualcomm => {
-            let paths = [
-                "/sys/class/kgsl/kgsl-3d0/gpuclk",
-                "/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq",
-            ];
-            for path in paths {
-                if let Some(val) = common::read_sysfs_i64(path) {
-                    if val > 0 {
-                        return normalize_freq_mhz(val);
-                    }
-                }
-            }
-        }
-        GpuVendor::Mali => {
-            let paths = [
-                "/sys/class/misc/mali0/device/cur_freq",
-                "/sys/devices/platform/mali/cur_freq",
-                "/sys/kernel/gpu/gpu_clock",
-                "/sys/class/devfreq/gpufreq/cur_freq",
-                "/proc/gpufreq/gpufreq_var_dump",
-            ];
-            for path in paths {
-                if let Some(val) = common::read_sysfs_i64(path) {
-                    if val > 0 {
-                        return normalize_freq_mhz(val);
-                    }
-                }
-            }
-        }
-        GpuVendor::Unknown => {}
+    let vendor_paths: &[&str] = match vendor {
+        GpuVendor::Qualcomm => &[
+            "/sys/class/kgsl/kgsl-3d0/gpuclk",
+            "/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq",
+        ],
+        GpuVendor::Mali => &[
+            "/sys/class/misc/mali0/device/cur_freq",
+            "/sys/devices/platform/mali/cur_freq",
+            "/sys/kernel/gpu/gpu_clock",
+            "/sys/class/devfreq/gpufreq/cur_freq",
+            "/proc/gpufreq/gpufreq_var_dump",
+        ],
+        GpuVendor::Unknown => &[],
+    };
+
+    if let Some(freq) = find_first_positive_freq(vendor_paths) {
+        return freq;
     }
 
     // Generic devfreq search
@@ -54,15 +49,8 @@ pub fn read_gpu_freq_mhz() -> i32 {
         "/sys/class/devfreq/1c00000.qcom,kgsl-3d0/cur_freq",
         "/sys/class/devfreq/gpufreq/cur_freq",
     ];
-    for path in generic_paths {
-        if let Some(val) = common::read_sysfs_i64(path) {
-            if val > 0 {
-                return normalize_freq_mhz(val);
-            }
-        }
-    }
 
-    0
+    find_first_positive_freq(&generic_paths).unwrap_or(0)
 }
 
 pub fn get_available_frequencies() -> Vec<i32> {
@@ -73,16 +61,14 @@ pub fn get_available_frequencies() -> Vec<i32> {
     ];
 
     for path in candidates {
-        if Path::new(path).exists() {
-            if let Ok(content) = fs::read_to_string(path) {
-                let freqs: Vec<i32> = content
-                    .split_whitespace()
-                    .filter_map(|s| s.parse::<i64>().ok())
-                    .map(normalize_freq_mhz)
-                    .collect();
-                if !freqs.is_empty() {
-                    return freqs;
-                }
+        if let Ok(content) = fs::read_to_string(path) {
+            let freqs: Vec<i32> = content
+                .split_whitespace()
+                .filter_map(|s| s.parse::<i64>().ok())
+                .map(normalize_freq_mhz)
+                .collect();
+            if !freqs.is_empty() {
+                return freqs;
             }
         }
     }
