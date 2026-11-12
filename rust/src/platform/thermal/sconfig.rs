@@ -6,11 +6,11 @@ const SCONFIG_PATH: &str = "/sys/class/thermal/thermal_message/sconfig";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum XiaomiThermalPreset {
-    Class0,   // 11 or 0 - Default stock
-    Extreme,  // 2 - Maximum gaming performance
-    Dynamic,  // 10 - Balanced / adaptive
-    Incalls,  // 8 - Cool calls
-    Thermal20,// 20 - Relaxed throttling
+    Class0,    // 11 or 0 - Default stock
+    Extreme,   // 2 - Maximum gaming performance
+    Dynamic,   // 10 - Balanced / adaptive
+    Incalls,   // 8 - Cool calls
+    Thermal20, // 20 - Relaxed throttling
 }
 
 impl XiaomiThermalPreset {

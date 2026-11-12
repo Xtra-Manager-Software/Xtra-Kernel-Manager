@@ -107,16 +107,17 @@ pub fn scan_thermal_zones() -> ThermalSummary {
             };
 
             // Test if sensor responds with valid temperature
-            if let Some(raw) = common::read_sysfs_i64(&temp_path) {
-                if parse_raw_temp(raw).is_some() {
-                    let category = categorize_zone(&name);
-                    discovered.push(CachedSensor {
-                        id: i,
-                        name,
-                        category,
-                        temp_path,
-                    });
-                }
+            if common::read_sysfs_i64(&temp_path)
+                .and_then(parse_raw_temp)
+                .is_some()
+            {
+                let category = categorize_zone(&name);
+                discovered.push(CachedSensor {
+                    id: i,
+                    name,
+                    category,
+                    temp_path,
+                });
             }
         }
         RwLock::new(discovered)
@@ -124,37 +125,27 @@ pub fn scan_thermal_zones() -> ThermalSummary {
 
     let sensors = cache_lock.read();
     let mut zones = Vec::with_capacity(sensors.len());
-    let mut cpu_temps = Vec::new();
-    let mut gpu_temps = Vec::new();
+    let mut cpu_max: Option<f32> = None;
+    let mut gpu_max: Option<f32> = None;
     let mut battery_temp = None;
 
     for s in sensors.iter() {
-        if let Some(raw) = common::read_sysfs_i64(&s.temp_path) {
-            if let Some(temp_c) = parse_raw_temp(raw) {
-                match s.category {
-                    "cpu" => cpu_temps.push(temp_c),
-                    "gpu" => gpu_temps.push(temp_c),
-                    "battery" => battery_temp = Some(temp_c),
-                    _ => {}
-                }
-
-                zones.push(ThermalZoneInfo {
-                    id: s.id,
-                    name: s.name.clone(),
-                    temp: temp_c,
-                    category: s.category.to_string(),
-                });
+        if let Some(temp_c) = common::read_sysfs_i64(&s.temp_path).and_then(parse_raw_temp) {
+            match s.category {
+                "cpu" => cpu_max = Some(cpu_max.map_or(temp_c, |c| c.max(temp_c))),
+                "gpu" => gpu_max = Some(gpu_max.map_or(temp_c, |g| g.max(temp_c))),
+                "battery" => battery_temp = Some(temp_c),
+                _ => {}
             }
+
+            zones.push(ThermalZoneInfo {
+                id: s.id,
+                name: s.name.clone(),
+                temp: temp_c,
+                category: s.category.to_string(),
+            });
         }
     }
-
-    let cpu_max = cpu_temps.iter().cloned().fold(None, |acc, val| {
-        Some(acc.map_or(val, |a: f32| a.max(val)))
-    });
-
-    let gpu_max = gpu_temps.iter().cloned().fold(None, |acc, val| {
-        Some(acc.map_or(val, |a: f32| a.max(val)))
-    });
 
     ThermalSummary {
         cpu_temp_c: cpu_max,
@@ -188,17 +179,19 @@ fn get_primary_sensors() -> &'static PrimarySensors {
                 continue;
             }
 
-            if let Some(name) = common::read_sysfs_trimmed(&type_path) {
-                if let Some(raw) = common::read_sysfs_i64(&temp_path) {
-                    if parse_raw_temp(raw).is_some() {
-                        let cat = categorize_zone(&name);
-                        match cat {
-                            "cpu" => cpu_paths.push(temp_path),
-                            "gpu" => gpu_paths.push(temp_path),
-                            "battery" => battery_paths.push(temp_path),
-                            _ => {}
-                        }
-                    }
+            let Some(name) = common::read_sysfs_trimmed(&type_path) else {
+                continue;
+            };
+
+            if common::read_sysfs_i64(&temp_path)
+                .and_then(parse_raw_temp)
+                .is_some()
+            {
+                match categorize_zone(&name) {
+                    "cpu" => cpu_paths.push(temp_path),
+                    "gpu" => gpu_paths.push(temp_path),
+                    "battery" => battery_paths.push(temp_path),
+                    _ => {}
                 }
             }
         }
@@ -218,27 +211,21 @@ pub fn read_primary_thermal_summary() -> ThermalSummary {
     let mut battery_temp: Option<f32> = None;
 
     for path in &prim.cpu_paths {
-        if let Some(raw) = common::read_sysfs_i64(path) {
-            if let Some(t) = parse_raw_temp(raw) {
-                cpu_max = Some(cpu_max.map_or(t, |c| c.max(t)));
-            }
+        if let Some(t) = common::read_sysfs_i64(path).and_then(parse_raw_temp) {
+            cpu_max = Some(cpu_max.map_or(t, |c| c.max(t)));
         }
     }
 
     for path in &prim.gpu_paths {
-        if let Some(raw) = common::read_sysfs_i64(path) {
-            if let Some(t) = parse_raw_temp(raw) {
-                gpu_max = Some(gpu_max.map_or(t, |g| g.max(t)));
-            }
+        if let Some(t) = common::read_sysfs_i64(path).and_then(parse_raw_temp) {
+            gpu_max = Some(gpu_max.map_or(t, |g| g.max(t)));
         }
     }
 
     for path in &prim.battery_paths {
-        if let Some(raw) = common::read_sysfs_i64(path) {
-            if let Some(t) = parse_raw_temp(raw) {
-                battery_temp = Some(t);
-                break;
-            }
+        if let Some(t) = common::read_sysfs_i64(path).and_then(parse_raw_temp) {
+            battery_temp = Some(t);
+            break;
         }
     }
 
