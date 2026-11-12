@@ -1,6 +1,6 @@
 [package]
 name = "xkm_native"
-version = "1.0.0"
+version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0"
 authors = ["Xms-Team"]
@@ -10,11 +10,10 @@ description = "Native library for Xtra Kernel Manager"
 name = "xkm_native"
 crate-type = ["cdylib", "rlib"]
 
-[[bin]]
+[[test]]
 name = "device_runner"
-path = "src/bin/device_runner.rs"
-bench = false
-test = false
+path = "tests/device_runner/main.rs"
+harness = false
 
 [dependencies]
 jni = "0.21"
@@ -68,4 +67,3 @@ strip = "symbols"
 
 [profile.bench]
 opt-level = 3
-
