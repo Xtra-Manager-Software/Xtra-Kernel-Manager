@@ -5,6 +5,7 @@ pub mod cpu;
 pub mod fps;
 pub mod gpu;
 pub mod memory;
+pub mod modules;
 pub mod process;
 pub mod thermal;
 pub mod vendor;
