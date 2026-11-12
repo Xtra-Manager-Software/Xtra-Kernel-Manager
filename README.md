@@ -7,8 +7,6 @@
     <img src="https://img.shields.io/badge/Jetpack%20Compose-7F52FF?style=for-the-badge&colorA=363A4F&logo=jetpack-compose&logoColor=D9E0EE">
     <img src="https://img.shields.io/badge/Rust-000000?style=for-the-badge&colorA=363A4F&logo=rust&logoColor=D9E0EE">
     <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&colorA=363A4F&logo=android&logoColor=D9E0EE">
-    <a href="https://deepwiki.com/Gustyx-Power/Xtra-Kernel-Manager"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
-    <a href="https://github.com/Gustyx-Power/Xtra-Kernel-Manager/actions/workflows/build-and-release.yml"><img src="https://github.com/Gustyx-Power/Xtra-Kernel-Manager/actions/workflows/build-and-release.yml/badge.svg?branch=staging-version-3.1&event=workflow_dispatch" alt="Build & Release"></a>
 </p>
 
 <p align="center">
@@ -98,24 +96,10 @@ This project includes optimizations to reduce Play Protect detection:
 ## Credits
 - [YukiHookAPI](https://github.com/HighCapable/YukiHookAPI)
 - [KavaRef](https://github.com/Kava-Ref)
-- [Auriya](https://github.com/pavelc4/auriya) – Reference API and Native Binder IPC architecture
-- [kala](https://github.com/pavelc4/kala) – eBPF uprobe engine for FPS metering via `libgui.so`
-
----
-
-## Community
-
-<p align="left">
-    <a href="https://discord.gg/mQYVj4twYZ">
-        <img src="https://img.shields.io/badge/Discord-Community-B4BEFE?style=for-the-badge&colorA=363A4F&logo=discord&logoColor=D9E0EE">
-    </a>
-    <a href="https://t.me/CH_XtraManagerSoftware">
-        <img src="https://img.shields.io/badge/Telegram-Community-2CA5E0?style=for-the-badge&colorA=363A4F&logo=telegram&logoColor=D9E0EE">
-    </a>
-</p>
+- [Auriya](https://github.com/pavelc4/auriya) – Reference API and Native Binder architecture
+- [kala](https://github.com/pavelc4/kala) –  engine for FPS metering 
 
 
 ## License
 
-Xtra Kernel Manager is open-sourced software licensed under the **MIT License**.  
-See the [LICENSE](LICENSE) file for more information.
+Xtra Kernel Manager is open-source software licensed under the **[GNU General Public License v3.0](LICENSE)**.
