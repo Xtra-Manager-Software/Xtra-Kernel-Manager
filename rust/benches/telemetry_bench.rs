@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use xkm_native::platform::cpu::frequency::{read_core_data, read_cpu_load};
 use xkm_native::platform::cpu::topology::detect_cpu_clusters;
 use xkm_native::platform::memory::meminfo::read_memory_and_swap;

@@ -3,9 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use super::snapshot::{
     CpuTelemetry, GpuTelemetry, MemoryTelemetry, TelemetrySnapshot, ThermalTelemetry,
 };
-use crate::platform::{
-    battery, binder, cpu, gpu, memory, thermal,
-};
+use crate::platform::{battery, binder, cpu, gpu, memory, thermal};
 
 pub fn collect_snapshot() -> TelemetrySnapshot {
     let timestamp_ms = SystemTime::now()
@@ -23,7 +21,7 @@ pub fn collect_snapshot() -> TelemetrySnapshot {
         load_pct: cpu_load,
         cores,
         clusters,
-        model: cpu_model,
+        model: cpu_model.to_string(),
     };
 
     // GPU
@@ -35,7 +33,7 @@ pub fn collect_snapshot() -> TelemetrySnapshot {
         freq_mhz: gpu_freq,
         load_pct: gpu_load,
         vendor: gpu_vendor.to_string(),
-        model: gpu_model.clone(),
+        model: gpu_model.to_string(),
     };
 
     // Battery
@@ -66,7 +64,9 @@ pub fn collect_snapshot() -> TelemetrySnapshot {
     let thermal_telemetry = ThermalTelemetry {
         cpu_temp_c: thermal_summary.cpu_temp_c.unwrap_or(0.0),
         gpu_temp_c: thermal_summary.gpu_temp_c.unwrap_or(0.0),
-        battery_temp_c: thermal_summary.battery_temp_c.unwrap_or(battery_snap.temp_c),
+        battery_temp_c: thermal_summary
+            .battery_temp_c
+            .unwrap_or(battery_snap.temp_c),
         zones: thermal_summary.zones,
     };
 
