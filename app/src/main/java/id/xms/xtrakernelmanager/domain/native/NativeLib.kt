@@ -1082,13 +1082,13 @@ object NativeLib {
           }
         }
       }
-      
+
       // Check if Vulkan is supported at all
       val hasVulkan = packageManager.hasSystemFeature("android.hardware.vulkan.version")
       if (hasVulkan) {
         return "Vulkan 1.1" // Default
       }
-      
+
       null
     } catch (e: Exception) {
       Log.e(TAG, "Failed to get Vulkan version", e)
