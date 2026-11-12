@@ -65,16 +65,12 @@ proptest! {
 fn parse_online_cores_str(s: &str) -> Vec<i32> {
     let mut cores = Vec::new();
     for part in s.trim().split(',') {
-        if part.contains('-') {
-            let bounds: Vec<&str> = part.split('-').collect();
-            if bounds.len() == 2 {
-                if let (Ok(start), Ok(end)) = (bounds[0].parse::<i32>(), bounds[1].parse::<i32>()) {
-                    if start <= end && end - start < 256 {
-                        for c in start..=end {
-                            cores.push(c);
-                        }
-                    }
-                }
+        if let Some((start_str, end_str)) = part.split_once('-') {
+            if let (Ok(start), Ok(end)) = (start_str.parse::<i32>(), end_str.parse::<i32>())
+                && start <= end
+                && end - start < 256
+            {
+                cores.extend(start..=end);
             }
         } else if let Ok(c) = part.parse::<i32>() {
             cores.push(c);
