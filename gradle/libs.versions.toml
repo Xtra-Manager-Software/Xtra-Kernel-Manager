@@ -72,7 +72,7 @@ lifecycle-service = "2.10.0"
 foundation = "1.10.6"
 
 # YukiHookAPI - For Xposed Module (Banking Hide Mode)
-yukihookapi = "1.3.1"
+yukihookapi = "1.3.2"
 
 [libraries]
 # AndroidX Core
