@@ -1,6 +1,6 @@
+use jni::JNIEnv;
 use jni::objects::JClass;
 use jni::sys::jstring;
-use jni::JNIEnv;
 
 use super::create_jstring_safe;
 use crate::telemetry::collect_snapshot;

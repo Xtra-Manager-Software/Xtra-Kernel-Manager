@@ -1,11 +1,12 @@
 pub mod backward_compat;
 pub mod binder_bridge;
+pub mod fps_bridge;
 pub mod telemetry_bridge;
 pub mod tuning_bridge;
 
+use jni::JNIEnv;
 use jni::objects::JString;
 use jni::sys::jstring;
-use jni::JNIEnv;
 
 #[inline]
 pub fn create_jstring_safe(env: &JNIEnv, s: &str) -> jstring {

@@ -1,6 +1,6 @@
+use jni::JNIEnv;
 use jni::objects::{JClass, JString};
 use jni::sys::{jboolean, jint, jlong};
-use jni::JNIEnv;
 
 use super::jstring_to_string;
 use crate::platform::{cpu, memory};
