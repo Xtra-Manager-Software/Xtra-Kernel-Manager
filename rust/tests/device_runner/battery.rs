@@ -1,6 +1,6 @@
+use crate::util;
 use std::time::Instant;
 use xkm_native::platform::battery;
-use crate::util;
 
 pub fn run() {
     println!("\n[battery]");

@@ -149,15 +149,14 @@ pub fn lock_cluster_frequency(cluster: i32, max_freq_khz: u64) -> Result<()> {
         "/sys/devices/system/cpu/cpufreq/policy{}/scaling_max_freq",
         cluster
     );
-    if Path::new(&policy_path).exists() {
-        return lock_path_frequency(&policy_path, max_freq_khz);
-    }
-
-    let cpu_path = format!(
-        "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_max_freq",
-        cluster
-    );
-    lock_path_frequency(&cpu_path, max_freq_khz)
+    let target = match Path::new(&policy_path).exists() {
+        true => policy_path,
+        false => format!(
+            "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_max_freq",
+            cluster
+        ),
+    };
+    lock_path_frequency(&target, max_freq_khz)
 }
 
 /// Unlock a CPU cluster frequency bind mount
@@ -166,15 +165,14 @@ pub fn unlock_cluster_frequency(cluster: i32) -> Result<()> {
         "/sys/devices/system/cpu/cpufreq/policy{}/scaling_max_freq",
         cluster
     );
-    if Path::new(&policy_path).exists() {
-        return unlock_path_frequency(&policy_path);
-    }
-
-    let cpu_path = format!(
-        "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_max_freq",
-        cluster
-    );
-    unlock_path_frequency(&cpu_path)
+    let target = match Path::new(&policy_path).exists() {
+        true => policy_path,
+        false => format!(
+            "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_max_freq",
+            cluster
+        ),
+    };
+    unlock_path_frequency(&target)
 }
 
 /// Teardown all active bind mounts

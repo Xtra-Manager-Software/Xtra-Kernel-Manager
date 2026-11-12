@@ -1,6 +1,6 @@
+use crate::util;
 use std::time::Instant;
 use xkm_native::platform::cpu;
-use crate::util;
 
 pub fn run() {
     println!("\n[cpu]");
@@ -48,10 +48,17 @@ pub fn run() {
                 let lock_time = t_lock.elapsed();
                 let mounts = std::fs::read_to_string("/proc/mounts").unwrap_or_default();
                 let has_mount = mounts.contains(&format!("policy{}/scaling_max_freq", cluster_num));
-                println!("    mount_status: applied (in /proc/mounts: {}) [took {}]", has_mount, util::fmt_duration(lock_time));
+                println!(
+                    "    mount_status: applied (in /proc/mounts: {}) [took {}]",
+                    has_mount,
+                    util::fmt_duration(lock_time)
+                );
                 let t_unlock = Instant::now();
                 match cpu::unlock_cluster_frequency(cluster_num) {
-                    Ok(_) => println!("    unlock_status: detached cleanly [took {}]", util::fmt_duration(t_unlock.elapsed())),
+                    Ok(_) => println!(
+                        "    unlock_status: detached cleanly [took {}]",
+                        util::fmt_duration(t_unlock.elapsed())
+                    ),
                     Err(e) => println!("    unlock_status: failed ({})", e),
                 }
             }

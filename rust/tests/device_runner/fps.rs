@@ -1,6 +1,6 @@
+use crate::util;
 use std::time::Instant;
 use xkm_native::platform::{binder, fps};
-use crate::util;
 
 pub fn run() {
     println!("\n[fps]");
@@ -55,7 +55,11 @@ pub fn run() {
     let t_detach = Instant::now();
     let detached_ok = fps::detach_fps_pid();
     std::thread::sleep(std::time::Duration::from_millis(50));
-    println!("  detach_result: {} [took {}]", detached_ok, util::fmt_duration(t_detach.elapsed()));
+    println!(
+        "  detach_result: {} [took {}]",
+        detached_ok,
+        util::fmt_duration(t_detach.elapsed())
+    );
     println!("  attached_after_detach: {}", fps::is_ebpf_attached());
 
     // Isolation check

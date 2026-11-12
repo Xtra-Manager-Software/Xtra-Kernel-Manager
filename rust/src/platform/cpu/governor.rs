@@ -73,15 +73,14 @@ pub fn set_governor_for_cluster(cluster_or_policy: i32, governor: &str) -> Resul
         "/sys/devices/system/cpu/cpufreq/policy{}/scaling_governor",
         cluster_or_policy
     );
-    if Path::new(&policy_path).exists() {
-        return common::write_sysfs(&policy_path, governor);
-    }
-
-    let cpu_path = format!(
-        "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_governor",
-        cluster_or_policy
-    );
-    common::write_sysfs(&cpu_path, governor)
+    let target_path = match Path::new(&policy_path).exists() {
+        true => policy_path,
+        false => format!(
+            "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_governor",
+            cluster_or_policy
+        ),
+    };
+    common::write_sysfs(&target_path, governor)
 }
 
 pub fn set_all_governors(governor: &str) -> Result<()> {

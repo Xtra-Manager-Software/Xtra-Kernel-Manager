@@ -1,6 +1,6 @@
+use crate::util;
 use std::time::Instant;
 use xkm_native::platform::binder;
-use crate::util;
 
 pub fn run() {
     println!("\n[storage]");
@@ -20,5 +20,9 @@ pub fn run() {
 
     let t_trim = Instant::now();
     let trim_res = binder::run_fstrim();
-    println!("  fstrim_result: {:?} [took {}]", trim_res, util::fmt_duration(t_trim.elapsed()));
+    println!(
+        "  fstrim_result: {:?} [took {}]",
+        trim_res,
+        util::fmt_duration(t_trim.elapsed())
+    );
 }

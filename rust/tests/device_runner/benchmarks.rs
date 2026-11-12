@@ -1,7 +1,7 @@
+use crate::util;
 use std::time::Instant;
 use xkm_native::platform::{cpu, fps, memory, thermal};
 use xkm_native::telemetry::collect_snapshot;
-use crate::util;
 
 pub fn run() {
     println!("\n[telemetry_sample]");
@@ -41,7 +41,11 @@ pub fn run() {
     println!("  throughput: {:.1} snapshots/sec", throughput);
     println!("  min: {} µs ({:.3} ms)", min_us, min_us as f64 / 1000.0);
     println!("  avg: {:.1} µs ({:.3} ms)", avg_us, avg_us / 1000.0);
-    println!("  p50: {} µs ({:.3} ms)", median_us, median_us as f64 / 1000.0);
+    println!(
+        "  p50: {} µs ({:.3} ms)",
+        median_us,
+        median_us as f64 / 1000.0
+    );
     println!("  p95: {} µs ({:.3} ms)", p95_us, p95_us as f64 / 1000.0);
     println!("  p99: {} µs ({:.3} ms)", p99_us, p99_us as f64 / 1000.0);
     println!("  max: {} µs ({:.3} ms)", max_us, max_us as f64 / 1000.0);

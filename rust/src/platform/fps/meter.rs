@@ -268,14 +268,14 @@ impl FpsMeter {
         };
 
         // Determine target FPS: user configured or auto-detected (60, 90, 120, 144)
-        let target_fps = if let Some(t) = guard.target_fps {
-            t
-        } else if avg_fps > 105.0 {
-            120.0
-        } else if avg_fps > 75.0 {
-            90.0
-        } else {
-            60.0
+        let target_fps = match guard.target_fps {
+            Some(t) => t,
+            None => match avg_fps {
+                f if f > 130.0 => 144.0,
+                f if f > 105.0 => 120.0,
+                f if f > 75.0 => 90.0,
+                _ => 60.0,
+            },
         };
 
         // Jank threshold: frame took > 1.35x expected deadline
@@ -330,32 +330,20 @@ impl FpsMeter {
 
 /// Diagnoses root cause of a frame drop / jank by examining real-time SoC telemetry.
 pub fn diagnose_drop_cause() -> FrameDropCause {
-    // 1. Thermal throttling check
     let cpu_temp = crate::platform::thermal::read_cpu_temperature();
-    if cpu_temp >= 75.0 {
-        return FrameDropCause::ThermalThrottling;
-    }
-
-    // 2. GPU bottleneck check
     let gpu_load = crate::platform::gpu::read_gpu_busy_pct();
-    if gpu_load >= 85 {
-        return FrameDropCause::GpuBound;
-    }
-
-    // 3. CPU bottleneck check
     let cpu_load = crate::platform::cpu::read_cpu_load();
-    if cpu_load >= 85.0 {
-        return FrameDropCause::CpuBound;
-    }
-
-    // 4. Memory pressure check (Available RAM < 350 MB)
     let (mem, _) = crate::platform::memory::read_memory_and_swap();
-    if mem.available_kb > 0 && mem.available_kb < 350 * 1024 {
-        return FrameDropCause::MemoryPressure;
-    }
 
-    // 5. Hardware has headroom, but frame stuttered -> App/Render stall
-    FrameDropCause::AppStall
+    match () {
+        _ if cpu_temp >= 75.0 => FrameDropCause::ThermalThrottling,
+        _ if gpu_load >= 85 => FrameDropCause::GpuBound,
+        _ if cpu_load >= 85.0 => FrameDropCause::CpuBound,
+        _ if mem.available_kb > 0 && mem.available_kb < 350 * 1024 => {
+            FrameDropCause::MemoryPressure
+        }
+        _ => FrameDropCause::AppStall,
+    }
 }
 
 impl Drop for FpsMeter {

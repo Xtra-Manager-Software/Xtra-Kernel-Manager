@@ -1,6 +1,6 @@
+use crate::util;
 use std::time::Instant;
 use xkm_native::platform::memory;
-use crate::util;
 
 pub fn run() {
     println!("\n[memory]");
@@ -21,9 +21,6 @@ pub fn run() {
     println!("  swap_free: {} MB", swap.free_kb / 1024);
     println!("  swappiness: {}", swappiness);
     println!("  zram_disksize: {} MB", zram.disksize / (1024 * 1024));
-    println!(
-        "  zram_used: {} MB",
-        zram.mem_used_total / (1024 * 1024)
-    );
+    println!("  zram_used: {} MB", zram.mem_used_total / (1024 * 1024));
     println!("  zram_compression: {:.2}x", zram.compression_ratio);
 }

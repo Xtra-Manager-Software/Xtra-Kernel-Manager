@@ -106,20 +106,20 @@ pub fn parse_sysfs_fps(content: &str) -> Option<f64> {
     };
 
     while let Some(token) = tokens.next() {
-        let candidate = if let Some(val_str) =
-            strip_case_prefix(token, "fps:").or_else(|| strip_case_prefix(token, "fps="))
-        {
-            let val_clean = val_str.trim();
-            if !val_clean.is_empty() {
-                Some(val_clean)
-            } else {
-                tokens.next()
-            }
-        } else if token.eq_ignore_ascii_case("fps") {
-            tokens.next()
-        } else {
-            None
-        };
+        let candidate =
+            match strip_case_prefix(token, "fps:").or_else(|| strip_case_prefix(token, "fps=")) {
+                Some(val_str) => {
+                    let val_clean = val_str.trim();
+                    match val_clean.is_empty() {
+                        false => Some(val_clean),
+                        true => tokens.next(),
+                    }
+                }
+                None => match token.eq_ignore_ascii_case("fps") {
+                    true => tokens.next(),
+                    false => None,
+                },
+            };
 
         if let Some(v) = candidate.and_then(parse_val) {
             return Some(v);

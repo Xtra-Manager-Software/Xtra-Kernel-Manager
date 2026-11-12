@@ -6,10 +6,10 @@ pub use meter::{FpsMeter, diagnose_drop_cause};
 pub use sysfs::{FPS_SYSFS_PATHS, SysfsFpsReader, parse_sysfs_fps};
 pub use types::{FpsReading, FpsSource, FrameDropCause};
 
-use once_cell::sync::Lazy;
 use parking_lot::Mutex;
+use std::sync::LazyLock;
 
-static GLOBAL_FPS_METER: Lazy<Mutex<FpsMeter>> = Lazy::new(|| Mutex::new(FpsMeter::new()));
+static GLOBAL_FPS_METER: LazyLock<Mutex<FpsMeter>> = LazyLock::new(|| Mutex::new(FpsMeter::new()));
 
 /// Read current FPS and rich frame pacing telemetry.
 pub fn read_fps() -> Option<FpsReading> {

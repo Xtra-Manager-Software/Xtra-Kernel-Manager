@@ -61,22 +61,30 @@ pub fn get_storage_life_time() -> Result<StorageHealth> {
 
             for line in content.lines() {
                 let lower = line.to_lowercase();
-                if lower.contains("lifetimea") || lower.contains("life_time_a") {
-                    if let Some(val) = parse_hex_or_dec(line) {
-                        type_a = val * 10;
+                match () {
+                    _ if lower.contains("lifetimea") || lower.contains("life_time_a") => {
+                        if let Some(val) = parse_hex_or_dec(line) {
+                            type_a = val * 10;
+                        }
                     }
-                } else if lower.contains("lifetimeb") || lower.contains("life_time_b") {
-                    if let Some(val) = parse_hex_or_dec(line) {
-                        type_b = val * 10;
+                    _ if lower.contains("lifetimeb") || lower.contains("life_time_b") => {
+                        if let Some(val) = parse_hex_or_dec(line) {
+                            type_b = val * 10;
+                        }
                     }
-                } else if lower.contains("eol") {
-                    if lower.contains("0x01") || lower.contains("normal") {
-                        eol = "Normal".to_string();
-                    } else if lower.contains("0x02") || lower.contains("warning") {
-                        eol = "Warning (80% consumed)".to_string();
-                    } else if lower.contains("0x03") || lower.contains("urgent") {
-                        eol = "Urgent (Near EOL)".to_string();
-                    }
+                    _ if lower.contains("eol") => match () {
+                        _ if lower.contains("0x01") || lower.contains("normal") => {
+                            eol = "Normal".to_string();
+                        }
+                        _ if lower.contains("0x02") || lower.contains("warning") => {
+                            eol = "Warning (80% consumed)".to_string();
+                        }
+                        _ if lower.contains("0x03") || lower.contains("urgent") => {
+                            eol = "Urgent (Near EOL)".to_string();
+                        }
+                        _ => {}
+                    },
+                    _ => {}
                 }
             }
 
@@ -101,10 +109,10 @@ pub fn get_storage_life_time() -> Result<StorageHealth> {
             let parts: Vec<i32> = content
                 .split_whitespace()
                 .filter_map(|s| {
-                    if let Some(hex) = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")) {
-                        i32::from_str_radix(hex, 16).ok()
-                    } else {
-                        s.parse::<i32>().ok()
+                    let hex = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X"));
+                    match hex {
+                        Some(h) => i32::from_str_radix(h, 16).ok(),
+                        None => s.parse::<i32>().ok(),
                     }
                 })
                 .collect();
@@ -125,15 +133,19 @@ pub fn get_storage_life_time() -> Result<StorageHealth> {
 fn parse_hex_or_dec(line: &str) -> Option<i32> {
     for part in line.split(|c: char| c == ':' || c == '=' || c.is_whitespace()) {
         let trimmed = part.trim();
-        if let Some(hex) = trimmed
+        let stripped_hex = trimmed
             .strip_prefix("0x")
-            .or_else(|| trimmed.strip_prefix("0X"))
-        {
-            if let Ok(v) = i32::from_str_radix(hex, 16) {
-                return Some(v);
-            }
-        } else if let Ok(v) = trimmed.parse::<i32>() {
-            return Some(v);
+            .or_else(|| trimmed.strip_prefix("0X"));
+
+        match stripped_hex {
+            Some(hex) => match i32::from_str_radix(hex, 16) {
+                Ok(v) => return Some(v),
+                Err(_) => continue,
+            },
+            None => match trimmed.parse::<i32>() {
+                Ok(v) => return Some(v),
+                Err(_) => continue,
+            },
         }
     }
     None

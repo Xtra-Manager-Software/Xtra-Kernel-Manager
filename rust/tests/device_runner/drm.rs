@@ -1,6 +1,6 @@
+use crate::util;
 use std::time::Instant;
 use xkm_native::platform::drm;
-use crate::util;
 
 pub fn run() {
     println!("\n[drm_security]");
@@ -10,7 +10,10 @@ pub fn run() {
 
     println!("  fetch_time: {}", util::fmt_duration(fetch_time));
     println!("  widevine_available: {}", info.widevine_available);
-    println!("  widevine_security_level: {}", info.widevine_security_level);
+    println!(
+        "  widevine_security_level: {}",
+        info.widevine_security_level
+    );
     if let Some(s) = info.widevine_service {
         println!("  widevine_service: {}", s);
     }
@@ -18,6 +21,7 @@ pub fn run() {
     if let Some(s) = info.clearkey_service {
         println!("  clearkey_service: {}", s);
     }
+    println!("  wfd_hdcp_available: {}", info.wfd_hdcp_available);
     if let Some(tee) = info.tee_interface {
         println!("  tee_interface: {}", tee);
     }
@@ -28,6 +32,23 @@ pub fn run() {
         println!("  keymint_service: {}", km);
     }
     if let Some(conn) = info.display_connector {
-        println!("  display_connector: {} ({:?})", conn, info.display_status.unwrap_or_default());
+        println!(
+            "  display_connector: {} ({})",
+            conn,
+            info.display_status.unwrap_or_default()
+        );
+    }
+    if !info.supported_refresh_rates.is_empty() {
+        println!(
+            "  supported_refresh_rates: {:?}",
+            info.supported_refresh_rates
+        );
+    }
+    if !info.hdr_types.is_empty() {
+        println!("  supported_hdr_types: {:?}", info.hdr_types);
+    }
+    println!("  wide_color_gamut: {}", info.wide_color_gamut);
+    if !info.display_modes.is_empty() {
+        println!("  display_modes: {:?}", info.display_modes);
     }
 }

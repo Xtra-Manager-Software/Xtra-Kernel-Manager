@@ -30,20 +30,20 @@ pub fn is_sconfig_supported() -> bool {
 }
 
 pub fn read_sconfig_index() -> Option<i32> {
-    if !is_sconfig_supported() {
-        return None;
+    match is_sconfig_supported() {
+        false => None,
+        true => fs::read_to_string(SCONFIG_PATH)
+            .ok()
+            .and_then(|s| s.trim().parse::<i32>().ok()),
     }
-    fs::read_to_string(SCONFIG_PATH)
-        .ok()
-        .and_then(|s| s.trim().parse::<i32>().ok())
 }
 
 pub fn set_sconfig_index(index: i32) -> Result<()> {
-    if !is_sconfig_supported() {
-        anyhow::bail!("Xiaomi sconfig is not supported on this device");
+    match is_sconfig_supported() {
+        false => anyhow::bail!("Xiaomi sconfig is not supported on this device"),
+        true => fs::write(SCONFIG_PATH, index.to_string())
+            .with_context(|| format!("Failed to write index {} to {}", index, SCONFIG_PATH)),
     }
-    fs::write(SCONFIG_PATH, index.to_string())
-        .with_context(|| format!("Failed to write index {} to {}", index, SCONFIG_PATH))
 }
 
 pub fn set_thermal_preset(preset: XiaomiThermalPreset) -> Result<()> {

@@ -44,18 +44,21 @@ pub fn scan_npu_subsystem() -> NpuInfo {
                 continue;
             }
 
-            let subsystem_type = if name.contains("cdsp") {
-                "Compute DSP (NPU/HTP Tensor Core)".to_string()
-            } else if name.contains("adsp") {
-                "Audio DSP (Hexagon Voice/Audio AI)".to_string()
-            } else if name.contains("slpi") {
-                "Sensor Low-Power Island".to_string()
-            } else if name.contains("mss") {
-                "Modem Subsystem".to_string()
-            } else if name.contains("npu") || name.contains("apu") || name.contains("tpu") {
-                "Neural Processing Unit".to_string()
-            } else {
-                "Hardware Coprocessor".to_string()
+            let lower_name = name.to_lowercase();
+            let subsystem_type = match () {
+                _ if lower_name.contains("cdsp") => "Compute DSP (NPU/HTP Tensor Core)".to_string(),
+                _ if lower_name.contains("adsp") => {
+                    "Audio DSP (Hexagon Voice/Audio AI)".to_string()
+                }
+                _ if lower_name.contains("slpi") => "Sensor Low-Power Island".to_string(),
+                _ if lower_name.contains("mss") => "Modem Subsystem".to_string(),
+                _ if lower_name.contains("npu")
+                    || lower_name.contains("apu")
+                    || lower_name.contains("tpu") =>
+                {
+                    "Neural Processing Unit".to_string()
+                }
+                _ => "Hardware Coprocessor".to_string(),
             };
 
             coprocessors.push(CoprocessorInfo {
@@ -120,16 +123,43 @@ pub fn scan_npu_subsystem() -> NpuInfo {
 
     // 4. Scan vendor AI runtimes and shared libraries
     let candidate_libs = [
-        ("/vendor/lib64/libcdsprpc.so", "Qualcomm cDSP Compute FastRPC"),
+        (
+            "/vendor/lib64/libcdsprpc.so",
+            "Qualcomm cDSP Compute FastRPC",
+        ),
         ("/vendor/lib64/libadsprpc.so", "Qualcomm aDSP FastRPC"),
-        ("/vendor/lib64/libsnpe_dsp_domains_v3.so", "Snapdragon Neural Processing Engine (SNPE v3)"),
-        ("/vendor/lib64/libsnpe_dsp_domains_v2.so", "Snapdragon Neural Processing Engine (SNPE v2)"),
-        ("/vendor/lib64/libfastcvdsp_stub.so", "Fast Computer Vision DSP (FastCV)"),
-        ("/vendor/lib64/libQnnHtp.so", "Qualcomm Neural Network (QNN HTP Engine)"),
-        ("/vendor/lib64/libQnnGpu.so", "Qualcomm Neural Network (QNN GPU Engine)"),
-        ("/vendor/lib64/libneuron_runtime.so", "MediaTek NeuroPilot Runtime"),
-        ("/system/lib64/libnpumanager.so", "Android NpuManager Framework (libnpumanager.so)"),
-        ("/system/lib64/libneuralnetworks.so", "Android Neural Networks API (NNAPI)"),
+        (
+            "/vendor/lib64/libsnpe_dsp_domains_v3.so",
+            "Snapdragon Neural Processing Engine (SNPE v3)",
+        ),
+        (
+            "/vendor/lib64/libsnpe_dsp_domains_v2.so",
+            "Snapdragon Neural Processing Engine (SNPE v2)",
+        ),
+        (
+            "/vendor/lib64/libfastcvdsp_stub.so",
+            "Fast Computer Vision DSP (FastCV)",
+        ),
+        (
+            "/vendor/lib64/libQnnHtp.so",
+            "Qualcomm Neural Network (QNN HTP Engine)",
+        ),
+        (
+            "/vendor/lib64/libQnnGpu.so",
+            "Qualcomm Neural Network (QNN GPU Engine)",
+        ),
+        (
+            "/vendor/lib64/libneuron_runtime.so",
+            "MediaTek NeuroPilot Runtime",
+        ),
+        (
+            "/system/lib64/libnpumanager.so",
+            "Android NpuManager Framework (libnpumanager.so)",
+        ),
+        (
+            "/system/lib64/libneuralnetworks.so",
+            "Android Neural Networks API (NNAPI)",
+        ),
     ];
 
     for &(lib_path, desc) in &candidate_libs {
@@ -150,7 +180,8 @@ pub fn scan_npu_subsystem() -> NpuInfo {
     for vpath in vintf_paths {
         if let Ok(content) = fs::read_to_string(vpath) {
             if content.contains("android.hardware.neuralnetworks")
-                && !hal_services.contains(&"android.hardware.neuralnetworks (AIDL/VINTF)".to_string())
+                && !hal_services
+                    .contains(&"android.hardware.neuralnetworks (AIDL/VINTF)".to_string())
             {
                 hal_services.push("android.hardware.neuralnetworks (AIDL/VINTF)".to_string());
             }
@@ -167,40 +198,47 @@ pub fn scan_npu_subsystem() -> NpuInfo {
     }
 
     // 6. Determine vendor family and availability
-    let has_cdsp = coprocessors.iter().any(|c| c.name.contains("cdsp") && c.state == "running")
-        || dev_nodes.iter().any(|d| d.contains("cdsprpc") || d.contains("adsprpc"))
+    let has_cdsp = coprocessors
+        .iter()
+        .any(|c| c.name.contains("cdsp") && c.state == "running")
+        || dev_nodes
+            .iter()
+            .any(|d| d.contains("cdsprpc") || d.contains("adsprpc"))
         || active_daemons.iter().any(|d| d.contains("cdsprpcd"));
 
     let has_apu = dev_nodes.iter().any(|d| d.contains("apu"))
         || active_daemons.iter().any(|d| d.contains("apu"));
 
-    let has_tpu = dev_nodes.iter().any(|d| d.contains("edgetpu") || d.contains("janeiro"))
+    let has_tpu = dev_nodes
+        .iter()
+        .any(|d| d.contains("edgetpu") || d.contains("janeiro"))
         || active_daemons.iter().any(|d| d.contains("edgetpu"));
 
-    let has_exynos_npu = dev_nodes.iter().any(|d| d.contains("vertex") || d.contains("npu"));
+    let has_exynos_npu = dev_nodes
+        .iter()
+        .any(|d| d.contains("vertex") || d.contains("npu"));
 
-    let (vendor_family, is_available) = if has_cdsp {
-        ("Qualcomm Hexagon (HTP/cDSP Tensor Engine)".to_string(), true)
-    } else if has_apu {
-        ("MediaTek NeuroPilot APU".to_string(), true)
-    } else if has_tpu {
-        ("Google Tensor EdgeTPU".to_string(), true)
-    } else if has_exynos_npu {
-        ("Samsung Exynos NPU".to_string(), true)
-    } else if !ai_runtimes.is_empty() || !hal_services.is_empty() {
-        ("Android Generic NNAPI / NpuManager".to_string(), true)
-    } else {
-        ("Not Detected".to_string(), false)
+    let (vendor_family, is_available) = match () {
+        _ if has_cdsp => (
+            "Qualcomm Hexagon (HTP/cDSP Tensor Engine)".to_string(),
+            true,
+        ),
+        _ if has_apu => ("MediaTek NeuroPilot APU".to_string(), true),
+        _ if has_tpu => ("Google Tensor EdgeTPU".to_string(), true),
+        _ if has_exynos_npu => ("Samsung Exynos NPU".to_string(), true),
+        _ if !ai_runtimes.is_empty() || !hal_services.is_empty() => {
+            ("Android Generic NNAPI / NpuManager".to_string(), true)
+        }
+        _ => ("Not Detected".to_string(), false),
     };
 
-    let hardware_state = if is_available {
-        if coprocessors.iter().any(|c| c.state == "running") {
-            "Active (Hardware Powered & Running)".to_string()
-        } else {
-            "Available (Driver/Library Accessible)".to_string()
-        }
-    } else {
-        "Offline / Unsupported".to_string()
+    let hardware_state = match (
+        is_available,
+        coprocessors.iter().any(|c| c.state == "running"),
+    ) {
+        (true, true) => "Active (Hardware Powered & Running)".to_string(),
+        (true, false) => "Available (Driver/Library Accessible)".to_string(),
+        (false, _) => "Offline / Unsupported".to_string(),
     };
 
     NpuInfo {

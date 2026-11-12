@@ -1,6 +1,6 @@
+use crate::util;
 use std::time::Instant;
 use xkm_native::platform::gpu;
-use crate::util;
 
 pub fn run() {
     println!("\n[gpu]");
