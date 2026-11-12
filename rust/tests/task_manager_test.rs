@@ -71,7 +71,7 @@ fn test_task_manager_actuators_lifecycle() {
     assert!(kill_all_background_processes().is_ok());
     assert!(force_stop_package("com.test.app", None).is_ok());
     assert!(kill_pids(&[99999], "test").is_ok());
-    assert_eq!(is_process_frozen(1).unwrap_or(true), false);
+    assert!(!is_process_frozen(1).unwrap_or(true));
     assert!(
         set_process_memory_trim_level("com.test.app", 1000, MemoryTrimLevel::RunningCritical)
             .is_ok()
@@ -87,15 +87,15 @@ fn test_task_manager_actuators_lifecycle() {
 fn test_touch_and_charging_actuators() {
     assert!(is_high_touch_polling_rate_supported());
     assert!(set_high_touch_polling_rate_enabled(true).is_ok());
-    assert_eq!(get_high_touch_polling_rate_enabled().unwrap(), true);
+    assert!(get_high_touch_polling_rate_enabled().unwrap());
     assert!(set_high_touch_polling_rate_enabled(false).is_ok());
-    assert_eq!(get_high_touch_polling_rate_enabled().unwrap(), false);
+    assert!(!get_high_touch_polling_rate_enabled().unwrap());
 
     assert!(is_charging_control_supported());
     assert!(set_charging_enabled(false).is_ok()); // Bypass mode
-    assert_eq!(get_charging_enabled().unwrap(), false);
+    assert!(!get_charging_enabled().unwrap());
     assert!(set_charging_enabled(true).is_ok());
-    assert_eq!(get_charging_enabled().unwrap(), true);
+    assert!(get_charging_enabled().unwrap());
 
     assert_eq!(get_thermal_status().unwrap(), ThermalStatus::None);
     assert!(get_thermal_headroom(0).unwrap() >= 0.0);

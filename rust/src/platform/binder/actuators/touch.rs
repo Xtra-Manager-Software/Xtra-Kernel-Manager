@@ -1,6 +1,8 @@
 #[allow(unused_imports)]
 use anyhow::{Context, Result, bail};
+#[cfg(target_os = "android")]
 use std::fs;
+#[cfg(target_os = "android")]
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -12,6 +14,7 @@ pub const TRANSACTION_GET_ENABLED: u32 = 1;
 pub const TRANSACTION_SET_ENABLED: u32 = 2;
 
 // OEM touch game mode nodes: (path, performance_value, balance_value)
+#[allow(dead_code)]
 const TOUCH_PATHS: &[(&str, &str, &str)] = &[
     // Xiaomi / POCO (bump_sample_rate)
     (
@@ -33,6 +36,45 @@ const TOUCH_PATHS: &[(&str, &str, &str)] = &[
 ];
 
 static ACTIVE_TOUCH_POLLING: AtomicBool = AtomicBool::new(false);
+
+#[cfg(target_os = "android")]
+fn query_hal_touch_enabled() -> Result<bool> {
+    if !crate::platform::binder::ensure_initialized() {
+        bail!("Binder not initialized");
+    }
+    let svc =
+        rsbinder::hub::check_service(HIGH_TOUCH_SERVICE).context("HighTouch service not found")?;
+    let proxy = svc.as_proxy().context("Failed to get proxy")?;
+    let data = proxy.prepare_transact(true)?;
+    let mut reply = proxy
+        .submit_transact(TRANSACTION_GET_ENABLED, &data, 0)?
+        .context("Empty reply")?;
+
+    match reply.read_i32()? {
+        0 => Ok(reply.read_bool()?),
+        code => bail!("HAL status non-zero: {code}"),
+    }
+}
+
+#[cfg(target_os = "android")]
+fn send_hal_touch_enabled(enabled: bool) -> Result<()> {
+    if !crate::platform::binder::ensure_initialized() {
+        bail!("Binder not initialized");
+    }
+    let svc =
+        rsbinder::hub::check_service(HIGH_TOUCH_SERVICE).context("HighTouch service not found")?;
+    let proxy = svc.as_proxy().context("Failed to get proxy")?;
+    let mut data = proxy.prepare_transact(true)?;
+    data.write(&enabled)?;
+    let mut reply = proxy
+        .submit_transact(TRANSACTION_SET_ENABLED, &data, 0)?
+        .context("Empty reply")?;
+
+    match reply.read_i32()? {
+        0 => Ok(()),
+        code => bail!("HAL set_enabled error code: {code}"),
+    }
+}
 
 /// Check if High Touch Polling Rate is supported via LineageOS/AOSP Touch HAL or OEM sysfs nodes.
 pub fn is_high_touch_polling_rate_supported() -> bool {
@@ -59,23 +101,9 @@ pub fn get_high_touch_polling_rate_enabled() -> Result<bool> {
     {
         // Many OEM kernel drivers (e.g. Xiaomi touch_dev) are write-only and return -EINVAL on read.
         // First try reading Binder HAL; if unsupported or failing, return cached state.
-        if crate::platform::binder::ensure_initialized() {
-            if let Some(svc) = rsbinder::hub::check_service(HIGH_TOUCH_SERVICE) {
-                if let Some(proxy) = svc.as_proxy() {
-                    if let Ok(data) = proxy.prepare_transact(true) {
-                        if let Ok(Some(mut r)) =
-                            proxy.submit_transact(TRANSACTION_GET_ENABLED, &data, 0)
-                        {
-                            if let Ok(0) = r.read_i32() {
-                                if let Ok(val) = r.read_bool() {
-                                    ACTIVE_TOUCH_POLLING.store(val, Ordering::Relaxed);
-                                    return Ok(val);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        if let Ok(val) = query_hal_touch_enabled() {
+            ACTIVE_TOUCH_POLLING.store(val, Ordering::Relaxed);
+            return Ok(val);
         }
         Ok(ACTIVE_TOUCH_POLLING.load(Ordering::Relaxed))
     }
@@ -91,31 +119,12 @@ pub fn set_high_touch_polling_rate_enabled(enabled: bool) -> Result<bool> {
 
     #[cfg(target_os = "android")]
     {
-        let mut applied = false;
+        let mut applied = send_hal_touch_enabled(enabled).is_ok();
 
-        // 1. Try Native Binder Touch HAL if available
-        if crate::platform::binder::ensure_initialized() {
-            if let Some(svc) = rsbinder::hub::check_service(HIGH_TOUCH_SERVICE) {
-                if let Some(proxy) = svc.as_proxy() {
-                    if let Ok(mut data) = proxy.prepare_transact(true) {
-                        if data.write(&enabled).is_ok() {
-                            if let Ok(Some(mut r)) =
-                                proxy.submit_transact(TRANSACTION_SET_ENABLED, &data, 0)
-                            {
-                                if let Ok(0) = r.read_i32() {
-                                    applied = true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // 2. Also write to OEM sysfs nodes for complete hardware coverage
-        for (path, perf_val, bal_val) in TOUCH_PATHS {
+        // Also write to OEM sysfs nodes for complete hardware coverage
+        for &(path, perf_val, bal_val) in TOUCH_PATHS {
             if Path::new(path).exists() {
-                let v = if enabled { *perf_val } else { *bal_val };
+                let v = if enabled { perf_val } else { bal_val };
                 if fs::write(path, v).is_ok() {
                     applied = true;
                 }

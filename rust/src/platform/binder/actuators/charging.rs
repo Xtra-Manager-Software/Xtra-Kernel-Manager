@@ -49,12 +49,13 @@ pub fn get_charging_enabled() -> Result<bool> {
         let data = proxy.prepare_transact(true)?;
 
         let reply = proxy.submit_transact(TRANSACTION_GET_CHARGING_ENABLED, &data, 0)?;
-        if let Some(mut r) = reply {
-            if let Ok(0) = r.read_i32() {
-                return Ok(r.read_bool().unwrap_or(true));
-            }
+        match reply {
+            Some(mut r) => match r.read_i32() {
+                Ok(0) => Ok(r.read_bool().unwrap_or(true)),
+                _ => bail!("Failed to read charging state"),
+            },
+            None => bail!("Failed to read charging state"),
         }
-        bail!("Failed to read charging state")
     }
     #[cfg(not(target_os = "android"))]
     {

@@ -1,7 +1,6 @@
 #[allow(unused_imports)]
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
-use std::fs;
 
 pub const ACTIVITY_SERVICE: &str = "activity";
 pub const ACTIVITY_DESCRIPTOR: &str = "android.app.IActivityManager";
@@ -57,16 +56,7 @@ pub enum MemoryTrimLevel {
     Complete = 80,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ProcessItem {
-    pub pid: i32,
-    pub uid: u32,
-    pub process_name: String,
-    pub package_name: String,
-    pub rss_kb: u64,
-    pub state: char,
-    pub cgroup: String,
-}
+pub use crate::platform::process::{ProcessItem, get_running_process_list};
 
 /// Kill all background processes belonging to the specified package.
 pub fn kill_background_processes(package_name: &str, user_id: Option<i32>) -> Result<()> {
@@ -211,12 +201,13 @@ pub fn set_process_memory_trim_level(
         data.write(&(level as i32))?;
 
         let reply = proxy.submit_transact(TRANSACTION_SET_PROCESS_MEMORY_TRIM_LEVEL, &data, 0)?;
-        if let Some(mut r) = reply {
-            if let Ok(0) = r.read_i32() {
-                return Ok(r.read_bool().unwrap_or(true));
-            }
+        match reply {
+            Some(mut r) => match r.read_i32() {
+                Ok(0) => Ok(r.read_bool().unwrap_or(true)),
+                _ => Ok(true),
+            },
+            None => Ok(true),
         }
-        Ok(true)
     }
     #[cfg(not(target_os = "android"))]
     {
@@ -241,13 +232,16 @@ pub fn get_app_standby_bucket(package_name: &str, user_id: Option<i32>) -> Resul
         data.write(&(user_id.unwrap_or(0)))?;
 
         let reply = proxy.submit_transact(TRANSACTION_GET_APP_STANDBY_BUCKET, &data, 0)?;
-        if let Some(mut r) = reply {
-            if let Ok(0) = r.read_i32() {
-                let bucket_val = r.read_i32().unwrap_or(10);
-                return Ok(StandbyBucket::from_i32(bucket_val));
-            }
+        match reply {
+            Some(mut r) => match r.read_i32() {
+                Ok(0) => {
+                    let bucket_val = r.read_i32().unwrap_or(10);
+                    Ok(StandbyBucket::from_i32(bucket_val))
+                }
+                _ => Ok(StandbyBucket::Active),
+            },
+            None => Ok(StandbyBucket::Active),
         }
-        Ok(StandbyBucket::Active)
     }
     #[cfg(not(target_os = "android"))]
     {
@@ -283,99 +277,4 @@ pub fn set_app_standby_bucket(
         let _ = (package_name, bucket, user_id);
         Ok(())
     }
-}
-
-/// Scan running processes natively without spawning subshells or companion APKs.
-pub fn get_running_process_list() -> Result<Vec<ProcessItem>> {
-    let mut list = Vec::with_capacity(128);
-    let proc_dir = fs::read_dir("/proc").context("Cannot read /proc")?;
-
-    for entry in proc_dir.flatten() {
-        let file_name = entry.file_name();
-        let name_str = match file_name.to_str() {
-            Some(s) => s,
-            None => continue,
-        };
-
-        let pid: i32 = match name_str.parse() {
-            Ok(p) => p,
-            Err(_) => continue,
-        };
-
-        if pid <= 100 {
-            continue; // Skip kernel threads
-        }
-
-        let pid_path = format!("/proc/{}", pid);
-        let cmdline_path = format!("{}/cmdline", pid_path);
-        let status_path = format!("{}/status", pid_path);
-        let cgroup_path = format!("{}/cgroup", pid_path);
-
-        // 1. Process / Package Name from cmdline
-        let cmdline_bytes = fs::read(&cmdline_path).unwrap_or_default();
-        let first_null = cmdline_bytes
-            .iter()
-            .position(|&b| b == 0)
-            .unwrap_or(cmdline_bytes.len());
-        let raw_name = std::str::from_utf8(&cmdline_bytes[..first_null]).unwrap_or("");
-        if raw_name.is_empty() {
-            continue;
-        }
-
-        let process_name = raw_name.to_string();
-        let package_name = raw_name.split(':').next().unwrap_or(raw_name).to_string();
-
-        // 2. UID, State, RSS from status
-        let mut uid = 0u32;
-        let mut rss_kb = 0u64;
-        let mut state = 'S';
-
-        if let Ok(status_str) = fs::read_to_string(&status_path) {
-            for line in status_str.lines() {
-                if let Some(rest) = line.strip_prefix("Uid:") {
-                    if let Some(first_uid) = rest.split_whitespace().next() {
-                        uid = first_uid.parse().unwrap_or(0);
-                    }
-                } else if let Some(rest) = line.strip_prefix("State:") {
-                    if let Some(s) = rest.trim().chars().next() {
-                        state = s;
-                    }
-                } else if let Some(rest) = line.strip_prefix("VmRSS:") {
-                    if let Some(kb) = rest.split_whitespace().next() {
-                        rss_kb = kb.parse().unwrap_or(0);
-                    }
-                }
-            }
-        }
-
-        // 3. Cgroup (top-app, foreground, background)
-        let mut cgroup = "default".to_string();
-        if let Ok(cg_str) = fs::read_to_string(&cgroup_path) {
-            for line in cg_str.lines() {
-                if line.contains("cpuset") {
-                    if let Some(grp) = line.split(':').nth(2) {
-                        let trimmed = grp.trim_start_matches('/');
-                        if !trimmed.is_empty() {
-                            cgroup = trimmed.to_string();
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        list.push(ProcessItem {
-            pid,
-            uid,
-            process_name,
-            package_name,
-            rss_kb,
-            state,
-            cgroup,
-        });
-    }
-
-    // Sort by RSS memory descending
-    list.sort_unstable_by(|a, b| b.rss_kb.cmp(&a.rss_kb));
-    Ok(list)
 }

@@ -6,44 +6,39 @@ pub struct ForegroundAppInfo {
     pub pid: Option<i32>,
 }
 
-/// Query foreground package using Native Binder `activity_task` IPC with Linux cgroup top-app fallback
-pub fn get_foreground_app() -> Option<ForegroundAppInfo> {
-    // 1. Try Native Binder IPC via activity_task (getFocusedRootTaskInfo)
-    #[cfg(target_os = "android")]
-    {
-        if crate::platform::binder::ensure_initialized() {
-            if let Some(atm) = rsbinder::hub::check_service("activity_task") {
-                if let Some(proxy) = atm.as_proxy() {
-                    if let Ok(data) = proxy.prepare_transact(true) {
-                        // Transaction 30: getFocusedRootTaskInfo
-                        if let Ok(Some(mut reply)) = proxy.submit_transact(30, &data, 0) {
-                            if reply.data_size() >= 0x28 {
-                                if let Ok(0) = reply.read_i32() {
-                                    if let Ok(1) = reply.read_i32() {
-                                        reply.set_data_position(0x24);
-                                        if let Ok(1) = reply.read_i32() {
-                                            if let Ok(Some(comp_str)) = reply.read::<Option<String>>() {
-                                                let pkg = comp_str.split('/').next().unwrap_or(&comp_str).trim();
-                                                if !pkg.is_empty() && !pkg.contains("systemui") && !pkg.contains("launcher") {
-                                                    let pid = find_pid_by_package(pkg);
-                                                    return Some(ForegroundAppInfo {
-                                                        package_name: pkg.to_string(),
-                                                        pid,
-                                                    });
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+#[cfg(target_os = "android")]
+fn get_foreground_app_binder() -> Option<ForegroundAppInfo> {
+    if !crate::platform::binder::ensure_initialized() {
+        return None;
     }
+    let atm = rsbinder::hub::check_service("activity_task")?;
+    let proxy = atm.as_proxy()?;
+    let data = proxy.prepare_transact(true).ok()?;
+    // Transaction 30: getFocusedRootTaskInfo
+    let mut reply = proxy.submit_transact(30, &data, 0).ok()??;
+    if reply.data_size() < 0x28 {
+        return None;
+    }
+    if reply.read_i32().ok()? != 0 || reply.read_i32().ok()? != 1 {
+        return None;
+    }
+    reply.set_data_position(0x24);
+    if reply.read_i32().ok()? != 1 {
+        return None;
+    }
+    let comp_str = reply.read::<Option<String>>().ok()??;
+    let pkg = comp_str.split('/').next().unwrap_or(&comp_str).trim();
+    if !pkg.is_empty() && !pkg.contains("systemui") && !pkg.contains("launcher") {
+        let pid = find_pid_by_package(pkg);
+        return Some(ForegroundAppInfo {
+            package_name: pkg.to_string(),
+            pid,
+        });
+    }
+    None
+}
 
-    // 2. Fall back to Linux cgroup top-app & /proc without permissions
+fn get_foreground_app_cgroups() -> Option<ForegroundAppInfo> {
     let cgroup_paths = [
         "/dev/cpuset/top-app/cgroup.procs",
         "/sys/fs/cgroup/top-app/cgroup.procs",
@@ -51,32 +46,45 @@ pub fn get_foreground_app() -> Option<ForegroundAppInfo> {
     ];
 
     for path in cgroup_paths {
-        if let Ok(content) = fs::read_to_string(path) {
-            for line in content.lines().rev() {
-                if let Ok(pid) = line.trim().parse::<i32>() {
-                    if pid <= 2000 {
-                        continue; // Skip system_server and init
-                    }
+        let Ok(content) = fs::read_to_string(path) else {
+            continue;
+        };
+        for line in content.lines().rev() {
+            let Ok(pid) = line.trim().parse::<i32>() else {
+                continue;
+            };
+            if pid <= 2000 {
+                continue; // Skip system_server and init
+            }
 
-                    if let Some(pkg) = get_pkg_from_cmdline(pid) {
-                        if !pkg.starts_with("/system")
-                            && !pkg.starts_with("sh")
-                            && !pkg.contains("inputmethod")
-                            && !pkg.contains("systemui")
-                            && !pkg.is_empty()
-                        {
-                            return Some(ForegroundAppInfo {
-                                package_name: pkg,
-                                pid: Some(pid),
-                            });
-                        }
-                    }
+            if let Some(pkg) = get_pkg_from_cmdline(pid) {
+                let is_ignored = pkg.is_empty()
+                    || pkg.starts_with("/system")
+                    || pkg.starts_with("sh")
+                    || pkg.contains("inputmethod")
+                    || pkg.contains("systemui");
+                if !is_ignored {
+                    return Some(ForegroundAppInfo {
+                        package_name: pkg,
+                        pid: Some(pid),
+                    });
                 }
             }
         }
     }
-
     None
+}
+
+/// Query foreground package using Native Binder `activity_task` IPC with Linux cgroup top-app fallback
+pub fn get_foreground_app() -> Option<ForegroundAppInfo> {
+    #[cfg(target_os = "android")]
+    {
+        if let Some(info) = get_foreground_app_binder() {
+            return Some(info);
+        }
+    }
+
+    get_foreground_app_cgroups()
 }
 
 fn get_pkg_from_cmdline(pid: i32) -> Option<String> {

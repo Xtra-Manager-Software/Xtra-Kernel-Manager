@@ -123,12 +123,24 @@ pub fn apply_refresh_rate(rate_hz: u32) -> Result<()> {
         if rate_hz == 0 {
             if let Some(peak) = state.saved_peak_hz {
                 let _ = std::process::Command::new("cmd")
-                    .args(["settings", "put", "system", "peak_refresh_rate", &peak.to_string()])
+                    .args([
+                        "settings",
+                        "put",
+                        "system",
+                        "peak_refresh_rate",
+                        &peak.to_string(),
+                    ])
                     .status();
             }
             if let Some(min) = state.saved_min_hz {
                 let _ = std::process::Command::new("cmd")
-                    .args(["settings", "put", "system", "min_refresh_rate", &min.to_string()])
+                    .args([
+                        "settings",
+                        "put",
+                        "system",
+                        "min_refresh_rate",
+                        &min.to_string(),
+                    ])
                     .status();
             }
         } else {

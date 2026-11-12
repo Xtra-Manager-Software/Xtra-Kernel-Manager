@@ -92,7 +92,9 @@ pub fn is_display_rotation_frozen(display_id: i32) -> bool {
         if data.write(&display_id).is_err() {
             return false;
         }
-        let Ok(Some(mut reply)) = proxy.submit_transact(TRANSACTION_IS_DISPLAY_ROTATION_FROZEN, &data, 0) else {
+        let Ok(Some(mut reply)) =
+            proxy.submit_transact(TRANSACTION_IS_DISPLAY_ROTATION_FROZEN, &data, 0)
+        else {
             return false;
         };
         if let Ok(ex) = reply.read_i32() {

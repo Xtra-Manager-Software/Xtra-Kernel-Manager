@@ -56,13 +56,16 @@ pub fn get_thermal_status() -> Result<ThermalStatus> {
         let data = proxy.prepare_transact(true)?;
 
         let reply = proxy.submit_transact(TRANSACTION_GET_CURRENT_THERMAL_STATUS, &data, 0)?;
-        if let Some(mut r) = reply {
-            if let Ok(0) = r.read_i32() {
-                let status_val = r.read_i32().unwrap_or(0);
-                return Ok(ThermalStatus::from_i32(status_val));
-            }
+        match reply {
+            Some(mut r) => match r.read_i32() {
+                Ok(0) => {
+                    let status_val = r.read_i32().unwrap_or(0);
+                    Ok(ThermalStatus::from_i32(status_val))
+                }
+                _ => bail!("Failed to read thermal status"),
+            },
+            None => bail!("Failed to read thermal status"),
         }
-        bail!("Failed to read thermal status")
     }
     #[cfg(not(target_os = "android"))]
     {
@@ -88,13 +91,13 @@ pub fn get_thermal_headroom(forecast_seconds: i32) -> Result<f32> {
         data.write(&forecast_seconds)?;
 
         let reply = proxy.submit_transact(TRANSACTION_GET_THERMAL_HEADROOM, &data, 0)?;
-        if let Some(mut r) = reply {
-            if let Ok(0) = r.read_i32() {
-                let headroom = r.read_f32().unwrap_or(f32::NAN);
-                return Ok(headroom);
-            }
+        match reply {
+            Some(mut r) => match r.read_i32() {
+                Ok(0) => Ok(r.read_f32().unwrap_or(f32::NAN)),
+                _ => Ok(f32::NAN),
+            },
+            None => Ok(f32::NAN),
         }
-        Ok(f32::NAN)
     }
     #[cfg(not(target_os = "android"))]
     {
