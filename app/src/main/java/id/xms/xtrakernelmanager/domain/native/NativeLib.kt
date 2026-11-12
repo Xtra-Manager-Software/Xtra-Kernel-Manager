@@ -600,6 +600,33 @@ object NativeLib {
   private external fun setGovernorNative(cluster: Int, governor: String): Boolean
   private external fun setSwappinessNative(swappiness: Int): Boolean
   private external fun getForegroundAppNative(): String
+  private external fun getNativeLogsNative(maxCount: Int): String
+  private external fun setNativeLogLevelNative(level: Int)
+
+  /**
+   * Retrieve recent native diagnostics and operational logs from memory ring-buffer
+   */
+  fun getNativeLogs(maxCount: Int = 100): String {
+    if (!isLoaded) return "[]"
+    return try {
+      getNativeLogsNative(maxCount)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native getNativeLogs failed: ${e.message}")
+      "[]"
+    }
+  }
+
+  /**
+   * Set dynamic log level filter (0=Off, 1=Error, 2=Warn, 3=Info, 4=Debug, 5=Trace)
+   */
+  fun setNativeLogLevel(level: Int) {
+    if (!isLoaded) return
+    try {
+      setNativeLogLevelNative(level)
+    } catch (e: Exception) {
+      Log.e(TAG, "Native setNativeLogLevel failed: ${e.message}")
+    }
+  }
 
   /**
    * Fetch complete 1-pass telemetry snapshot as raw JSON

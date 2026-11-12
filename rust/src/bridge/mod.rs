@@ -1,6 +1,7 @@
 pub mod backward_compat;
 pub mod binder_bridge;
 pub mod fps_bridge;
+pub mod logging_bridge;
 pub mod telemetry_bridge;
 pub mod tuning_bridge;
 
