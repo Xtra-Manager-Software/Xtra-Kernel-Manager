@@ -18,7 +18,10 @@ mod loom_tests {
     #[test]
     fn test_concurrent_cpu_snapshot_updates() {
         loom::model(|| {
-            let shared_cache = Arc::new(Mutex::new(CpuTimeSnapshot { total: 100, idle: 50 }));
+            let shared_cache = Arc::new(Mutex::new(CpuTimeSnapshot {
+                total: 100,
+                idle: 50,
+            }));
 
             let c1 = shared_cache.clone();
             let th1 = thread::spawn(move || {
@@ -90,6 +93,7 @@ fn test_multithreaded_stress_telemetry() {
         .collect();
 
     for h in handles {
-        h.join().expect("Worker thread should not panic under concurrent telemetry polling");
+        h.join()
+            .expect("Worker thread should not panic under concurrent telemetry polling");
     }
 }

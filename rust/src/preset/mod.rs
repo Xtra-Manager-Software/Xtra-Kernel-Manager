@@ -2,9 +2,7 @@ use anyhow::Result;
 use tracing::info;
 
 use crate::platform::{
-    cpu,
-    gpu,
-    memory,
+    cpu, gpu, memory,
     thermal::{self, XiaomiThermalPreset},
 };
 

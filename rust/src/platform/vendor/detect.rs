@@ -27,9 +27,15 @@ static DETECTED_SOC: OnceLock<SocVendor> = OnceLock::new();
 
 pub fn detect_soc_vendor() -> SocVendor {
     *DETECTED_SOC.get_or_init(|| {
-        let hardware = common::get_system_property("ro.hardware").unwrap_or_default().to_lowercase();
-        let platform = common::get_system_property("ro.board.platform").unwrap_or_default().to_lowercase();
-        let soc_model = common::get_system_property("ro.soc.model").unwrap_or_default().to_lowercase();
+        let hardware = common::get_system_property("ro.hardware")
+            .unwrap_or_default()
+            .to_lowercase();
+        let platform = common::get_system_property("ro.board.platform")
+            .unwrap_or_default()
+            .to_lowercase();
+        let soc_model = common::get_system_property("ro.soc.model")
+            .unwrap_or_default()
+            .to_lowercase();
 
         let combined = format!("{} {} {}", hardware, platform, soc_model);
 

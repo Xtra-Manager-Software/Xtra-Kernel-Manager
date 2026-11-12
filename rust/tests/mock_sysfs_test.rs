@@ -14,14 +14,25 @@ fn test_mocked_cpu_policy_reading() {
     fs::write(policy0.join("cpuinfo_max_freq"), "1800000\n").unwrap();
     fs::write(policy0.join("scaling_cur_freq"), "1200000\n").unwrap();
     fs::write(policy0.join("scaling_governor"), "schedutil\n").unwrap();
-    fs::write(policy0.join("scaling_available_governors"), "schedutil performance powersave\n").unwrap();
+    fs::write(
+        policy0.join("scaling_available_governors"),
+        "schedutil performance powersave\n",
+    )
+    .unwrap();
 
     // Verify file content parsing
     let affected = fs::read_to_string(policy0.join("affected_cpus")).unwrap();
-    let cores: Vec<i32> = affected.split_whitespace().filter_map(|s| s.parse().ok()).collect();
+    let cores: Vec<i32> = affected
+        .split_whitespace()
+        .filter_map(|s| s.parse().ok())
+        .collect();
     assert_eq!(cores, vec![0, 1, 2, 3]);
 
-    let max_freq: i64 = fs::read_to_string(policy0.join("cpuinfo_max_freq")).unwrap().trim().parse().unwrap();
+    let max_freq: i64 = fs::read_to_string(policy0.join("cpuinfo_max_freq"))
+        .unwrap()
+        .trim()
+        .parse()
+        .unwrap();
     assert_eq!(max_freq, 1800000);
 
     let gov = fs::read_to_string(policy0.join("scaling_governor")).unwrap();
@@ -44,10 +55,20 @@ fn test_mocked_thermal_zone_reading() {
     fs::write(tz1.join("type"), "battery\n").unwrap();
     fs::write(tz1.join("temp"), "34000\n").unwrap();
 
-    let temp0: f32 = fs::read_to_string(tz0.join("temp")).unwrap().trim().parse::<f32>().unwrap() / 1000.0;
+    let temp0: f32 = fs::read_to_string(tz0.join("temp"))
+        .unwrap()
+        .trim()
+        .parse::<f32>()
+        .unwrap()
+        / 1000.0;
     assert_eq!(temp0, 42.5);
 
-    let temp1: f32 = fs::read_to_string(tz1.join("temp")).unwrap().trim().parse::<f32>().unwrap() / 1000.0;
+    let temp1: f32 = fs::read_to_string(tz1.join("temp"))
+        .unwrap()
+        .trim()
+        .parse::<f32>()
+        .unwrap()
+        / 1000.0;
     assert_eq!(temp1, 34.0);
 }
 
@@ -95,7 +116,10 @@ fn test_mocked_kgsl_gpu_busy() {
     fs::write(&gpubusy_file, "150000 600000\n").unwrap();
 
     let content = fs::read_to_string(&gpubusy_file).unwrap();
-    let parts: Vec<i64> = content.split_whitespace().filter_map(|s| s.parse().ok()).collect();
+    let parts: Vec<i64> = content
+        .split_whitespace()
+        .filter_map(|s| s.parse().ok())
+        .collect();
     assert_eq!(parts.len(), 2);
     let busy = parts[0];
     let total = parts[1];

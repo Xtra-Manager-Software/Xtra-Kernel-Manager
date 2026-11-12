@@ -1,3 +1,3 @@
 pub mod detect;
 
-pub use detect::{detect_soc_vendor, SocVendor};
+pub use detect::{SocVendor, detect_soc_vendor};
