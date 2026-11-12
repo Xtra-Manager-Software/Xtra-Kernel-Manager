@@ -37,7 +37,7 @@ datastore = "1.2.0"
 libsu = "6.0.0"
 
 # Google Play Services
-play-services-base = "18.10.0"
+play-services-base = "18.11.1"
 play-services-tasks = "18.4.1"
 
 # TOML Parser
