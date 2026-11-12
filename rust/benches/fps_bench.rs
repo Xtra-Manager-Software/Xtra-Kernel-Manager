@@ -2,9 +2,7 @@ use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use std::fs::File;
 use std::io::Write;
 use tempfile::tempdir;
-use xkm_native::platform::fps::{
-    FpsReading, FpsSource, SysfsFpsReader, parse_sysfs_fps, read_fps,
-};
+use xkm_native::platform::fps::{FpsReading, FpsSource, SysfsFpsReader, parse_sysfs_fps, read_fps};
 
 fn bench_parse_sysfs_fps(c: &mut Criterion) {
     let mut group = c.benchmark_group("fps_parsing");

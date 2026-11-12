@@ -2,7 +2,7 @@ pub mod meter;
 pub mod sysfs;
 pub mod types;
 
-pub use meter::{diagnose_drop_cause, FpsMeter};
+pub use meter::{FpsMeter, diagnose_drop_cause};
 pub use sysfs::{FPS_SYSFS_PATHS, SysfsFpsReader, parse_sysfs_fps};
 pub use types::{FpsReading, FpsSource, FrameDropCause};
 
@@ -48,7 +48,10 @@ pub fn set_target_package(pkg: Option<String>) {
 
 /// Get current target package name.
 pub fn get_target_package() -> Option<String> {
-    GLOBAL_FPS_METER.lock().get_target_package()
+    GLOBAL_FPS_METER
+        .lock()
+        .get_target_package()
+        .map(str::to_string)
 }
 
 /// Set target package whitelist.
@@ -58,7 +61,7 @@ pub fn set_target_whitelist(list: Vec<String>) {
 
 /// Get target package whitelist.
 pub fn get_target_whitelist() -> Vec<String> {
-    GLOBAL_FPS_METER.lock().get_target_whitelist()
+    GLOBAL_FPS_METER.lock().get_target_whitelist().to_vec()
 }
 
 /// Check if eBPF uprobe is currently attached to a live process.

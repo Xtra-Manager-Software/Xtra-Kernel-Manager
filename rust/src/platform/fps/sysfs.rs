@@ -57,22 +57,21 @@ impl SysfsFpsReader {
             self.path = Self::detect_sysfs();
         }
 
-        match self.cached.is_some() && now.duration_since(self.last_poll) < SYSFS_POLL_INTERVAL {
-            true => self.cached,
-            false => {
-                self.last_poll = now;
-                let path = self.path.as_ref()?;
-                let content = fs::read_to_string(path).ok()?;
-                let fps = match parse_sysfs_fps(&content) {
-                    Some(f) => f,
-                    None => self.cached?.fps,
-                };
-
-                let reading = FpsReading::new(fps, FpsSource::Sysfs);
-                self.cached = Some(reading);
-                Some(reading)
-            }
+        if self.cached.is_some() && now.duration_since(self.last_poll) < SYSFS_POLL_INTERVAL {
+            return self.cached;
         }
+
+        self.last_poll = now;
+        let path = self.path.as_ref()?;
+        let content = fs::read_to_string(path).ok()?;
+        let fps = match parse_sysfs_fps(&content) {
+            Some(f) => f,
+            None => self.cached?.fps,
+        };
+
+        let reading = FpsReading::new(fps, FpsSource::Sysfs);
+        self.cached = Some(reading);
+        Some(reading)
     }
 
     pub fn clear(&mut self) {
@@ -99,26 +98,31 @@ pub fn parse_sysfs_fps(content: &str) -> Option<f64> {
         .map(str::trim)
         .filter(|s| !s.is_empty());
 
+    let parse_val = |candidate: &str| {
+        candidate
+            .parse::<f64>()
+            .ok()
+            .filter(|v| (0.0..=500.0).contains(v))
+    };
+
     while let Some(token) = tokens.next() {
-        if let Some(val_str) = strip_case_prefix(token, "fps:")
-            .or_else(|| strip_case_prefix(token, "fps="))
+        let candidate = if let Some(val_str) =
+            strip_case_prefix(token, "fps:").or_else(|| strip_case_prefix(token, "fps="))
         {
             let val_clean = val_str.trim();
             if !val_clean.is_empty() {
-                if let Ok(v) = val_clean.parse::<f64>() {
-                    return (0.0..=500.0).contains(&v).then_some(v);
-                }
-            } else if let Some(next) = tokens.next() {
-                if let Ok(v) = next.parse::<f64>() {
-                    return (0.0..=500.0).contains(&v).then_some(v);
-                }
+                Some(val_clean)
+            } else {
+                tokens.next()
             }
         } else if token.eq_ignore_ascii_case("fps") {
-            if let Some(next) = tokens.next() {
-                if let Ok(v) = next.parse::<f64>() {
-                    return (0.0..=500.0).contains(&v).then_some(v);
-                }
-            }
+            tokens.next()
+        } else {
+            None
+        };
+
+        if let Some(v) = candidate.and_then(parse_val) {
+            return Some(v);
         }
     }
 
@@ -127,10 +131,12 @@ pub fn parse_sysfs_fps(content: &str) -> Option<f64> {
 
 #[inline]
 fn strip_case_prefix<'a>(s: &'a str, prefix: &str) -> Option<&'a str> {
-    if s.len() >= prefix.len() && s.is_char_boundary(prefix.len()) {
-        if s[..prefix.len()].eq_ignore_ascii_case(prefix) {
-            return Some(&s[prefix.len()..]);
-        }
+    if s.len() >= prefix.len()
+        && s.is_char_boundary(prefix.len())
+        && s[..prefix.len()].eq_ignore_ascii_case(prefix)
+    {
+        Some(&s[prefix.len()..])
+    } else {
+        None
     }
-    None
 }

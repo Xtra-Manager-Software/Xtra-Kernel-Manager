@@ -3,9 +3,9 @@ use super::types::{FpsReading, FpsSource, FrameDropCause};
 use parking_lot::Mutex;
 use std::collections::VecDeque;
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::{Receiver, Sender, channel};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
@@ -94,8 +94,8 @@ impl FpsMeter {
         }
     }
 
-    pub fn get_target_package(&self) -> Option<String> {
-        self.target_package.clone()
+    pub fn get_target_package(&self) -> Option<&str> {
+        self.target_package.as_deref()
     }
 
     /// Set a list of target package names.
@@ -106,8 +106,17 @@ impl FpsMeter {
         }
     }
 
-    pub fn get_target_whitelist(&self) -> Vec<String> {
-        self.whitelist.clone()
+    pub fn get_target_whitelist(&self) -> &[String] {
+        &self.whitelist
+    }
+
+    #[inline]
+    fn matches_target(&self, pkg: &str) -> bool {
+        match (&self.target_package, &self.whitelist) {
+            (Some(target), _) if pkg == target => true,
+            (_, list) if !list.is_empty() => list.iter().any(|p| p == pkg),
+            _ => false,
+        }
     }
 
     /// Check if eBPF uprobe is currently attached to a live process.
@@ -167,32 +176,26 @@ impl FpsMeter {
         let has_target_rule = self.target_package.is_some() || !self.whitelist.is_empty();
 
         if has_target_rule {
-            if let Some(fg) = crate::platform::binder::get_foreground_app() {
-                let matches_target = match (&self.target_package, &self.whitelist) {
-                    (Some(target), _) if fg.package_name == *target => true,
-                    (_, list) if !list.is_empty() => list.iter().any(|p| p == &fg.package_name),
-                    _ => false,
-                };
-
-                if matches_target {
-                    if let Some(pid) = fg.pid {
-                        let current_attached = self.shared.lock().attached_pid;
-                        if current_attached != Some(pid) {
-                            self.attach_pid(pid);
-                        }
+            match crate::platform::binder::get_foreground_app() {
+                Some(fg) if self.matches_target(&fg.package_name) => match fg.pid {
+                    Some(pid) if self.shared.lock().attached_pid != Some(pid) => {
+                        self.attach_pid(pid);
                     }
-                } else if self.shared.lock().attached_pid.is_some() {
-                    self.detach_current();
+                    _ => {}
+                },
+                _ => {
+                    if self.shared.lock().attached_pid.is_some() {
+                        self.detach_current();
+                    }
                 }
-            } else if self.shared.lock().attached_pid.is_some() {
-                self.detach_current();
             }
         } else {
-            let attached = self.shared.lock().attached_pid;
-            if let Some(pid) = attached {
-                if !Path::new(&format!("/proc/{}", pid)).exists() {
+            let attached_pid = self.shared.lock().attached_pid;
+            match attached_pid {
+                Some(pid) if !Path::new(&format!("/proc/{}", pid)).exists() => {
                     self.detach_current();
                 }
+                _ => {}
             }
         }
 
@@ -279,8 +282,7 @@ impl FpsMeter {
         let deadline_ms = 1000.0 / target_fps;
         let jank_threshold = deadline_ms * 1.35;
         let jank_count = ms_list.iter().filter(|&&ms| ms >= jank_threshold).count() as u32;
-        let jank_percent =
-            ((jank_count as f64 / valid_count as f64) * 100.0 * 10.0).round() / 10.0;
+        let jank_percent = ((jank_count as f64 / valid_count as f64) * 100.0 * 10.0).round() / 10.0;
 
         // 1% Low and 0.1% Low calculation
         // Sort ms_list ascending: index near end = slowest frames (lowest FPS)
@@ -408,18 +410,16 @@ fn run_ebpf_worker(
             }
         }
 
-        if attached_pid.is_none() {
+        let Some(pid) = attached_pid else {
             continue;
-        }
+        };
 
         // Check if attached process died
-        if let Some(pid) = attached_pid {
-            if last_health_check.elapsed() >= Duration::from_millis(500) {
-                last_health_check = Instant::now();
-                if !Path::new(&format!("/proc/{}", pid)).exists() {
-                    handle_detach(&mut probe, &mut attached_pid, &shared);
-                    continue;
-                }
+        if last_health_check.elapsed() >= Duration::from_millis(500) {
+            last_health_check = Instant::now();
+            if !Path::new(&format!("/proc/{}", pid)).exists() {
+                handle_detach(&mut probe, &mut attached_pid, &shared);
+                continue;
             }
         }
 

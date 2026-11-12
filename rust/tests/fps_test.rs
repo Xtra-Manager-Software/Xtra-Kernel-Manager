@@ -1,9 +1,7 @@
 use std::fs::File;
 use std::io::Write;
 use tempfile::tempdir;
-use xkm_native::platform::fps::{
-    FpsMeter, FpsReading, FpsSource, SysfsFpsReader, parse_sysfs_fps,
-};
+use xkm_native::platform::fps::{FpsMeter, FpsReading, FpsSource, SysfsFpsReader, parse_sysfs_fps};
 
 #[test]
 fn test_parse_sysfs_fps_formats() {
@@ -95,7 +93,7 @@ fn test_fps_meter_target_and_detach_lifecycle() {
 
     // Set target package
     meter.set_target_package(Some("com.mihoyo.genshin".to_string()));
-    assert_eq!(meter.get_target_package(), Some("com.mihoyo.genshin".to_string()));
+    assert_eq!(meter.get_target_package(), Some("com.mihoyo.genshin"));
 
     // Whitelist
     meter.set_target_whitelist(vec![

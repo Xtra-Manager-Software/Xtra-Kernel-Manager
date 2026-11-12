@@ -1,13 +1,12 @@
 use std::fs::File;
 use std::io::Write;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 use tempfile::tempdir;
 use xkm_native::platform::fps::{
-    attach_fps_pid, clear_fps, detach_fps_pid, parse_sysfs_fps, read_fps, FpsMeter,
-    SysfsFpsReader,
+    FpsMeter, SysfsFpsReader, attach_fps_pid, clear_fps, detach_fps_pid, parse_sysfs_fps, read_fps,
 };
 
 #[test]
@@ -138,7 +137,8 @@ fn test_concurrent_hammering_stress() {
     }
 
     for h in handles {
-        h.join().expect("Worker thread panicked under concurrency stress");
+        h.join()
+            .expect("Worker thread panicked under concurrency stress");
     }
 
     clear_fps();

@@ -7,9 +7,10 @@ pub enum FpsSource {
     Sysfs,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FrameDropCause {
+    #[default]
     Smooth,
     CpuBound,
     GpuBound,
@@ -28,12 +29,6 @@ impl FrameDropCause {
             Self::MemoryPressure => "Memory Pressure",
             Self::AppStall => "App Stall",
         }
-    }
-}
-
-impl Default for FrameDropCause {
-    fn default() -> Self {
-        Self::Smooth
     }
 }
 
