@@ -41,7 +41,7 @@ play-services-base = "18.11.1"
 play-services-tasks = "18.4.1"
 
 # TOML Parser
-tomlj = "1.1.1"
+tomlj = "2.2.0"
 
 # Accompanist
 accompanist = "0.36.0"
