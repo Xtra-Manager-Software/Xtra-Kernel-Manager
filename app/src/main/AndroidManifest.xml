@@ -2,55 +2,28 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permissions for miscellaneous advanced features -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Required for kernel management and system optimization -->
-    <!-- <uses-permission android:name="android.permission.ACCESS_SUPERUSER" /> -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- Required for system reboot after kernel changes -->
-    <!-- <uses-permission android:name="android.permission.REBOOT" tools:ignore="ProtectedPermissions" /> -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <!-- Required for game overlay functionality -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:ignore="ForegroundServicesPolicy" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" tools:ignore="ScopedStorage" />
-    <!-- Required for app usage monitoring and optimization -->
-    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
-    <!-- Required for per-app profile management -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
 
-    <!-- Permissions for fullscreen and overlay (OOS, MIUI, AOSP) -->
-    <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="oppo.permission.OPPO_COMPONENT_SAFE" tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="com.huawei.permission.external_app_settings.USE_COMPONENT" tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.XtraKernelManager"
+        tools:targetApi="31">
 
-    <application android:name=".XtraKernelApp" android:allowBackup="true" android:dataExtractionRules="@xml/data_extraction_rules" android:fullBackupContent="@xml/backup_rules" android:icon="@mipmap/ic_launcher" android:label="@string/app_name_short" android:roundIcon="@mipmap/ic_launcher_round" android:supportsRtl="true" android:theme="@style/Theme.XtraKernelManager" tools:targetApi="31">
-        
-        <!-- Play Protect compatibility metadata -->
-        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />
-        <meta-data android:name="com.google.android.play.billingclient.version" android:value="5.0.0" />
-        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
-        <meta-data android:name="com.google.android.play.core.splitcompat.SplitCompatApplication" android:value="true" />
-        
-        <!-- Indicate legitimate app purpose -->
-        <meta-data android:name="app.category" android:value="productivity" />
-        <meta-data android:name="app.purpose" android:value="system_optimization" />
-        <meta-data android:name="distribution.channel" android:value="direct_download" />
-        
         <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name_short"
+            android:label="@string/app_name"
             android:theme="@style/Theme.XtraKernelManager"
             android:windowSoftInputMode="adjustResize"
             android:configChanges="locale|layoutDirection|orientation|screenSize|smallestScreenSize|screenLayout|uiMode|fontScale|keyboardHidden">
@@ -60,110 +33,15 @@
             </intent-filter>
         </activity>
 
-        <!-- Splash Activity (Fast redirect fallback) -->
-        <activity
-            android:name=".ui.splash.SplashActivity"
-            android:exported="false"
-            android:theme="@style/Theme.XtraKernelManager.Splash" />
-
-
-        <!-- Boot Receiver -->
-        <receiver android:name=".receiver.BootReceiver" android:enabled="true" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
-        <!-- Date/Time Change Receiver for Donation Notification -->
-        <receiver android:name=".receiver.DateChangeReceiver" android:enabled="true" android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.TIME_SET" />
-                <action android:name="android.intent.action.DATE_CHANGED" />
-                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
-            </intent-filter>
-        </receiver>
-
-        <!-- Game Overlay Service -->
-        <service android:name=".service.GameOverlayService" 
-                 android:enabled="true" 
-                 android:exported="false" 
-                 android:stopWithTask="true"
-                 android:foregroundServiceType="specialUse" 
-                 android:description="@string/game_overlay_service_description">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Game overlay controls and performance monitoring during gameplay for enhanced gaming experience" />
-        </service>
-
-        <!-- Floating Window Service for Quick Apps -->
-        <service android:name=".service.FloatingWindowService" 
-                 android:enabled="true" 
-                 android:exported="false" 
-                 android:stopWithTask="true"
-                 android:foregroundServiceType="specialUse" 
-                 android:description="@string/floating_window_service_description">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Floating window for quick apps during gaming to improve user productivity" />
-        </service>
-
-        <!-- Battery Info Notification Service -->
-        <service android:name=".service.BatteryInfoService" android:enabled="true" android:exported="false" android:stopWithTask="false" android:foregroundServiceType="specialUse" android:description="@string/battery_service_description">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Battery monitoring and statistics tracking for device health optimization" />
-        </service>
-
-        <!-- Per-App Profile Monitoring Service -->
-        <service android:name=".service.AppProfileService" 
-                 android:enabled="true" 
-                 android:exported="false" 
-                 android:stopWithTask="true"
-                 android:foregroundServiceType="specialUse" 
-                 android:description="@string/app_profile_service_description">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Per-app profile monitoring and automatic settings adjustment for optimal performance" />
-        </service>
-
-    <!-- Game Monitor Service - Accessibility Service for instant detection -->
-        <!-- Enabled for game overlay functionality -->
-        <service android:name=".service.GameMonitorService" 
-                 android:label="@string/game_monitor_service_label" 
-                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" 
-                 android:exported="true" 
-                 android:stopWithTask="false" 
-                 android:enabled="true"
-                 android:foregroundServiceType="specialUse"
-                 android:description="@string/accessibility_service_description">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data android:name="android.accessibilityservice" android:resource="@xml/accessibility_config" />
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" 
-                      android:value="Accessibility service for game detection and performance monitoring" />
-        </service>
-
-        <!-- Alternative Game Detection Service using UsageStats API -->
-        <!-- Safer alternative to Accessibility Service -->
-        <service android:name=".service.AlternativeGameDetectionService" 
-                 android:enabled="true" 
-                 android:exported="false" 
-                 android:stopWithTask="true"
-                 android:foregroundServiceType="specialUse">
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" 
-                      android:value="Game detection using usage statistics for performance optimization" />
-        </service>
-
-        <!-- Accessibility Restart Receiver -->
-        <receiver android:name=".receiver.AccessibilityRestartReceiver" android:enabled="true" android:exported="false">
-            <intent-filter>
-                <action android:name="${applicationId}.RESTART_ACCESSIBILITY" />
-            </intent-filter>
-        </receiver>
-
-        <!-- Performance Mode Quick Settings Tile -->
-        <service android:name=".service.PerformanceModeTileService" android:label="@string/tile_perf_label" android:icon="@drawable/ic_tile_balanced" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE" android:exported="true">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE" />
-            </intent-filter>
-        </service>
-
         <!-- File Provider -->
-        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true">
-            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
         </provider>
     </application>
 </manifest>
