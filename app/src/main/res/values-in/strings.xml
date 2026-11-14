@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Xtra Kernel Manager</string>
+    <string name="app_name_short">XKM</string>
+
+    <!-- Setup Wizard: Common & Navigation -->
+    <string name="setup_btn_lets_go">Mulai</string>
+    <string name="setup_step_counter">Langkah %1$d dari %2$d</string>
+    <string name="setup_btn_next">Lanjut</string>
+    <string name="setup_btn_finish">Selesai</string>
+    <string name="setup_nav_desc">Navigasi Setup</string>
+    <string name="setup_error_permission_required">Izin Diperlukan</string>
+
+    <!-- Setup Step 1: Welcome -->
+    <string name="setup_welcome_title">Selamat Datang di XKM</string>
+    <string name="setup_welcome_subtitle" formatted="false">Yet Another Kernel Manager  literally just a shell script wrapped in a Rust gimmick so it\'s \"bLaZiNgLy FaSt\". 100% placebo, trust me bro.</string>
+    <string name="setup_welcome_quote">If the only way to get off an island was to make a pretty UI, I\'d die there.</string>
+    <string name="setup_welcome_bongo_desc">Sambutan Bongo Cat</string>
+
+    <!-- Setup Step 2: Root Check -->
+    <string name="setup_root_title">Hak Akses Root</string>
+    <string name="setup_root_subtitle">Akses superuser diperlukan untuk konfigurasi node sysfs dan menerapkan kebijakan governor.</string>
+    <string name="setup_root_status_granted">Superuser Diberikan</string>
+    <string name="setup_root_status_granted_desc">Komunikasi daemon kernel aktif</string>
+    <string name="setup_root_status_awaiting">Menunggu Otorisasi</string>
+    <string name="setup_root_status_awaiting_desc">Berikan izin di Magisk / KernelSU / APatch</string>
+    <string name="setup_root_btn_verifying">Memverifikasi Superuser...</string>
+    <string name="setup_root_btn_verified">Hak Akses Terverifikasi</string>
+    <string name="setup_root_btn_grant">Berikan Izin Superuser</string>
+
+    <!-- Setup Step 3: Theme Selection -->
+    <string name="setup_theme_title">Pilih Tema</string>
+    <string name="setup_theme_subtitle">Pilih tampilan favorit Anda. \'Ikuti Sistem\' akan sinkron otomatis dengan pengaturan tampilan Android.</string>
+    <string name="setup_theme_system_title">Ikuti Sistem</string>
+    <string name="setup_theme_system_desc">Sinkron otomatis dengan setelan tema sistem Android</string>
+    <string name="setup_theme_dark_title">Tema Gelap</string>
+    <string name="setup_theme_dark_desc">Permukaan hitam pekat OLED dengan aksen dinamis Monet</string>
+    <string name="setup_theme_light_title">Tema Terang</string>
+    <string name="setup_theme_light_desc">Permukaan kontras tinggi yang cerah dengan aksen dinamis Monet</string>
+
+    <!-- Setup Step 4: Done / Celebration -->
+    <string name="setup_done_title">Semua Siap!</string>
+    <string name="setup_done_subtitle">Setup complete. Pretty sure your device gonna blow up soon, trust me.</string>
+    <string name="setup_done_explore_title">Let\'s break stuff</string>
+    <string name="setup_done_explore_desc">Tap the checkmark below to enter at your own risk.</string>
+    <string name="setup_done_kurukuru_desc">Perayaan Kurukuru</string>
+</resources>

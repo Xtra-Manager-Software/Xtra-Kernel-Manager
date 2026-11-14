@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Xtra Kernel Manager</string>
+    <string name="app_name_short">XKM</string>
+
+    <!-- Setup Wizard: Common & Navigation -->
+    <string name="setup_btn_lets_go">Let\'s go</string>
+    <string name="setup_step_counter">Step %1$d of %2$d</string>
+    <string name="setup_btn_next">Next</string>
+    <string name="setup_btn_finish">Finish</string>
+    <string name="setup_nav_desc">Setup Navigation</string>
+    <string name="setup_error_permission_required">Permission Required</string>
+
+    <!-- Setup Step 1: Welcome -->
+    <string name="setup_welcome_title">Welcome to XKM</string>
+    <string name="setup_welcome_subtitle" formatted="false">Yet Another Kernel Manager literally just a shell script wrapped in a Rust gimmick so it\'s \"bLaZiNgLy FaSt\". 100% placebo, trust me bro.</string>
+    <string name="setup_welcome_quote">If the only way to get off an island was to make a pretty UI, I\'d die there.</string>
+    <string name="setup_welcome_bongo_desc">Bongo Cat Welcome</string>
+
+    <!-- Setup Step 2: Root Check -->
+    <string name="setup_root_title">Root Privilege</string>
+    <string name="setup_root_subtitle">Superuser privileges are required to configure sysfs nodes and enforce governor policies.</string>
+    <string name="setup_root_status_granted">Superuser Granted</string>
+    <string name="setup_root_status_granted_desc">Kernel daemon communication active</string>
+    <string name="setup_root_status_awaiting">Awaiting Authorization</string>
+    <string name="setup_root_status_awaiting_desc">Grant Magisk / KernelSU / APatch prompt</string>
+    <string name="setup_root_btn_verifying">Verifying Superuser...</string>
+    <string name="setup_root_btn_verified">Privilege Verified</string>
+    <string name="setup_root_btn_grant">Grant Superuser Permission</string>
+
+    <!-- Setup Step 3: Theme Selection -->
+    <string name="setup_theme_title">Choose Theme</string>
+    <string name="setup_theme_subtitle">Pick your preferred appearance. \'Follow System\' dynamically synchronizes with Android OS display settings.</string>
+    <string name="setup_theme_system_title">Follow System</string>
+    <string name="setup_theme_system_desc">Auto-sync with Android system theme toggles</string>
+    <string name="setup_theme_dark_title">Dark Theme</string>
+    <string name="setup_theme_dark_desc">Deep OLED black surface with dynamic Monet accents</string>
+    <string name="setup_theme_light_title">Light Theme</string>
+    <string name="setup_theme_light_desc">Radiant, high-contrast surface with dynamic Monet accents</string>
+
+    <!-- Setup Step 4: Done / Celebration -->
+    <string name="setup_done_title">You\'re All Set!</string>
+    <string name="setup_done_subtitle">Setup complete. Pretty sure your device gonna blow up soon, trust me.</string>
+    <string name="setup_done_explore_title">Let\'s break stuff</string>
+    <string name="setup_done_explore_desc">Tap the checkmark below to enter at your own risk.</string>
+    <string name="setup_done_kurukuru_desc">Kurukuru Celebration</string>
+</resources>
