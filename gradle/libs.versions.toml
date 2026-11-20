@@ -1,6 +1,6 @@
 [versions]
 # Build
-agp = "9.5.1"
+agp = "9.5.2"
 kotlin = "2.3.20"
 compose = "1.7.5"
 
