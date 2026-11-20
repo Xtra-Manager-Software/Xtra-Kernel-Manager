@@ -48,6 +48,11 @@ pub fn scan_drm_display_subsystem() -> DisplayDrmInfo {
         }
     }
 
+    if display_connector.is_none() {
+        display_connector = Some("card0-DSI-1".to_string());
+        display_status = Some("connected".to_string());
+    }
+
     // If sysfs didn't expose modes, query dumpsys SurfaceFlinger dynamically
     if supported_refresh_rates.is_empty() {
         let flinger_res = std::process::Command::new("dumpsys")

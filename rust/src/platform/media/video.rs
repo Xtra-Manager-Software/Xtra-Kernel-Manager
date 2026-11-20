@@ -189,8 +189,51 @@ pub fn scan_media_codecs_from_files() -> MediaCodecInfo {
     let mut audio_codecs = Vec::new();
     let mut hw_decoders = Vec::new();
 
+    let av1 = VideoCodecCapability {
+        name: "AV1".to_string(),
+        decode: "SW".to_string(),
+        encode: "SW".to_string(),
+    };
+    let vp9 = VideoCodecCapability {
+        name: "VP9".to_string(),
+        decode: "HW".to_string(),
+        encode: "SW".to_string(),
+    };
+    let vp8 = VideoCodecCapability {
+        name: "VP8".to_string(),
+        decode: "HW".to_string(),
+        encode: "SW".to_string(),
+    };
+    let hevc = VideoCodecCapability {
+        name: "H.265 / HEVC".to_string(),
+        decode: "HW".to_string(),
+        encode: "HW".to_string(),
+    };
+    let avc = VideoCodecCapability {
+        name: "H.264 / AVC".to_string(),
+        decode: "HW".to_string(),
+        encode: "HW".to_string(),
+    };
+    let mpeg4 = VideoCodecCapability {
+        name: "MPEG-4 Visual".to_string(),
+        decode: "SW".to_string(),
+        encode: "SW".to_string(),
+    };
+    let h263 = VideoCodecCapability {
+        name: "H.263".to_string(),
+        decode: "SW".to_string(),
+        encode: "SW".to_string(),
+    };
+    let dolby_vision = VideoCodecCapability {
+        name: "Dolby Vision".to_string(),
+        decode: "HW".to_string(),
+        encode: "-".to_string(),
+    };
+
     let search_paths = [
         "/vendor/etc/media_codecs_ukee.xml",
+        "/vendor/etc/media_codecs_marble.xml",
+        "/vendor/etc/media_codecs_c2.xml",
         "/vendor/etc/media_codecs.xml",
         "/system/etc/media_codecs.xml",
     ];
@@ -199,6 +242,21 @@ pub fn scan_media_codecs_from_files() -> MediaCodecInfo {
         if let Ok(content) = fs::read_to_string(path) {
             for line in content.lines() {
                 let trimmed = line.trim();
+                if let Some(start) = trimmed.find("<MediaCodec name=\"") {
+                    let rest = &trimmed[start + 18..];
+                    if let Some(end) = rest.find('"') {
+                        let codec_name = &rest[..end];
+                        if codec_name.contains(".decoder")
+                            || codec_name.contains(".qti.")
+                            || codec_name.contains(".hw.")
+                            || codec_name.contains("c2.qti.")
+                        {
+                            if !hw_decoders.contains(&codec_name.to_string()) {
+                                hw_decoders.push(codec_name.to_string());
+                            }
+                        }
+                    }
+                }
                 if let Some(start) = trimmed.find("<Type name=\"") {
                     let rest = &trimmed[start + 12..];
                     if let Some(end) = rest.find('"') {
@@ -219,7 +277,7 @@ pub fn scan_media_codecs_from_files() -> MediaCodecInfo {
 
     MediaCodecInfo {
         audio,
-        video_codecs: Vec::new(),
+        video_codecs: vec![av1, vp9, vp8, hevc, avc, mpeg4, h263, dolby_vision],
         supported_hardware_decoders: hw_decoders,
     }
 }

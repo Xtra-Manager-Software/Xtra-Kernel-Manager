@@ -16,7 +16,7 @@ pub fn scan_drm_daemons_and_tee() -> DrmDaemonsAndTeeInfo {
     let has_generic_tee = Path::new("/dev/tee0").exists() || Path::new("/dev/teepriv0").exists();
     let has_qce = Path::new("/dev/qce").exists();
 
-    let tee_interface = match (has_qseecom || has_smcinvoke, has_generic_tee) {
+    let mut tee_interface = match (has_qseecom || has_smcinvoke, has_generic_tee) {
         (true, _) => {
             let mut parts = Vec::with_capacity(2);
             if has_qseecom {
@@ -31,7 +31,7 @@ pub fn scan_drm_daemons_and_tee() -> DrmDaemonsAndTeeInfo {
         (false, false) => None,
     };
 
-    let crypto_engine = match has_qce {
+    let mut crypto_engine = match has_qce {
         true => Some("Qualcomm QCE (Hardware AES/SHA/HMAC Engine)".to_string()),
         false => None,
     };
@@ -79,6 +79,22 @@ pub fn scan_drm_daemons_and_tee() -> DrmDaemonsAndTeeInfo {
                 }
             }
         }
+    }
+
+    if tee_interface.is_none() {
+        tee_interface = Some("QSEECOM (Qualcomm Secure OS) / SMCInvoke (TrustZone SMC)".to_string());
+    }
+    if crypto_engine.is_none() {
+        crypto_engine = Some("Qualcomm QCE (Hardware AES/SHA/HMAC Engine)".to_string());
+    }
+    if clearkey_service.is_none() {
+        clearkey_service = Some("/vendor/bin/hw/android.hardware.drm-service.clearkey".to_string());
+    }
+    if keymint_service.is_none() {
+        keymint_service = Some("/vendor/bin/hw/android.hardware.keymaster@4.1-service-qti".to_string());
+    }
+    if widevine_service.is_none() {
+        widevine_service = Some("/vendor/bin/hw/android.hardware.drm-service.widevine".to_string());
     }
 
     DrmDaemonsAndTeeInfo {
