@@ -23,6 +23,42 @@ data class ProcessorSpec(
     @get:DrawableRes val logoRes: Int = R.drawable.ic_snapdragon,
 )
 
+data class CpuClusterSpec(
+    val clusterName: String,
+    val coreCount: Int,
+    val architecture: String,
+    val maxFrequency: String,
+    val minFrequency: String,
+    val l2Cache: String,
+)
+
+data class ProcessorDetailSpec(
+    val commercialName: String = "Snapdragon® 7+ Gen 2",
+    val partNumber: String = "SM7475-AB",
+    val vendor: String = "Qualcomm Technologies, Inc.",
+    val fabrication: String = "4 nm TSMC (N4)",
+    val instructionSet: String = "ARMv9-A (64-bit)",
+    val cpuTopology: String = "Octa-Core (1 + 3 + 4)",
+    val clusters: List<CpuClusterSpec> = listOf(
+        CpuClusterSpec("Prime Core (Gold+)", 1, "Cortex-X2", "2.91 GHz", "844 MHz", "1024 KB L2"),
+        CpuClusterSpec("Performance (Gold)", 3, "Cortex-A710", "2.49 GHz", "672 MHz", "512 KB L2 / core"),
+        CpuClusterSpec("Efficiency (Silver)", 4, "Cortex-A510", "1.80 GHz", "300 MHz", "256 KB L2 / core"),
+    ),
+    val l1CacheText: String = "64 KB I$ + 64 KB D$ per core",
+    val l2CacheTotal: String = "3.5 MB Dedicated L2",
+    val l3SharedCache: String = "6 MB Unified System L3",
+    val systemLevelCache: String = "4 MB SLC Memory Buffer",
+    val activeGovernor: String = "walt",
+    val availableGovernors: List<String> = listOf("walt", "schedutil", "performance", "powersave"),
+    val energyModel: String = "Energy-Aware Scheduling (walt EAS)",
+    val frequencyRange: String = "300 MHz - 2918 MHz",
+    val idleStates: List<String> = listOf("C0 Active", "C1 Retention", "C2 Power Collapse"),
+    val supportedAbis: String = "arm64-v8a (64-bit)",
+    val vectorExtensions: List<String> = listOf("SVE2", "NEON", "FP16", "DotProd"),
+    val cryptoExtensions: List<String> = listOf("AES-256", "SHA-512", "CRC32", "PMULL", "PAC / BTI"),
+    @get:DrawableRes val logoRes: Int = R.drawable.ic_snapdragon,
+)
+
 data class DisplaySpec(
     val refreshRateText: String = "120 Hz",
     val gpuPillText: String = "ADRENO",
@@ -50,6 +86,7 @@ object DeviceInfoResolver {
     fun resolveDeviceSpec(): DeviceSpec = DeviceSpec()
     fun resolveKernelVersion(): String = "5.10.269-Chandelier-prjkt+"
     fun resolveProcessorSpec(): ProcessorSpec = ProcessorSpec()
+    fun resolveProcessorDetailSpec(): ProcessorDetailSpec = ProcessorDetailSpec()
     fun resolveDisplaySpec(): DisplaySpec = DisplaySpec()
     fun resolveAndroidVersionSpec(): AndroidVersionSpec = AndroidVersionSpec()
     fun resolveBatterySpec(): BatterySpec = BatterySpec()
