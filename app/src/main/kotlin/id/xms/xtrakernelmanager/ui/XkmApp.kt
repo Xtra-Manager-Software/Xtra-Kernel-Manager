@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import id.xms.xtrakernelmanager.ui.screens.home.HomeScreen
+import id.xms.xtrakernelmanager.ui.screens.processor.ProcessorScreen
 import id.xms.xtrakernelmanager.ui.screens.setup.SetupScreen
 import id.xms.xtrakernelmanager.ui.theme.ThemeMode
 import id.xms.xtrakernelmanager.ui.theme.XtraKernelManagerTheme
@@ -39,10 +40,14 @@ fun XkmApp() {
                         onThemeModeChanged = { themeMode = it },
                         onFinished = { currentScreen = "home" },
                     )
+                    "processor" -> ProcessorScreen(
+                        onNavigateBack = { currentScreen = "home" },
+                    )
                     else -> HomeScreen(
                         themeMode = themeMode,
                         onThemeModeChanged = { themeMode = it },
                         onNavigateToSetup = { currentScreen = "setup" },
+                        onNavigateToProcessor = { currentScreen = "processor" },
                     )
                 }
             }
