@@ -27,7 +27,7 @@ fun XkmApp() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
         ) {
-            var currentScreen by rememberSaveable { mutableStateOf("setup") }
+            var currentScreen by rememberSaveable { mutableStateOf("home") }
 
             Crossfade(
                 targetState = currentScreen,
