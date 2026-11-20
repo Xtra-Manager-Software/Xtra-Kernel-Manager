@@ -102,7 +102,7 @@ fun HomeScreen(
                 contentPadding = WindowInsets.navigationBars.asPaddingValues().let { navInsets ->
                     PaddingValues(
                         top = 16.dp,
-                        bottom = 32.dp + navInsets.calculateBottomPadding(),
+                        bottom = 100.dp + navInsets.calculateBottomPadding(),
                     )
                 },
             ) {
