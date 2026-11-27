@@ -84,9 +84,9 @@ data class DisplayDetailSpec(
     // Density
     val ppiText: String = "395 ppi",
     val densityDpiText: String = "440 dpi",
-    // Brightness
-    val brightnessLevelText: String = "68%",
-    val peakBrightnessText: String = "1000 nits",
+    // Accelerators
+    val gpuModelText: String = "Adreno 725",
+    val npuModelText: String = "Hexagon NPU",
     // Color & HDR
     val hdrTypes: List<String> = listOf("HDR10", "HDR10+", "Dolby Vision"),
     val wideColorGamutText: String = "DCI-P3",

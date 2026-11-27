@@ -40,7 +40,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -56,7 +58,7 @@ import id.xms.xtrakernelmanager.domain.device.DisplayDetailSpec
 import id.xms.xtrakernelmanager.ui.components.ExpressiveInfoCard
 import id.xms.xtrakernelmanager.ui.components.ExpressiveSectionHeader
 import id.xms.xtrakernelmanager.ui.screens.display.components.DisplayMetricTile
-import id.xms.xtrakernelmanager.ui.screens.display.components.DisplayModesCard
+import id.xms.xtrakernelmanager.ui.screens.display.components.DisplayModesDialog
 import id.xms.xtrakernelmanager.ui.screens.display.components.HeroPanelCard
 
 @Composable
@@ -68,6 +70,8 @@ fun DisplayScreen(
     BackHandler(enabled = true) {
         onNavigateBack()
     }
+
+    var showModesDialog by remember { mutableStateOf(false) }
 
     // One UI "Scroll" pattern: the pinned header collapses smoothly with the
     // scroll position — padding tightens, the title scales down, and the
@@ -195,8 +199,9 @@ fun DisplayScreen(
                         DisplayMetricTile(
                             label = "Refresh Rate",
                             value = spec.activeRefreshRateText,
-                            subtext = "Active mode",
+                            subtext = "Active mode • tap for all modes",
                             accentColor = MaterialTheme.colorScheme.primary,
+                            onClick = { showModesDialog = true },
                             modifier = Modifier.weight(1f),
                         )
                         DisplayMetricTile(
@@ -209,7 +214,7 @@ fun DisplayScreen(
                     }
                 }
 
-                // 3. Reusable Metric Tiles: Brightness
+                // 3. Reusable Metric Tiles: GPU & NPU
                 item(key = "metric_tiles_row_two") {
                     Row(
                         modifier = Modifier
@@ -218,39 +223,23 @@ fun DisplayScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         DisplayMetricTile(
-                            label = "Brightness",
-                            value = spec.brightnessLevelText,
-                            subtext = "Current level",
+                            label = "GPU",
+                            value = spec.gpuModelText,
+                            subtext = "Graphics processor",
                             accentColor = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.weight(1f),
                         )
                         DisplayMetricTile(
-                            label = "Peak Brightness",
-                            value = spec.peakBrightnessText,
-                            subtext = "High Brightness Mode",
+                            label = "NPU",
+                            value = spec.npuModelText,
+                            subtext = "AI accelerator",
                             accentColor = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.weight(1f),
                         )
                     }
                 }
 
-                // 4. Section Header: Display Modes
-                item(key = "modes_section_header") {
-                    ExpressiveSectionHeader(
-                        title = "Display Modes",
-                        subtitle = "All resolution & refresh rate combinations exposed by the panel driver.",
-                    )
-                }
-
-                // 5. Reusable Supported Modes Card
-                item(key = "modes_card") {
-                    DisplayModesCard(
-                        modes = spec.modes,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                // 6. Section Header: Color & HDR
+                // 4. Section Header: Color & HDR
                 item(key = "color_section_header") {
                     ExpressiveSectionHeader(
                         title = "Color & HDR",
@@ -258,7 +247,7 @@ fun DisplayScreen(
                     )
                 }
 
-                // 7. Color & HDR Info Rows
+                // 5. Color & HDR Info Rows
                 item(key = "color_rows") {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -281,7 +270,7 @@ fun DisplayScreen(
                     }
                 }
 
-                // 8. Section Header: Panel & Link
+                // 6. Section Header: Panel & Link
                 item(key = "panel_section_header") {
                     ExpressiveSectionHeader(
                         title = "Panel & Link",
@@ -289,7 +278,7 @@ fun DisplayScreen(
                     )
                 }
 
-                // 9. Panel & Link Info Rows
+                // 7. Panel & Link Info Rows
                 item(key = "panel_rows") {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -314,5 +303,13 @@ fun DisplayScreen(
                 }
             }
         }
+    }
+
+    // Popup listing every panel mode, opened from the Refresh Rate tile.
+    if (showModesDialog) {
+        DisplayModesDialog(
+            modes = spec.modes,
+            onDismiss = { showModesDialog = false },
+        )
     }
 }

@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.sp
  * Reusable metric display tile for the display detail screen.
  * Mirrors ClusterMetricTile styling: flat tonal container, uppercase overline,
  * bold accent value, and an optional supporting subtext.
+ *
+ * When [onClick] is provided the tile becomes interactive with a bounded
+ * ripple (used for the Refresh Rate tile that opens the modes popup).
  */
 @Composable
 fun DisplayMetricTile(
@@ -29,12 +32,9 @@ fun DisplayMetricTile(
     accentColor: Color,
     modifier: Modifier = Modifier,
     subtext: String? = null,
+    onClick: (() -> Unit)? = null,
 ) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
+    val content: @Composable () -> Unit = {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -66,6 +66,24 @@ fun DisplayMetricTile(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+        }
+    }
+    if (onClick != null) {
+        Surface(
+            onClick = onClick,
+            modifier = modifier,
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+        ) {
+            content()
+        }
+    } else {
+        Surface(
+            modifier = modifier,
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+        ) {
+            content()
         }
     }
 }
