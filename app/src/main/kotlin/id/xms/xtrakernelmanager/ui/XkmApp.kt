@@ -22,16 +22,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import id.xms.xtrakernelmanager.ui.components.XkmBottomBar
 import id.xms.xtrakernelmanager.ui.screens.about.AboutScreen
 import id.xms.xtrakernelmanager.ui.screens.display.DisplayScreen
 import id.xms.xtrakernelmanager.ui.screens.home.HomeScreen
 import id.xms.xtrakernelmanager.ui.screens.info.InfoScreen
 import id.xms.xtrakernelmanager.ui.screens.processor.ProcessorScreen
+import id.xms.xtrakernelmanager.ui.screens.settings.SettingsScreen
 import id.xms.xtrakernelmanager.ui.screens.setup.SetupScreen
 import id.xms.xtrakernelmanager.ui.screens.tuning.TuningScreen
-import id.xms.xtrakernelmanager.ui.theme.ThemeMode
 import id.xms.xtrakernelmanager.ui.theme.XtraKernelManagerTheme
+import id.xms.xtrakernelmanager.ui.theme.XkmSettingsStore
 
 /**
  * Main application UI host for XKM.
@@ -42,7 +45,8 @@ import id.xms.xtrakernelmanager.ui.theme.XtraKernelManagerTheme
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun XkmApp() {
-    var themeMode by rememberSaveable { mutableStateOf(ThemeMode.SYSTEM) }
+    val context = LocalContext.current
+    val settings = remember { XkmSettingsStore.fromContext(context) }
     var currentScreen by rememberSaveable { mutableStateOf("home") }
     var previousScreen by rememberSaveable { mutableStateOf("home") }
 
@@ -58,7 +62,10 @@ fun XkmApp() {
     }
 
     XtraKernelManagerTheme(
-        themeMode = themeMode,
+        themeMode = settings.themeMode,
+        colorStyle = settings.colorStyle,
+        customAccent = Color(settings.customAccent),
+        luminance = settings.luminance,
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -83,9 +90,13 @@ fun XkmApp() {
                             CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this) {
                                 when (screen) {
                                     "setup" -> SetupScreen(
-                                        themeMode = themeMode,
-                                        onThemeModeChanged = { themeMode = it },
+                                        themeMode = settings.themeMode,
+                                        onThemeModeChanged = { settings.updateThemeMode(it) },
                                         onFinished = { currentScreen = "home" },
+                                    )
+                                    "settings" -> SettingsScreen(
+                                        settings = settings,
+                                        onNavigateBack = { currentScreen = previousScreen },
                                     )
                                     "processor" -> ProcessorScreen(
                                         onNavigateBack = { currentScreen = previousScreen },
@@ -102,11 +113,15 @@ fun XkmApp() {
                                     )
                                     "about" -> AboutScreen()
                                     else -> HomeScreen(
-                                        themeMode = themeMode,
-                                        onThemeModeChanged = { themeMode = it },
+                                        themeMode = settings.themeMode,
+                                        onThemeModeChanged = { settings.updateThemeMode(it) },
                                         onNavigateToSetup = {
                                             previousScreen = "home"
                                             currentScreen = "setup"
+                                        },
+                                        onNavigateToSettings = {
+                                            previousScreen = "home"
+                                            currentScreen = "settings"
                                         },
                                         onNavigateToProcessor = {
                                             previousScreen = "home"
@@ -126,8 +141,13 @@ fun XkmApp() {
                 if (showBottomBar) {
                     XkmBottomBar(
                         currentRoute = currentScreen,
+                        navBarStyle = settings.navBarStyle,
                         onSelectRoute = { route ->
                             currentScreen = route
+                        },
+                        onOverflowClick = {
+                            previousScreen = currentScreen
+                            currentScreen = "settings"
                         },
                         modifier = Modifier.align(Alignment.BottomCenter),
                     )
