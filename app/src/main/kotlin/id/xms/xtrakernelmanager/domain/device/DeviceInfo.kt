@@ -66,6 +66,43 @@ data class DisplaySpec(
     val physicalSizeText: String = "6,66 / 169 mm",
 )
 
+data class DisplayModeSpec(
+    val resolutionText: String,
+    val refreshRateText: String,
+    val isActive: Boolean = false,
+)
+
+data class DisplayDetailSpec(
+    // Hero panel
+    val resolutionText: String = "1080 x 2400",
+    val resolutionClass: String = "FHD+",
+    val panelTechnology: String = "AMOLED",
+    val aspectRatioText: String = "20:9",
+    val activeRefreshRateText: String = "120 Hz",
+    val screenDiagonalText: String = "6,67\"",
+    val physicalSizeText: String = "6,66 / 169 mm",
+    // Density
+    val ppiText: String = "395 ppi",
+    val densityDpiText: String = "440 dpi",
+    // Brightness
+    val brightnessLevelText: String = "68%",
+    val peakBrightnessText: String = "1000 nits",
+    // Color & HDR
+    val hdrTypes: List<String> = listOf("HDR10", "HDR10+", "Dolby Vision"),
+    val wideColorGamutText: String = "DCI-P3",
+    val colorDepthText: String = "10-bit",
+    // Panel & link
+    val connectorText: String = "card0-DSI-1",
+    val connectionStatus: String = "Connected",
+    val gpuPillText: String = "ADRENO",
+    val modes: List<DisplayModeSpec> = listOf(
+        DisplayModeSpec("1080 x 2400", "120 Hz", isActive = true),
+        DisplayModeSpec("1080 x 2400", "90 Hz"),
+        DisplayModeSpec("1080 x 2400", "60 Hz"),
+        DisplayModeSpec("1080 x 2400", "30 Hz"),
+    ),
+)
+
 data class AndroidVersionSpec(
     val version: String = "Android 17",
     val codename: String = "Cinnamon Bun",
@@ -88,6 +125,7 @@ object DeviceInfoResolver {
     fun resolveProcessorSpec(): ProcessorSpec = ProcessorSpec()
     fun resolveProcessorDetailSpec(): ProcessorDetailSpec = ProcessorDetailSpec()
     fun resolveDisplaySpec(): DisplaySpec = DisplaySpec()
+    fun resolveDisplayDetailSpec(): DisplayDetailSpec = DisplayDetailSpec()
     fun resolveAndroidVersionSpec(): AndroidVersionSpec = AndroidVersionSpec()
     fun resolveBatterySpec(): BatterySpec = BatterySpec()
 }
