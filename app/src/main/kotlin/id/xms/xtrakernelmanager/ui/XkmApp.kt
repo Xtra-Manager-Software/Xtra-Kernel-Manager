@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import id.xms.xtrakernelmanager.ui.components.XkmBottomBar
 import id.xms.xtrakernelmanager.ui.screens.about.AboutScreen
+import id.xms.xtrakernelmanager.ui.screens.display.DisplayScreen
 import id.xms.xtrakernelmanager.ui.screens.home.HomeScreen
 import id.xms.xtrakernelmanager.ui.screens.info.InfoScreen
 import id.xms.xtrakernelmanager.ui.screens.processor.ProcessorScreen
@@ -66,6 +67,9 @@ fun XkmApp() {
                         "processor" -> ProcessorScreen(
                             onNavigateBack = { currentScreen = previousScreen },
                         )
+                        "display" -> DisplayScreen(
+                            onNavigateBack = { currentScreen = previousScreen },
+                        )
                         "tuning" -> TuningScreen()
                         "info" -> InfoScreen(
                             onNavigateToProcessor = {
@@ -84,6 +88,10 @@ fun XkmApp() {
                             onNavigateToProcessor = {
                                 previousScreen = "home"
                                 currentScreen = "processor"
+                            },
+                            onNavigateToDisplay = {
+                                previousScreen = "home"
+                                currentScreen = "display"
                             },
                         )
                     }

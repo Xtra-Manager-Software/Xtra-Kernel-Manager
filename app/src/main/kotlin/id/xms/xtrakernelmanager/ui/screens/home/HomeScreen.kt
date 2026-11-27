@@ -45,6 +45,7 @@ fun HomeScreen(
     onNavigateToSetup: () -> Unit,
     onNavigateToSettings: () -> Unit = onNavigateToSetup,
     onNavigateToProcessor: () -> Unit = {},
+    onNavigateToDisplay: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -120,7 +121,9 @@ fun HomeScreen(
 
                 // Display Specifications Card
                 item {
-                    DisplayCard()
+                    DisplayCard(
+                        onClick = onNavigateToDisplay,
+                    )
                 }
 
                 // Operating System Card
