@@ -3,6 +3,7 @@ package id.xms.xtrakernelmanager.ui.screens.display
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,12 +38,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import id.xms.xtrakernelmanager.domain.device.DeviceInfoResolver
 import id.xms.xtrakernelmanager.domain.device.DisplayDetailSpec
@@ -61,6 +69,20 @@ fun DisplayScreen(
         onNavigateBack()
     }
 
+    // One UI "Scroll" pattern: the pinned header collapses smoothly with the
+    // scroll position — padding tightens, the title scales down, and the
+    // subtitle folds away — then expands back when the list returns to top.
+    val listState = rememberLazyListState()
+    val headerCollapseProgress by remember {
+        derivedStateOf {
+            if (listState.firstVisibleItemIndex > 0) {
+                1f
+            } else {
+                (listState.firstVisibleItemScrollOffset / 140f).coerceIn(0f, 1f)
+            }
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -71,7 +93,12 @@ fun DisplayScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(start = 16.dp, end = 20.dp, top = 14.dp, bottom = 14.dp),
+                .padding(
+                    start = 16.dp,
+                    end = 20.dp,
+                    top = lerp(14.dp, 6.dp, headerCollapseProgress),
+                    bottom = lerp(14.dp, 6.dp, headerCollapseProgress),
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             FilledIconButton(
@@ -102,14 +129,28 @@ fun DisplayScreen(
                     ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = 1f - 0.12f * headerCollapseProgress
+                        scaleY = 1f - 0.12f * headerCollapseProgress
+                        transformOrigin = TransformOrigin(pivotFractionX = 0f, pivotFractionY = 0.5f)
+                    },
                 )
-                Text(
-                    text = "Panel & Graphics",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Box(
+                    modifier = Modifier
+                        .height(lerp(20.dp, 0.dp, headerCollapseProgress))
+                        .clipToBounds(),
+                ) {
+                    Text(
+                        text = "Panel & Graphics",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.graphicsLayer {
+                            alpha = 1f - headerCollapseProgress
+                        },
+                    )
+                }
             }
         }
 
@@ -122,6 +163,7 @@ fun DisplayScreen(
             color = MaterialTheme.colorScheme.surfaceContainer,
         ) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
@@ -133,10 +175,11 @@ fun DisplayScreen(
                     )
                 },
             ) {
-                // 1. Reusable Hero Panel Card
+                // 1. Reusable Hero Panel Card — collapses in sync with the header
                 item(key = "hero_panel_card") {
                     HeroPanelCard(
                         spec = spec,
+                        collapseProgress = headerCollapseProgress,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
