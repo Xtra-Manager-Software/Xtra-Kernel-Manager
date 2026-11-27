@@ -1,12 +1,20 @@
 package id.xms.xtrakernelmanager.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,7 +36,10 @@ import id.xms.xtrakernelmanager.ui.theme.XtraKernelManagerTheme
 /**
  * Main application UI host for XKM.
  * Manages screen navigation, global themes, and container states.
+ * Screen changes run through a SharedTransitionLayout so detail screens can
+ * morph from their Home cards following the One UI "Contact detail view" motion.
  */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun XkmApp() {
     var themeMode by rememberSaveable { mutableStateOf(ThemeMode.SYSTEM) }
@@ -54,46 +65,61 @@ fun XkmApp() {
             color = MaterialTheme.colorScheme.background,
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                Crossfade(
-                    targetState = currentScreen,
-                    label = "ScreenCrossfade",
-                ) { screen ->
-                    when (screen) {
-                        "setup" -> SetupScreen(
-                            themeMode = themeMode,
-                            onThemeModeChanged = { themeMode = it },
-                            onFinished = { currentScreen = "home" },
-                        )
-                        "processor" -> ProcessorScreen(
-                            onNavigateBack = { currentScreen = previousScreen },
-                        )
-                        "display" -> DisplayScreen(
-                            onNavigateBack = { currentScreen = previousScreen },
-                        )
-                        "tuning" -> TuningScreen()
-                        "info" -> InfoScreen(
-                            onNavigateToProcessor = {
-                                previousScreen = "info"
-                                currentScreen = "processor"
+                SharedTransitionLayout {
+                    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                        AnimatedContent(
+                            targetState = currentScreen,
+                            transitionSpec = {
+                                // One UI crossfade rule: incoming content starts fading
+                                // in before the outgoing content finishes. Linear for fades.
+                                fadeIn(
+                                    tween(durationMillis = 260, delayMillis = 60, easing = LinearEasing),
+                                ) togetherWith fadeOut(
+                                    tween(durationMillis = 150, easing = LinearEasing),
+                                )
                             },
-                        )
-                        "about" -> AboutScreen()
-                        else -> HomeScreen(
-                            themeMode = themeMode,
-                            onThemeModeChanged = { themeMode = it },
-                            onNavigateToSetup = {
-                                previousScreen = "home"
-                                currentScreen = "setup"
-                            },
-                            onNavigateToProcessor = {
-                                previousScreen = "home"
-                                currentScreen = "processor"
-                            },
-                            onNavigateToDisplay = {
-                                previousScreen = "home"
-                                currentScreen = "display"
-                            },
-                        )
+                            label = "ScreenTransition",
+                        ) { screen ->
+                            CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this) {
+                                when (screen) {
+                                    "setup" -> SetupScreen(
+                                        themeMode = themeMode,
+                                        onThemeModeChanged = { themeMode = it },
+                                        onFinished = { currentScreen = "home" },
+                                    )
+                                    "processor" -> ProcessorScreen(
+                                        onNavigateBack = { currentScreen = previousScreen },
+                                    )
+                                    "display" -> DisplayScreen(
+                                        onNavigateBack = { currentScreen = previousScreen },
+                                    )
+                                    "tuning" -> TuningScreen()
+                                    "info" -> InfoScreen(
+                                        onNavigateToProcessor = {
+                                            previousScreen = "info"
+                                            currentScreen = "processor"
+                                        },
+                                    )
+                                    "about" -> AboutScreen()
+                                    else -> HomeScreen(
+                                        themeMode = themeMode,
+                                        onThemeModeChanged = { themeMode = it },
+                                        onNavigateToSetup = {
+                                            previousScreen = "home"
+                                            currentScreen = "setup"
+                                        },
+                                        onNavigateToProcessor = {
+                                            previousScreen = "home"
+                                            currentScreen = "processor"
+                                        },
+                                        onNavigateToDisplay = {
+                                            previousScreen = "home"
+                                            currentScreen = "display"
+                                        },
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 

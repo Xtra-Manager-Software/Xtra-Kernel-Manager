@@ -16,10 +16,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import id.xms.xtrakernelmanager.domain.device.DisplayDetailSpec
+import id.xms.xtrakernelmanager.ui.SHARED_KEY_DISPLAY_HERO
 import id.xms.xtrakernelmanager.ui.components.DeviceSilhouette
 import id.xms.xtrakernelmanager.ui.components.ExpressiveCard
 import id.xms.xtrakernelmanager.ui.components.ExpressiveCardHeader
 import id.xms.xtrakernelmanager.ui.components.ExpressivePill
+import id.xms.xtrakernelmanager.ui.oneUiSharedBounds
 
 /**
  * Hero card for the display detail screen.
@@ -31,7 +33,9 @@ fun HeroPanelCard(
     spec: DisplayDetailSpec,
     modifier: Modifier = Modifier,
 ) {
-    ExpressiveCard(modifier = modifier) {
+    ExpressiveCard(
+        modifier = modifier.oneUiSharedBounds(SHARED_KEY_DISPLAY_HERO),
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(18.dp),

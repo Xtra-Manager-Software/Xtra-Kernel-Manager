@@ -17,10 +17,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import id.xms.xtrakernelmanager.domain.device.DisplaySpec
+import id.xms.xtrakernelmanager.ui.SHARED_KEY_DISPLAY_HERO
 import id.xms.xtrakernelmanager.ui.components.DeviceSilhouette
 import id.xms.xtrakernelmanager.ui.components.ExpressiveCard
 import id.xms.xtrakernelmanager.ui.components.ExpressiveCardHeader
 import id.xms.xtrakernelmanager.ui.components.ExpressivePill
+import id.xms.xtrakernelmanager.ui.oneUiSharedBounds
 
 @Composable
 fun DisplayCard(
@@ -29,7 +31,7 @@ fun DisplayCard(
     onClick: () -> Unit = {},
 ) {
     ExpressiveCard(
-        modifier = modifier,
+        modifier = modifier.oneUiSharedBounds(SHARED_KEY_DISPLAY_HERO),
         onClick = onClick,
     ) {
         Row(
