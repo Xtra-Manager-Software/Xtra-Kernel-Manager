@@ -25,6 +25,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -34,9 +36,13 @@ import androidx.compose.ui.unit.sp
 import id.xms.xtrakernelmanager.ui.screens.home.components.AndroidVersionCard
 import id.xms.xtrakernelmanager.ui.screens.home.components.BatteryCard
 import id.xms.xtrakernelmanager.ui.screens.home.components.DisplayCard
+import id.xms.xtrakernelmanager.ui.components.IntroAppear
 import id.xms.xtrakernelmanager.ui.screens.home.components.HeroDeviceCard
 import id.xms.xtrakernelmanager.ui.screens.home.components.ProcessorCard
 import id.xms.xtrakernelmanager.ui.theme.ThemeMode
+
+/** Index of the last staggered element; drives when the intro reports done. */
+private const val LAST_INTRO_INDEX = 6
 
 @Composable
 fun HomeScreen(
@@ -46,7 +52,18 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit = onNavigateToSetup,
     onNavigateToProcessor: () -> Unit = {},
     onNavigateToDisplay: () -> Unit = {},
+    // Post-setup "explosion" intro: elements appear one by one, then this
+    // screen reports back so the bottom bar can slide in last.
+    playIntro: Boolean = false,
+    onIntroFinished: () -> Unit = {},
 ) {
+    LaunchedEffect(playIntro) {
+        if (playIntro) {
+            // Enough time for the last element to fully appear.
+            delay(LAST_INTRO_INDEX * 110L + 700L)
+            onIntroFinished()
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -60,17 +77,20 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = "Xtra Kernel Manager",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Black,
-                    fontSize = 26.sp,
-                    color = MaterialTheme.colorScheme.onSurface,
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            IntroAppear(index = 0, enabled = playIntro) {
+                Text(
+                    text = "Xtra Kernel Manager",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Black,
+                        fontSize = 26.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
 
+            IntroAppear(index = 1, enabled = playIntro) {
             FilledIconButton(
                 onClick = onNavigateToSettings,
                 shape = CircleShape,
@@ -85,6 +105,7 @@ fun HomeScreen(
                     contentDescription = "Settings",
                     modifier = Modifier.size(22.dp),
                 )
+            }
             }
         }
 
@@ -109,31 +130,35 @@ fun HomeScreen(
             ) {
                 // Hero Device Card with Device Silhouette & Material Expressive Pills
                 item {
-                    HeroDeviceCard()
+                    IntroAppear(index = 2, enabled = playIntro) { HeroDeviceCard() }
                 }
 
                 // Processor Specifications Card
                 item {
-                    ProcessorCard(
-                        onClick = onNavigateToProcessor,
-                    )
+                    IntroAppear(index = 3, enabled = playIntro) {
+                        ProcessorCard(
+                            onClick = onNavigateToProcessor,
+                        )
+                    }
                 }
 
                 // Display Specifications Card
                 item {
-                    DisplayCard(
-                        onClick = onNavigateToDisplay,
-                    )
+                    IntroAppear(index = 4, enabled = playIntro) {
+                        DisplayCard(
+                            onClick = onNavigateToDisplay,
+                        )
+                    }
                 }
 
                 // Operating System Card
                 item {
-                    AndroidVersionCard()
+                    IntroAppear(index = 5, enabled = playIntro) { AndroidVersionCard() }
                 }
 
                 // Battery Card
                 item {
-                    BatteryCard()
+                    IntroAppear(index = 6, enabled = playIntro) { BatteryCard() }
                 }
             }
         }

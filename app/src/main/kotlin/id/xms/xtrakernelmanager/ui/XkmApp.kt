@@ -2,12 +2,15 @@ package id.xms.xtrakernelmanager.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,6 +55,11 @@ fun XkmApp() {
     var currentScreen by rememberSaveable {
         mutableStateOf(if (settings.setupCompleted) "home" else "setup")
     }
+
+    // Post-setup intro: home elements stagger in after the blackhole explosion;
+    // the bottom bar waits for the home screen to report the intro finished.
+    var playHomeIntro by rememberSaveable { mutableStateOf(false) }
+    var homeIntroDone by rememberSaveable { mutableStateOf(true) }
     var previousScreen by rememberSaveable { mutableStateOf("home") }
 
     val mainTabs = remember { listOf("home", "tuning", "info", "about") }
@@ -98,6 +106,8 @@ fun XkmApp() {
                                         onThemeModeChanged = { settings.updateThemeMode(it) },
                                         onFinished = {
                                             settings.markSetupCompleted()
+                                            playHomeIntro = true
+                                            homeIntroDone = false
                                             currentScreen = "home"
                                         },
                                     )
@@ -122,6 +132,11 @@ fun XkmApp() {
                                     else -> HomeScreen(
                                         themeMode = settings.themeMode,
                                         onThemeModeChanged = { settings.updateThemeMode(it) },
+                                        playIntro = playHomeIntro,
+                                        onIntroFinished = {
+                                            playHomeIntro = false
+                                            homeIntroDone = true
+                                        },
                                         onNavigateToSetup = {
                                             previousScreen = "home"
                                             currentScreen = "setup"
@@ -146,18 +161,27 @@ fun XkmApp() {
                 }
 
                 if (showBottomBar) {
-                    XkmBottomBar(
-                        currentRoute = currentScreen,
-                        navBarStyle = settings.navBarStyle,
-                        onSelectRoute = { route ->
-                            currentScreen = route
-                        },
-                        onOverflowClick = {
-                            previousScreen = currentScreen
-                            currentScreen = "settings"
-                        },
+                    // During the post-setup intro the bar slides in last, after
+                    // every home element has appeared.
+                    AnimatedVisibility(
+                        visible = !playHomeIntro || homeIntroDone,
+                        enter = fadeIn(animationSpec = tween(450)) + slideInVertically(
+                            animationSpec = tween(500, easing = FastOutSlowInEasing),
+                        ) { it / 2 },
                         modifier = Modifier.align(Alignment.BottomCenter),
-                    )
+                    ) {
+                        XkmBottomBar(
+                            currentRoute = currentScreen,
+                            navBarStyle = settings.navBarStyle,
+                            onSelectRoute = { route ->
+                                currentScreen = route
+                            },
+                            onOverflowClick = {
+                                previousScreen = currentScreen
+                                currentScreen = "settings"
+                            },
+                        )
+                    }
                 }
             }
         }
