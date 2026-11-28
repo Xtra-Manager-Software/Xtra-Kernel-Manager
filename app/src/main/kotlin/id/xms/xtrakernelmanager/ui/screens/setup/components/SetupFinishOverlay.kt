@@ -38,9 +38,9 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 /** Timeline phases of the blackhole finish, in milliseconds. */
-private const val SUCK_MS = 900
-private const val SHAKE_MS = 750
-private const val BURST_MS = 650
+private const val SUCK_MS = 1200
+private const val HOLD_MS = 800
+private const val BURST_MS = 700
 
 private const val PARTICLE_COUNT = 56
 
@@ -54,9 +54,9 @@ private class BlackholeParticle(
 /**
  * One-time finish transition for the setup flow:
  *
- * 1. Suck  - the setup content (scaled by the parent through [suckProgress])
- *            spirals into a growing black hole at the center of the screen.
- * 2. Shake - the hole trembles with rising amplitude.
+ * 1. Suck  - the setup content (stretched spaghetti-thin by the parent through
+ *            [suckProgress]) is pulled into a growing black hole.
+ * 2. Hold  - the hole sits still for a beat, drifting slowly.
  * 3. Burst - an expanding flash plus a particle explosion, then [onExploded]
  *            hands control to the Home screen where elements stagger in.
  *
@@ -70,7 +70,7 @@ fun SetupFinishOverlay(
     modifier: Modifier = Modifier,
 ) {
     val haptics = LocalHapticFeedback.current
-    val shakeT = remember { mutableFloatStateOf(0f) }
+    val holdT = remember { mutableFloatStateOf(0f) }
     val burstT = remember { mutableFloatStateOf(0f) }
 
     var exploded by remember { mutableStateOf(false) }
@@ -112,13 +112,13 @@ fun SetupFinishOverlay(
                 animationSpec = tween(SUCK_MS, easing = FastOutSlowInEasing),
             ) { value, _ -> suckProgress.value = value }
 
-            // Phase 2: the hole trembles with rising amplitude.
+            // Phase 2: the hole sits still for a moment, drifting slowly.
             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
             animate(
                 initialValue = 0f,
                 targetValue = 1f,
-                animationSpec = tween(SHAKE_MS, easing = LinearEasing),
-            ) { value, _ -> shakeT.floatValue = value }
+                animationSpec = tween(HOLD_MS, easing = LinearEasing),
+            ) { value, _ -> holdT.floatValue = value }
 
             // Phase 3: flash + particle explosion, then hand over to Home.
             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -140,7 +140,7 @@ fun SetupFinishOverlay(
                     // Skip: freeze visuals at full intensity and hand over.
                     timelineJob?.cancel()
                     suckProgress.value = 1f
-                    shakeT.floatValue = 1f
+                    holdT.floatValue = 1f
                     burstT.floatValue = 0f
                     explode()
                 }
@@ -148,7 +148,7 @@ fun SetupFinishOverlay(
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val suck = suckProgress.value
-            val shake = shakeT.floatValue
+            val hold = holdT.floatValue
             val burst = burstT.floatValue
 
             // Fade the whole overlay out during the tail of the burst so the
@@ -157,16 +157,14 @@ fun SetupFinishOverlay(
             if (globalAlpha <= 0f) return@Canvas
 
             val maxR = hypot(size.width, size.height) * 0.5f
-            val amp = maxR * 0.02f * shake
-            val jitterX = if (shake > 0f) sin(shake * 55f) * amp else 0f
-            val jitterY = if (shake > 0f) cos(shake * 71f) * amp * 0.7f else 0f
-            val center = Offset(size.width / 2f + jitterX, size.height / 2f + jitterY)
+            val center = Offset(size.width / 2f, size.height / 2f)
 
             // Dark scrim so the hole reads against any theme.
             drawRect(color = Color.Black.copy(alpha = 0.94f * globalAlpha))
 
             if (burst <= 0f) {
-                val pulse = 1f + 0.05f * sin(shake * 34f)
+                // Gentle breathing while the hole holds still.
+                val pulse = 1f + 0.025f * sin(hold * 8f)
                 val r = maxR * (0.10f + 0.30f * suck) * pulse
 
                 // Glow halo behind the hole.
@@ -194,8 +192,8 @@ fun SetupFinishOverlay(
                     center = center,
                 )
 
-                // Accretion disk: rotating arcs that accelerate during the shake.
-                val spin = suck * 480f + shake * 760f
+                // Accretion disk: spins in fast while sucking, then drifts slowly.
+                val spin = suck * 540f + hold * 140f
                 rotate(degrees = spin, pivot = center) {
                     for (i in 0 until 4) {
                         val ringR = r * (1.08f + i * 0.14f)

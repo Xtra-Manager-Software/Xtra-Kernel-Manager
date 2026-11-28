@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlin.math.pow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import id.xms.xtrakernelmanager.ui.screens.setup.components.SetupBottomBar
 import id.xms.xtrakernelmanager.ui.screens.setup.components.SetupFinishOverlay
@@ -49,11 +50,12 @@ fun SetupScreen(
             modifier = Modifier.graphicsLayer {
                 val p = suckProgress.floatValue
                 if (p > 0f) {
-                    // Spiral into the screen center: shrink, spin, dim slightly.
-                    scaleX = 1f - 0.95f * p
-                    scaleY = 1f - 0.95f * p
-                    rotationZ = 500f * p
-                    alpha = 1f - 0.35f * p
+                    // Spaghettification: tidal pull stretches the screen into a
+                    // long thin strand while it collapses into the hole.
+                    scaleY = (1f + 3f * p) * (1f - p).pow(0.8f)
+                    scaleX = (1f - p).pow(1.2f)
+                    rotationZ = 200f * p
+                    alpha = 1f - 0.4f * p
                 }
             },
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
