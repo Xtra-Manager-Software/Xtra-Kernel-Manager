@@ -47,7 +47,11 @@ import id.xms.xtrakernelmanager.ui.theme.XkmSettingsStore
 fun XkmApp() {
     val context = LocalContext.current
     val settings = remember { XkmSettingsStore.fromContext(context) }
-    var currentScreen by rememberSaveable { mutableStateOf("home") }
+    // On a fresh install (no persisted state yet) the setup/splash flow runs first;
+    // after it is completed once, launch goes straight to Home.
+    var currentScreen by rememberSaveable {
+        mutableStateOf(if (settings.setupCompleted) "home" else "setup")
+    }
     var previousScreen by rememberSaveable { mutableStateOf("home") }
 
     val mainTabs = remember { listOf("home", "tuning", "info", "about") }
@@ -92,7 +96,10 @@ fun XkmApp() {
                                     "setup" -> SetupScreen(
                                         themeMode = settings.themeMode,
                                         onThemeModeChanged = { settings.updateThemeMode(it) },
-                                        onFinished = { currentScreen = "home" },
+                                        onFinished = {
+                                            settings.markSetupCompleted()
+                                            currentScreen = "home"
+                                        },
                                     )
                                     "settings" -> SettingsScreen(
                                         settings = settings,

@@ -51,6 +51,17 @@ class XkmSettingsStore(
     )
         private set
 
+    /** True only after the user has finished the setup/splash flow. */
+    var setupCompleted: Boolean
+        get() = prefs.getBoolean(KEY_SETUP_COMPLETED, false)
+        private set(value) {
+            prefs.edit().putBoolean(KEY_SETUP_COMPLETED, value).apply()
+        }
+
+    fun markSetupCompleted() {
+        setupCompleted = true
+    }
+
     fun updateThemeMode(value: ThemeMode) {
         themeMode = value
         persist()
@@ -92,6 +103,7 @@ class XkmSettingsStore(
         private const val KEY_NAV = "nav_bar_style"
         private const val KEY_ACCENT = "custom_accent"
         private const val KEY_LUMINANCE = "luminance"
+        private const val KEY_SETUP_COMPLETED = "setup_completed"
 
         const val DEFAULT_CUSTOM_ACCENT: Int = 0xFF7C6FF0.toInt()
 
