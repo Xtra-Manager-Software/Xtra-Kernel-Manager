@@ -102,3 +102,4 @@ APK_PATH="$(find "$SCRIPT_DIR/app/build/outputs/apk/debug" -maxdepth 1 -type f -
 [[ -n "$APK_PATH" ]] || die "Gradle completed but no debug APK was found."
 
 printf '\nBuild complete.\nRust library: %s\nDebug APK: %s\n' "$NATIVE_LIBRARY" "$APK_PATH"
+./gradlew installDebug
