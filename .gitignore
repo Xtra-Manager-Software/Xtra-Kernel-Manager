@@ -84,3 +84,6 @@ Thumbs.db
 *.hprof
 backdrop_catalog
 pico.save
+
+# Local editor state
+.zcode/
