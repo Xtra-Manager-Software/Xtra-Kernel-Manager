@@ -27,8 +27,9 @@ app/src/main/jniLibs/
 **/jniLibs/**/*.so
 app/src/main/rust/xkm_native/target/
 
-# Ignore all custom shell/batch scripts (keep gradle wrapper)
+# Ignore custom shell/batch scripts except the Linux full-build entry point
 *.sh
+!build-debug.sh
 *.bat
 !/gradlew.bat
 *.ps1

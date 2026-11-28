@@ -1,0 +1,27 @@
+# Keep repository contents LF so the tree is identical on every platform.
+* text=auto eol=lf
+
+# Windows-only launchers keep their original bytes (CRLF, untouched).
+*.bat -text
+*.cmd -text
+
+# Gradle wrapper and shell scripts must be LF and executable.
+gradlew text eol=lf
+*.sh text eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ttf binary
+*.otf binary
+*.jar binary
+*.so binary
+*.a binary
+*.apk binary
+*.aab binary
+*.jks binary
+*.keystore binary
+*.zip binary
