@@ -1,28 +1,34 @@
 package id.xms.xtrakernelmanager.ui.screens.setup
 
+import android.graphics.Bitmap
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlin.math.pow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import id.xms.xtrakernelmanager.ui.screens.setup.components.SetupBottomBar
 import id.xms.xtrakernelmanager.ui.screens.setup.components.SetupFinishOverlay
 import id.xms.xtrakernelmanager.ui.theme.ThemeMode
+import kotlinx.coroutines.CancellationException
 
 /**
  * Modular SetupScreen orchestrating setup steps, navigation, and state.
  *
- * Finishing does not jump straight to Home: the whole screen is first sucked
- * into a black hole (scaled/rotated here via [suckProgress]) while the
- * [SetupFinishOverlay] draws the hole, its shake, and the final explosion.
+ * Finishing does not jump straight to Home: the final page elements are
+ * individually stretched and pulled into the black hole before it bursts.
  */
 @Composable
 fun SetupScreen(
@@ -34,31 +40,51 @@ fun SetupScreen(
     var step by remember { mutableIntStateOf(0) }
     val totalSteps = 4
 
-    // Blackhole finish state: 0 = normal screen, 1 = fully sucked into the hole.
     var finishing by remember { mutableStateOf(false) }
-    val suckProgress = remember { mutableFloatStateOf(0f) }
+    var finishFrame by remember { mutableStateOf<Bitmap?>(null) }
+    val setupLayer = rememberGraphicsLayer()
+    val finishCallback by rememberUpdatedState(onFinished)
+
+    LaunchedEffect(finishing) {
+        if (finishing) {
+            try {
+                // Capture once, before hiding anything. The transparent layer
+                // contains the real text, GIF frame, pedestal, and finish button.
+                finishFrame = setupLayer.toImageBitmap().asAndroidBitmap()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                // A failed capture must not trap the user in onboarding.
+                Log.w("SetupFinish", "Unable to capture setup finish frame", error)
+                finishCallback()
+            }
+        }
+    }
 
     val hasRoot by viewModel.hasRoot.collectAsStateWithLifecycle()
     val isCheckingRoot by viewModel.isCheckingRoot.collectAsStateWithLifecycle()
 
-    BackHandler(enabled = step > 0 && !finishing) {
-        step -= 1
+    BackHandler(enabled = step > 0 || finishing) {
+        if (!finishing) step -= 1
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
         Scaffold(
-            modifier = Modifier.graphicsLayer {
-                val p = suckProgress.floatValue
-                if (p > 0f) {
-                    // Spaghettification: tidal pull stretches the screen into a
-                    // long thin strand while it collapses into the hole.
-                    scaleY = (1f + 3f * p) * (1f - p).pow(0.8f)
-                    scaleX = (1f - p).pow(1.2f)
-                    rotationZ = 200f * p
-                    alpha = 1f - 0.4f * p
+            modifier = Modifier.drawWithContent {
+                if (finishFrame == null) {
+                    if (step == totalSteps - 1) {
+                        setupLayer.record { this@drawWithContent.drawContent() }
+                        drawLayer(setupLayer)
+                    } else {
+                        drawContent()
+                    }
                 }
             },
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = Color.Transparent,
             bottomBar = {
                 SetupBottomBar(
                     currentPage = step,
@@ -112,11 +138,11 @@ fun SetupScreen(
             }
         }
 
-        // Hole + shake + explosion overlay covering the whole screen, above the
-        // scaffold so the hole center matches the suck pivot (screen center).
-        if (finishing) {
+        // The overlay redraws the captured pixels through a curved mesh, so
+        // every visible element is distorted toward the same event horizon.
+        finishFrame?.let { frame ->
             SetupFinishOverlay(
-                suckProgress = suckProgress,
+                setupFrame = frame,
                 accentColor = MaterialTheme.colorScheme.primary,
                 onExploded = onFinished,
             )
